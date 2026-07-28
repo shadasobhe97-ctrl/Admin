@@ -9,21 +9,37 @@ class StorageService {
 
   static const String _themeKey = 'is_dark_mode';
   static const String _tokenKey = 'auth_token';
+  static const String _roleIdKey = 'role_id';
+  static const String _userIdKey = 'user_id';
+  static const String _userNameKey = 'user_name';
+  static const String _userPhoneKey = 'user_phone';
 
   // Theme Mode
-  static bool getThemeMode() {
-    return _prefs?.getBool(_themeKey) ?? false;
-  }
+  static bool getThemeMode() => _prefs?.getBool(_themeKey) ?? false;
 
   static Future<bool> saveThemeMode(bool isDark) async {
     return await _prefs?.setBool(_themeKey, isDark) ?? false;
   }
 
-  // Auth Token
+  // Session Data
   static String? getToken() => _prefs?.getString(_tokenKey);
+  static int? getRoleId() => _prefs?.getInt(_roleIdKey);
+  static int? getUserId() => _prefs?.getInt(_userIdKey);
+  static String? getUserName() => _prefs?.getString(_userNameKey);
+  static String? getUserPhone() => _prefs?.getString(_userPhoneKey);
 
-  static Future<bool> saveToken(String token) async {
-    return await _prefs?.setString(_tokenKey, token) ?? false;
+  static Future<bool> saveSession({
+    required String token,
+    required int roleId,
+    required int userId,
+    required String userName,
+    required String userPhone,
+  }) async {
+    await _prefs?.setString(_tokenKey, token);
+    await _prefs?.setInt(_roleIdKey, roleId);
+    await _prefs?.setInt(_userIdKey, userId);
+    await _prefs?.setString(_userNameKey, userName);
+    return await _prefs?.setString(_userPhoneKey, userPhone) ?? false;
   }
 
   static Future<bool> clearAll() async {
