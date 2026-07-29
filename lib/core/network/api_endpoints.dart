@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://your-domain.com/api'; // ضع الرابط الأساسي للسيرفر هنا
+  static const String baseUrl = 'https://swift-stingray-2.loca.lt/api'; // ضع الرابط الأساسي للسيرفر هنا
 
   // Auth
   static const String login = '/auth/login';
