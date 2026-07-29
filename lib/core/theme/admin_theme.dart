@@ -123,6 +123,7 @@ class AdminTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Tajawal',
       brightness: Brightness.light,
       primaryColor: AdminColors.primaryLight,
       colorScheme: const ColorScheme.light(
@@ -165,6 +166,7 @@ class AdminTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Tajawal',
       brightness: Brightness.dark,
       primaryColor: AdminColors.primaryDark,
       colorScheme: const ColorScheme.dark(
