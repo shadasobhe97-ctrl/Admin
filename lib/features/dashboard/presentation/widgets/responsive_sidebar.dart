@@ -48,7 +48,7 @@ class ResponsiveSidebar extends StatelessWidget {
   }
 
   Widget _buildNavItem(BuildContext context, String title, IconData icon, bool isActive) {
-    final color = isActive ? context.primaryColor : context.colorScheme.onSurface.withOpacity(0.7);
+    final color = isActive ? context.primaryColor : context.colorScheme.onSurface.withValues(alpha: 0.7);
     return ListTile(
       leading: Icon(icon, color: color),
       title: Text(
@@ -62,7 +62,7 @@ class ResponsiveSidebar extends StatelessWidget {
         // Handle navigation
       },
       selected: isActive,
-      selectedTileColor: context.primaryColor.withOpacity(0.1),
+      selectedTileColor: context.primaryColor.withValues(alpha: 0.1),
     );
   }
 

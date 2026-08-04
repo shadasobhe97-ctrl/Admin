@@ -71,7 +71,7 @@ class StatsCardsWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 32),
@@ -86,7 +86,7 @@ class StatsCardsWidget extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontSize: 14,
-                      color: context.colorScheme.onSurface.withOpacity(0.7),
+                      color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 8),

@@ -33,14 +33,14 @@ class DashboardHeader extends StatelessWidget {
                 'الصلاحية: $roleName',
                 style: TextStyle(
                   fontSize: 14,
-                  color: context.colorScheme.onSurface.withOpacity(0.6),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
           ),
           CircleAvatar(
             radius: 24,
-            backgroundColor: context.primaryColor.withOpacity(0.1),
+            backgroundColor: context.primaryColor.withValues(alpha: 0.1),
             child: Icon(Icons.person, color: context.primaryColor),
           ),
         ],

@@ -1,56 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'core/di/service_locator.dart';
-import 'core/services/storage_service.dart';
-import 'core/theme/cubit/theme_cubit.dart';
-import 'core/theme/cubit/theme_state.dart';
-import 'features/Auth/logic/admin_auth_cubit.dart';
-import 'features/Auth/presentation/screens/admin_splash_screen.dart';
-import 'features/Auth/presentation/screens/admin_login_screen.dart';
-import 'features/dashboard/presentation/screens/dashboard_overview_screen.dart';
+import 'core/theme/derbi_theme.dart';
+import 'features/main_layout/presentation/screens/derbi_main_dashboard.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await StorageService.init();
-  await setupServiceLocator();
-
-  runApp(const MyApp());
+  runApp(const DerbiApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// 🎨 Derbi Main App Entry Point
+class DerbiApp extends StatelessWidget {
+  const DerbiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => ThemeCubit()),
-        BlocProvider(create: (_) => sl<AdminAuthCubit>()),
+    return MaterialApp(
+      title: 'دَربِي Derbi - لوحة التحكم الإدارية',
+      debugShowCheckedModeBanner: false,
+      // تم تغيير الثيم ليصبح افتراضياً فاتحاً (Light Theme) ليتوافق مع التصميم النظيف الأبيض
+      themeMode: ThemeMode.light,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        primarySwatch: Colors.blue,
+      ),
+      darkTheme: DerbiTheme.darkTheme,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
-      child: BlocBuilder<ThemeCubit, ThemeState>(
-        builder: (context, state) {
-          return MaterialApp(
-            title: 'Kids Transport - Admin Panel',
-            debugShowCheckedModeBanner: false,
-            theme: state.themeData,
-            initialRoute: '/',
-            locale: const Locale('ar', 'AE'),
-            supportedLocales: const [
-              Locale('ar', 'AE'),
-            ],
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            routes: {
-              '/': (context) => const AdminSplashScreen(),
-              '/login': (context) => const AdminLoginScreen(),
-              '/dashboard': (context) => const DashboardOverviewScreen(),
-            },
-          );
-        },
+      supportedLocales: const [
+        Locale('ar', 'LY'),
+        Locale('ar', 'AE'),
+      ],
+      locale: const Locale('ar', 'LY'),
+      home: const Directionality(
+        textDirection: TextDirection.rtl,
+        child: DerbiMainDashboard(),
       ),
     );
   }
