@@ -13,7 +13,7 @@ class StatItem {
 
   factory StatItem.fromJson(Map<String, dynamic> json) {
     return StatItem(
-      value: json['value']?.toString() ?? '',
+      value: json['value']?.toString() ?? '0',
       raw: json['raw'] ?? 0,
       change: json['change']?.toString() ?? '',
       trend: json['trend']?.toString() ?? '',
@@ -40,6 +40,8 @@ class DashboardStatsModel {
     required this.activeTrips,
   });
 
+  StatItem get activeSubscriptions => subscribedChildren;
+
   factory DashboardStatsModel.fromJson(Map<String, dynamic> json) {
     // الباك إند يرسل البيانات داخل مفتاح 'data'
     final data = json['data'] ?? json;
@@ -48,7 +50,7 @@ class DashboardStatsModel {
       totalUsers: StatItem.fromJson(data['total_users'] ?? {}),
       activeDrivers: StatItem.fromJson(data['active_drivers'] ?? {}),
       totalParents: StatItem.fromJson(data['total_parents'] ?? {}),
-      subscribedChildren: StatItem.fromJson(data['subscribed_children'] ?? {}),
+      subscribedChildren: StatItem.fromJson(data['subscribed_children'] ?? data['active_subscriptions'] ?? {}),
       dailySubscriptions: StatItem.fromJson(data['daily_subscriptions'] ?? {}),
       monthlySubscriptions: StatItem.fromJson(data['monthly_subscriptions'] ?? {}),
       activeTrips: StatItem.fromJson(data['drivers_with_active_trips'] ?? data['active_trips'] ?? {}),

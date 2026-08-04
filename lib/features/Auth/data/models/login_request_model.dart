@@ -9,8 +9,8 @@ class LoginRequestModel {
     required this.phoneNumber,
     required this.password,
     this.platform = 'web',
-    this.deviceName = 'Web_Admin_Panel',
-    this.fcmToken,
+    this.deviceName = 'admin_web_browser',
+    this.fcmToken = 'fcm_token_sample_string',
   });
 
   Map<String, dynamic> toJson() {

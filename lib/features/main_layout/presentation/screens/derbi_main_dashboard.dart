@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../Auth/logic/admin_auth_cubit.dart';
 
 import '../../../dashboard/presentation/screens/live_tracking_dashboard_screen.dart';
 import '../../../driver_inspector/presentation/screens/driver_inspector_screen.dart';
@@ -22,7 +25,15 @@ class DerbiMainDashboard extends StatefulWidget {
 
 class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   int _selectedTabIndex = 0;
-  final String _adminName = 'أ. عبد الرحمن الغرياني';
+  late String _adminName;
+  late String _roleName;
+
+  @override
+  void initState() {
+    super.initState();
+    _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
+    _roleName = StorageService.getRoleName() ?? 'مدير النظام';
+  }
 
   final List<NavigationItem> _navItems = [
     NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
@@ -123,7 +134,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                               ? Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white24 : DerbiColors.dangerRose.withOpacity(0.2),
+                                    color: isSelected ? Colors.white24 : DerbiColors.dangerRose.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -153,7 +164,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                       CircleAvatar(
                         backgroundColor: DerbiColors.primaryBlue,
                         child: Text(
-                          _adminName.isNotEmpty ? _adminName[0] : 'ع',
+                          _adminName.isNotEmpty ? _adminName[0] : 'أ',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -167,9 +178,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const Text(
-                              'مدير عام المنظومة',
-                              style: TextStyle(fontSize: 9, color: DerbiColors.textMuted),
+                            Text(
+                              _roleName,
+                              style: const TextStyle(fontSize: 9, color: DerbiColors.textMuted),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -241,9 +252,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: DerbiColors.successEmerald.withOpacity(0.1),
+                              color: DerbiColors.successEmerald.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: DerbiColors.successEmerald.withOpacity(0.3)),
+                              border: Border.all(color: DerbiColors.successEmerald.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -303,7 +314,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 10:
         return AdminProfileView(
           adminName: _adminName,
-          onNameChanged: (newName) => setState(() {}),
+          onNameChanged: (newName) => setState(() => _adminName = newName),
         );
       default:
         return const LiveTrackingDashboardView();
@@ -329,11 +340,15 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.dangerRose),
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final nav = Navigator.of(context);
+                if (ctx.mounted) Navigator.pop(ctx);
+                await context.read<AdminAuthCubit>().logout();
+                messenger.showSnackBar(
                   const SnackBar(content: Text('تم تسجيل الخروج بنجاح'), backgroundColor: DerbiColors.dangerRose),
                 );
+                nav.pushReplacementNamed('/login');
               },
               child: const Text('تسجيل الخروج'),
             ),

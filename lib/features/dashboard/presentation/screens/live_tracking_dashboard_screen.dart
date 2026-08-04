@@ -31,10 +31,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
     });
 
     try {
-      // استبدل الرابط أدناه برابط السيرفر الفعلي لديك
-      final url = Uri.parse('https://api.derbi.ly/api/admin/dashboard/stats');
-      
-      // ملاحظة: استبدل YOUR_ADMIN_TOKEN بـ التوكن الفعلي المخزن عند تسجيل دخول المشرف (مثلاً من SharedPreferences)
+      final url = Uri.parse('http://localhost:8000/api/admin/dashboard/stats');
       const String adminToken = 'YOUR_ADMIN_TOKEN'; 
 
       final response = await http.get(
@@ -49,7 +46,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
         
-        if (decodedResponse['success'] == true) {
+        if (decodedResponse['success'] == true || decodedResponse['status'] == true) {
           setState(() {
             _statsData = decodedResponse['data'] ?? {};
             _isLoading = false;
@@ -131,9 +128,9 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: DerbiColors.dangerRose.withOpacity(0.1),
+                color: DerbiColors.dangerRose.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: DerbiColors.dangerRose.withOpacity(0.3)),
+                border: Border.all(color: DerbiColors.dangerRose.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -192,7 +189,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: DerbiColors.successEmerald.withOpacity(0.1),
+                      color: DerbiColors.successEmerald.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.verified_user_rounded, color: DerbiColors.successEmerald, size: 28),
@@ -217,7 +214,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: DerbiColors.primaryBlue.withOpacity(0.15),
+                      color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
