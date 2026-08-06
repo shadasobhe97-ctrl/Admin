@@ -1,10 +1,15 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
 
   // Auth
   static const String login = '/auth/login';
   static const String logout = '/auth/logout';
   static const String profile = '/user/profile';
+
+  // Admin Password Reset Flow
+  static const String adminSendOtp = '/admin/auth/password/send-otp';
+  static const String adminVerifyOtp = '/admin/auth/password/verify-otp';
+  static const String adminResetPassword = '/admin/auth/password/reset';
 
   // 1. Dashboard
   static const String dashboardStats = '/dashboard/stats';

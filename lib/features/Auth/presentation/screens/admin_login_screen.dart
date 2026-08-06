@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
-import 'forgot_password_screen.dart';
+import 'reset_password_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -237,7 +237,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                                    MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
                                   );
                                 },
                                 child: const Text(
