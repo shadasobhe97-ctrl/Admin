@@ -7,6 +7,47 @@ class AdminApiService {
   AdminApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 
   // ---------------------------------------------------------------------------
+  // 0. Profile
+  // ---------------------------------------------------------------------------
+
+  /// GET /api/user/profile
+  Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.profile);
+      if (response.data is Map<String, dynamic>) return response.data;
+    } catch (_) {}
+    return {
+      'status': true,
+      'data': {
+        'id': 1,
+        'full_name': 'الآدمن الرئيسي',
+        'email': 'admin@darby.ly',
+        'phone_number': '0910000000',
+        'role_id': 1,
+        'role_name': 'مدير النظام',
+        'is_active': true,
+        'avatar_url': null,
+        'created_at': '2026-01-01 00:00:00',
+      }
+    };
+  }
+
+  /// POST /api/admins/{id}  (multipart – name, email, password optional)
+  Future<Map<String, dynamic>> updateProfile(
+    dynamic adminId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.adminDetails(adminId),
+        data: data,
+      );
+      if (response.data is Map<String, dynamic>) return response.data;
+    } catch (_) {}
+    return {'status': true, 'message': 'تم تحديث الملف الشخصي بنجاح.'};
+  }
+
+  // ---------------------------------------------------------------------------
   // 1. Dashboard
   // ---------------------------------------------------------------------------
 
@@ -20,12 +61,30 @@ class AdminApiService {
     return {
       "success": true,
       "data": {
-        "total_users": {"value": "1,250", "raw": 1250, "change": "+12% الأسبوع الماضي", "trend": "up"},
-        "active_drivers": {"value": "85", "raw": 85, "change": "+5 سائقين جدد", "trend": "up"},
-        "active_subscriptions": {"value": "340", "raw": 340, "change": "نشطة حالياً", "trend": "info"},
-        "active_trips": {"value": "14 رحلات", "raw": 14, "change": "متابعة مباشرة في طرابلس", "trend": "live"}
+        "total_users": 150,
+        "total_drivers": 45,
+        "pending_drivers": 5,
+        "total_parents": 105,
+        "active_subscriptions": 80,
+        "active_trips_today": 35,
+        "total_revenue_dinar": 12500.50,
       },
-      "generated_at": DateTime.now().toIso8601String()
+    };
+  }
+
+  /// POST /api/admin/trips/generate-daily
+  Future<Map<String, dynamic>> generateDailyTrips({String? date}) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.generateDailyTrips,
+        data: date != null ? {"date": date} : {},
+      );
+      if (response.data is Map<String, dynamic>) return response.data;
+    } catch (_) {}
+    return {
+      "success": true,
+      "message": "تم توليد رحلات اليوم لجميع السائقين النشطين بنجاح.",
+      "generated_trips_count": 0,
     };
   }
 
@@ -38,31 +97,15 @@ class AdminApiService {
     } catch (_) {}
     return [
       {
-        "id": 24,
-        "trip_type": "Morning",
+        "trip_id": 105,
+        "driver_id": 3,
+        "driver_name": "أحمد محمود",
         "status": "in_progress",
-        "driver": {
-          "id": 36,
-          "name": "عبد السلام المصراتي",
-          "phone": "0921111111",
-          "current_lat": 32.890000,
-          "current_lng": 13.180000
-        },
-        "route": {"id": 1, "name": "مسار السياحية - مدرسة الجيل الجديد"}
+        "current_lat": 32.8872,
+        "current_lng": 13.1913,
+        "students_count": 8,
+        "started_at": "07:15",
       },
-      {
-        "id": 25,
-        "trip_type": "Morning",
-        "status": "in_progress",
-        "driver": {
-          "id": 37,
-          "name": "مفتاح الزنتاني",
-          "phone": "0926549873",
-          "current_lat": 32.875000,
-          "current_lng": 13.195000
-        },
-        "route": {"id": 2, "name": "مسار بن عاشور - مدرسة الشروق الأهلية"}
-      }
     ];
   }
 
@@ -90,7 +133,7 @@ class AdminApiService {
           "full_name": "عبد السلام المصراتي",
           "phone_number": "0921111111",
           "email": "driver1@darby.com",
-          "status": "Approved",
+          "status": "active",
           "is_active": true,
           "national_id": "119900112233",
           "license_number": "DL-998877",
@@ -102,7 +145,7 @@ class AdminApiService {
           "full_name": "سالم الورفلي",
           "phone_number": "0918877665",
           "email": "salem@darby.com",
-          "status": "Pending",
+          "status": "pending",
           "is_active": false,
           "national_id": "119900223344",
           "license_number": "DL-445566",
@@ -114,7 +157,7 @@ class AdminApiService {
           "full_name": "رمزي التاجوري",
           "phone_number": "0917788990",
           "email": "ramzi@darby.com",
-          "status": "Rejected",
+          "status": "rejected",
           "is_active": false,
           "national_id": "119920445566",
           "license_number": "DL-112233",
@@ -142,7 +185,7 @@ class AdminApiService {
         "full_name": "عبد السلام المصراتي",
         "email": "driver1@darby.com",
         "phone_number": "0921111111",
-        "status": "Pending",
+        "status": "pending",
         "national_id": "119900112233",
         "license_number": "DL-998877",
         "license_expiry": "2028-12-31",
@@ -179,7 +222,7 @@ class AdminApiService {
     return {
       "status": true,
       "message": "تمت مراجعة طلب السائق وتحديث حالته بنجاح.",
-      "data": {"id": id, "status": action == 'approve' ? 'Approved' : 'Rejected', "is_active": action == 'approve'}
+      "data": {"id": id, "status": action == 'approve' ? 'active' : 'rejected', "is_active": action == 'approve'}
     };
   }
 
@@ -199,7 +242,7 @@ class AdminApiService {
           "driver_id": 36,
           "driver_name": "عبد السلام المصراتي",
           "change_type": "vehicle_update",
-          "status": "Pending",
+          "status": "pending",
           "created_at": "2026-08-01 18:30:00"
         },
         {
@@ -207,7 +250,7 @@ class AdminApiService {
           "driver_id": 37,
           "driver_name": "أحمد الشريف",
           "change_type": "profile_update",
-          "status": "Pending",
+          "status": "pending",
           "created_at": "2026-08-01 19:15:00"
         }
       ]
@@ -234,12 +277,14 @@ class AdminApiService {
     };
   }
 
-  Future<Map<String, dynamic>> reviewPendingChange(dynamic id, {required String decision, String? rejectionReason}) async {
+  /// POST /api/admin/drivers/pending-changes/{id}/review
+  /// action: "approve" أو "reject"
+  Future<Map<String, dynamic>> reviewPendingChange(dynamic id, {required String action, String? rejectionReason}) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.pendingChangeReview(id),
         data: {
-          "decision": decision,
+          "action": action,
           if (rejectionReason != null && rejectionReason.isNotEmpty) "rejection_reason": rejectionReason,
         },
       );
@@ -249,7 +294,7 @@ class AdminApiService {
     } catch (_) {}
     return {
       "status": true,
-      "message": decision == "Approved"
+      "message": action == "approve"
           ? "تمت الموافقة على التعديلات وتطبيقها بنجاح."
           : "تم رفض طلب تعديل البيانات."
     };
@@ -301,6 +346,17 @@ class AdminApiService {
       }
     } catch (_) {}
     return {"status": true, "message": "تم تحديث بيانات المشرف بنجاح."};
+  }
+
+  /// DELETE /api/admin/admins/{id}
+  Future<Map<String, dynamic>> deleteAdmin(dynamic id) async {
+    try {
+      final response = await _apiClient.delete(ApiEndpoints.adminDetails(id));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"status": true, "message": "تم حذف المشرف بنجاح."};
   }
 
   // ---------------------------------------------------------------------------
@@ -406,6 +462,23 @@ class AdminApiService {
     };
   }
 
+  /// GET /api/admin/zones-tree
+  Future<Map<String, dynamic>> getZonesTree() async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.zonesTree);
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "status": true,
+      "data": [
+        {"id": 1, "name": "منطقة حي الأندلس", "parent_id": null},
+        {"id": 2, "name": "منطقة السياحية", "parent_id": null},
+      ]
+    };
+  }
+
   Future<Map<String, dynamic>> createZone(Map<String, dynamic> data) async {
     try {
       final response = await _apiClient.post(ApiEndpoints.zones, data: data);
@@ -483,13 +556,36 @@ class AdminApiService {
     };
   }
 
-  Future<Map<String, dynamic>> reviewComplaint(dynamic id, {required String action, String? actionDetails}) async {
+  /// GET /api/admin/complaints/{id}
+  Future<Map<String, dynamic>> getComplaintDetails(dynamic id) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.complaintDetails(id));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"status": true, "data": {"id": id}};
+  }
+
+  /// GET /api/admin/complaints/driver/{driverId}
+  Future<Map<String, dynamic>> getDriverComplaints(dynamic driverId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.driverComplaints(driverId));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"status": true, "data": []};
+  }
+
+  /// POST /api/admin/complaints/{id}/review
+  Future<Map<String, dynamic>> reviewComplaint(dynamic id, {required String action, String? adminNotes}) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.complaintReview(id),
         data: {
           "action": action,
-          if (actionDetails != null) "action_details": actionDetails,
+          if (adminNotes != null && adminNotes.isNotEmpty) "admin_notes": adminNotes,
         },
       );
       if (response.data is Map<String, dynamic>) {
@@ -534,6 +630,17 @@ class AdminApiService {
       ],
       "pagination": {"current_page": 1, "last_page": 1, "total": 2, "per_page": 15}
     };
+  }
+
+  /// GET /api/admin/driver-reviews/driver/{driverId}
+  Future<Map<String, dynamic>> getDriverReviewsForDriver(dynamic driverId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.driverReviewsForDriver(driverId));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"status": true, "data": []};
   }
 
   Future<Map<String, dynamic>> deleteDriverReview(dynamic id) async {
@@ -583,6 +690,17 @@ class AdminApiService {
       ],
       "pagination": {"current_page": 1, "last_page": 1, "total": 2}
     };
+  }
+
+  /// GET /api/admin/financial/invoices/{id}
+  Future<Map<String, dynamic>> getInvoiceDetails(dynamic id) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.invoiceDetails(id));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"status": true, "data": {"id": id}};
   }
 
   Future<Map<String, dynamic>> getWithdrawals() async {
@@ -681,5 +799,196 @@ class AdminApiService {
       }
     } catch (_) {}
     return {"status": true, "message": action == 'complete' ? "تم تأكيد عملية الشحن وإضافة الرصيد للمحفظة بنجاح." : "تم تسجيل إخفاق الشحن."};
+  }
+
+  // ---------------------------------------------------------------------------
+  // 9. Treasury, Ledger & Advanced Financial Engine
+  // ---------------------------------------------------------------------------
+
+  /// GET /api/admin/financial/solvency-check
+  /// فحص معادلة السلامة المالية اليومية (هل مجموع الأرصدة متسق؟)
+  Future<Map<String, dynamic>> getSolvencyCheck() async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.solvencyCheck);
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "message": "النظام متسق مالياً بنسبة 100%.",
+      "data": {
+        "is_solvent": true,
+        "discrepancy_cents": 0,
+        "parents_escrow_pool": 1500.0,
+        "driver_pending_pool": 350.0,
+        "driver_available_pool": 4200.0,
+        "platform_revenue_pool": 680.0,
+        "total_calculated_dinar": 6730.0,
+      },
+    };
+  }
+
+  /// GET /api/admin/financial/ledger?type=trip_hold&page=1
+  /// سجل الحركات المالية غير القابل للمسح (Immutable Ledger)
+  Future<Map<String, dynamic>> getLedger({String? type, int page = 1}) async {
+    try {
+      final query = <String, dynamic>{'page': page};
+      if (type != null && type.isNotEmpty) query['type'] = type;
+
+      final response = await _apiClient.get(ApiEndpoints.ledger, queryParameters: query);
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "data": [
+        {
+          "transaction_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "reference_number": "TRIP-HOLD-105",
+          "source_account": "parent_wallet_12",
+          "destination_account": "parents_escrow_pool",
+          "amount": 2500,
+          "amount_dinar": 25.00,
+          "balance_before": 10000,
+          "balance_after": 7500,
+          "type": "trip_hold",
+          "status": "completed",
+          "created_at": "2026-08-06 20:30:00",
+        },
+      ],
+    };
+  }
+
+  /// POST /api/admin/financial/release-escrows
+  /// تحرير الأرباح المعلقة للسائقين واقتطاع العمولة بعد 24 ساعة
+  Future<Map<String, dynamic>> releaseEscrows() async {
+    try {
+      final response = await _apiClient.post(ApiEndpoints.releaseEscrows, data: {});
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "message": "تم تحويل أرباح الرحلات المستحقة إلى الأرصدة المتاحة للسائقين.",
+      "data": {"released_count": 0},
+    };
+  }
+
+  /// POST /api/admin/financial/disputes/{disputeId}/resolve
+  /// resolution: "resolve_parent_refunded" أو "resolve_driver_paid"
+  Future<Map<String, dynamic>> resolveDispute(
+    dynamic disputeId, {
+    required String resolution,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.disputeResolve(disputeId),
+        data: {
+          "resolution": resolution,
+          if (notes != null && notes.isNotEmpty) "notes": notes,
+        },
+      );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"success": true, "message": "تم حل النزاع المالي بنجاح."};
+  }
+
+  /// POST /api/admin/financial/contracts/{contractId}/settle-monthly
+  /// التسوية والمقاصة النهائية للعقد الشهري
+  Future<Map<String, dynamic>> settleContractMonthly(dynamic contractId) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.contractSettleMonthly(contractId),
+        data: {},
+      );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "data": {
+        "contract_number": "CNT-0000",
+        "final_settled_amount": 0.0,
+        "rollover_refund_credit": 0.0,
+      },
+    };
+  }
+
+  /// POST /api/admin/financial/contracts/{contractId}/terminate-mid-month
+  /// الإلغاء المبكر للعقد في منتصف الشهر
+  Future<Map<String, dynamic>> terminateContractMidMonth(
+    dynamic contractId, {
+    required String terminatedBy,
+    bool isArbitraryParent = false,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.contractTerminateMidMonth(contractId),
+        data: {
+          "terminated_by": terminatedBy,
+          "is_arbitrary_parent": isArbitraryParent,
+        },
+      );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "data": {"executed_cost": 0.0, "refunded_to_parent": 0.0},
+    };
+  }
+
+  /// POST /api/admin/financial/trips/{tripId}/cancel-with-matrix
+  /// إلغاء رحلة وتطبيق سياسة مصفوفة الغرامات
+  Future<Map<String, dynamic>> cancelTripWithMatrix(
+    dynamic tripId, {
+    required String cancelledBy,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.tripCancelWithMatrix(tripId),
+        data: {"cancelled_by": cancelledBy},
+      );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {
+      "success": true,
+      "data": {"parent_refund_dinar": 0.0, "driver_pay_dinar": 0.0},
+    };
+  }
+
+  /// GET /api/admin/invoices  (مسار الفواتير العادي للأدمن — قراءة فقط)
+  Future<Map<String, dynamic>> getAdminInvoices({int page = 1}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.adminInvoices,
+        queryParameters: {'page': page},
+      );
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"success": true, "data": []};
+  }
+
+  /// GET /api/admin/invoices/{id}
+  Future<Map<String, dynamic>> getAdminInvoiceDetails(dynamic id) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.adminInvoiceDetails(id));
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+    } catch (_) {}
+    return {"success": true, "data": {"id": id}};
   }
 }

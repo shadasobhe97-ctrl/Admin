@@ -13,11 +13,13 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
   final AdminApiService _apiService = AdminApiService();
   bool _isLoading = true;
   List<dynamic> _schools = [];
+  List<dynamic> _zones = [];
 
   @override
   void initState() {
     super.initState();
     _loadSchools();
+    _loadZones();
   }
 
   Future<void> _loadSchools() async {
@@ -30,6 +32,13 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
           _schools = res['data'];
         }
       });
+    }
+  }
+
+  Future<void> _loadZones() async {
+    final res = await _apiService.getZones();
+    if (mounted && res['data'] is List) {
+      setState(() => _zones = res['data']);
     }
   }
 
@@ -92,7 +101,8 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
                             ),
                             subtitle: Text(
-                              'العنوان: ${school['address'] ?? 'غير حدد'} • الاحداثيات: (${school['latitude']}, ${school['longitude']})',
+                              'العنوان: ${school['address'] ?? 'غير محدد'}'
+                              '${school['zone_name'] != null ? ' • المنطقة: ${school['zone_name']}' : ''}',
                               style: const TextStyle(fontSize: 11, color: DerbiColors.textMuted),
                             ),
                             trailing: Row(
@@ -124,78 +134,90 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
     final addressController = TextEditingController();
     final latController = TextEditingController(text: '32.890000');
     final lngController = TextEditingController(text: '13.180000');
+    dynamic selectedZoneId = _zones.isNotEmpty ? _zones.first['id'] : null;
 
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: DerbiColors.surfaceCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('إضافة مدرسة جديدة للنظام', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  decoration: const InputDecoration(labelText: 'اسم المدرسة الرسمي'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: addressController,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  decoration: const InputDecoration(labelText: 'العنوان الجغرافي (المنطقة والشارع)'),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: latController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                        decoration: const InputDecoration(labelText: 'دائرة العرض (Latitude)'),
+        child: StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: DerbiColors.surfaceCard,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('إضافة مدرسة جديدة للنظام', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(labelText: 'اسم المدرسة الرسمي'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: addressController,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(labelText: 'العنوان الجغرافي (المنطقة والشارع)'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<dynamic>(
+                    value: selectedZoneId,
+                    dropdownColor: DerbiColors.surfaceCard,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(labelText: 'المنطقة الجغرافية'),
+                    items: _zones.map((z) => DropdownMenuItem(value: z['id'], child: Text(z['name'] ?? '#${z['id']}'))).toList(),
+                    onChanged: (val) => setDialogState(() => selectedZoneId = val),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: latController,
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          decoration: const InputDecoration(labelText: 'دائرة العرض (Latitude)'),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: lngController,
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                        decoration: const InputDecoration(labelText: 'خط الطول (Longitude)'),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: lngController,
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          decoration: const InputDecoration(labelText: 'خط الطول (Longitude)'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted))),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.primaryBlue),
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final res = await _apiService.createSchool({
+                      "name": nameController.text.trim(),
+                      "address": addressController.text.trim(),
+                      "latitude": double.tryParse(latController.text) ?? 32.89,
+                      "longitude": double.tryParse(lngController.text) ?? 13.18,
+                      "zone_id": selectedZoneId,
+                    });
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(res['message'] ?? 'تم إضافة المدرسة بنجاح!'), backgroundColor: DerbiColors.successEmerald),
+                    );
+                    _loadSchools();
+                  }
+                },
+                child: const Text('حفظ وإضافة المدرسة'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted))),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.primaryBlue),
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final res = await _apiService.createSchool({
-                    "name": nameController.text.trim(),
-                    "address": addressController.text.trim(),
-                    "latitude": double.tryParse(latController.text) ?? 32.89,
-                    "longitude": double.tryParse(lngController.text) ?? 13.18,
-                    "zone_id": 1
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(res['message'] ?? 'تم إضافة المدرسة بنجاح!'), backgroundColor: DerbiColors.successEmerald),
-                  );
-                  _loadSchools();
-                }
-              },
-              child: const Text('حفظ وإضافة المدرسة'),
-            ),
-          ],
         ),
       ),
     );

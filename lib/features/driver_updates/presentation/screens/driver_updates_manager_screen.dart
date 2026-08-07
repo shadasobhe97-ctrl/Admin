@@ -118,6 +118,50 @@ class _PendingChangeCardState extends State<_PendingChangeCard> {
     }
   }
 
+  void _showRejectDialog(BuildContext context) {
+    final reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: DerbiColors.surfaceCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('رفض طلب التعديل', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          content: SizedBox(
+            width: 380,
+            child: TextField(
+              controller: reasonController,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+              decoration: const InputDecoration(labelText: 'سبب الرفض'),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.dangerRose),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final res = await widget.apiService.reviewPendingChange(
+                  widget.item['id'],
+                  action: 'reject',
+                  rejectionReason: reasonController.text.trim(),
+                );
+                if (ctx.mounted) Navigator.pop(ctx);
+                messenger.showSnackBar(
+                  SnackBar(content: Text(res['message'] ?? 'تم رفض التعديل.'), backgroundColor: DerbiColors.dangerRose),
+                );
+                widget.onActionComplete();
+              },
+              child: const Text('تأكيد الرفض'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -154,9 +198,10 @@ class _PendingChangeCardState extends State<_PendingChangeCard> {
                   tooltip: 'قبول وتطبيق التعديل',
                   icon: const Icon(Icons.check_circle, color: DerbiColors.successEmerald, size: 24),
                   onPressed: () async {
-                    final res = await widget.apiService.reviewPendingChange(item['id'], decision: 'Approved');
+                    final messenger = ScaffoldMessenger.of(context);
+                    final res = await widget.apiService.reviewPendingChange(item['id'], action: 'approve');
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text(res['message'] ?? 'تمت الموافقة بنجاح.'), backgroundColor: DerbiColors.successEmerald),
                       );
                       widget.onActionComplete();
@@ -166,15 +211,7 @@ class _PendingChangeCardState extends State<_PendingChangeCard> {
                 IconButton(
                   tooltip: 'رفض الطلب',
                   icon: const Icon(Icons.cancel, color: DerbiColors.dangerRose, size: 24),
-                  onPressed: () async {
-                    final res = await widget.apiService.reviewPendingChange(item['id'], decision: 'Rejected');
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(res['message'] ?? 'تم رفض التعديل.'), backgroundColor: DerbiColors.dangerRose),
-                      );
-                      widget.onActionComplete();
-                    }
-                  },
+                  onPressed: () => _showRejectDialog(context),
                 ),
                 Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: DerbiColors.textSecondary),
               ],

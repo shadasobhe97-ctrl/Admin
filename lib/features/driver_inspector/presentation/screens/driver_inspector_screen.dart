@@ -26,7 +26,7 @@ class _DriverInspectorViewState extends State<DriverInspectorView> {
     setState(() => _isLoading = true);
     final statusFilter = _selectedTab == 'الكل'
         ? null
-        : (_selectedTab == 'بانتظار المراجعة' ? 'Pending' : (_selectedTab == 'معتمد' ? 'Approved' : 'Rejected'));
+        : (_selectedTab == 'بانتظار المراجعة' ? 'pending' : (_selectedTab == 'معتمد' ? 'active' : 'rejected'));
 
     final res = await _apiService.getDrivers(status: statusFilter, search: _searchQuery);
     if (mounted) {
@@ -119,14 +119,14 @@ class _DriverInspectorViewState extends State<DriverInspectorView> {
   }
 
   Widget _buildDriverDocCard(Map<String, dynamic> driver) {
-    final status = driver['status'] ?? 'Pending';
+    final status = (driver['status'] ?? 'pending').toString().toLowerCase();
     Color statusColor = DerbiColors.warningAmber;
     String statusText = 'بانتظار المراجعة';
 
-    if (status == 'Approved') {
+    if (status == 'active' || status == 'approved') {
       statusColor = DerbiColors.successEmerald;
       statusText = 'معتمد';
-    } else if (status == 'Rejected') {
+    } else if (status == 'rejected') {
       statusColor = DerbiColors.dangerRose;
       statusText = 'مرفوض';
     }

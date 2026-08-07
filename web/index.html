@@ -31,7 +31,9 @@
 
   <title>admin_panel</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+  <!-- ملاحظة: مفتاح خرائط جوجل مازال placeholder ولا تُستخدم الخرائط حالياً في التطبيق.
+       تم وضع async حتى لا يوقف هذا السكربت إقلاع التطبيق (كان يسبب شاشة بيضاء). -->
+  <script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
