@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../../../core/network/admin_api_service.dart';
 import '../../../../core/theme/derbi_colors.dart';
 
 class LiveTrackingDashboardView extends StatefulWidget {
@@ -11,59 +10,48 @@ class LiveTrackingDashboardView extends StatefulWidget {
 }
 
 class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
+  final AdminApiService _apiService = AdminApiService();
+
   bool _isLoading = true;
+  bool _isGenerating = false;
   String? _errorMessage;
-  
-  // خريطة لتخزين الإحصائيات السبعة القادمة من الباك إند
+
   Map<String, dynamic> _statsData = {};
+  List<dynamic> _activeTrips = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchDashboardStats();
+    _fetchDashboardData();
   }
 
-  // دالة جلب الإحصائيات من الـ Endpoint الحقيقي
-  Future<void> _fetchDashboardStats() async {
+  Future<void> _fetchDashboardData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final url = Uri.parse('http://localhost:8000/api/admin/dashboard/stats');
-      const String adminToken = 'YOUR_ADMIN_TOKEN'; 
+      final statsRes = await _apiService.getDashboardStats();
+      final trips = await _apiService.getActiveTrips();
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $adminToken',
-        },
-      ).timeout(const Duration(seconds: 12));
+      if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
-        
-        if (decodedResponse['success'] == true || decodedResponse['status'] == true) {
-          setState(() {
-            _statsData = decodedResponse['data'] ?? {};
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = decodedResponse['message'] ?? 'فشل في استرجاع البيانات من الخادم.';
-            _isLoading = false;
-          });
-        }
+      final success = statsRes['success'] == true || statsRes['status'] == true;
+      if (success) {
+        setState(() {
+          _statsData = statsRes['data'] is Map<String, dynamic> ? statsRes['data'] : {};
+          _activeTrips = trips;
+          _isLoading = false;
+        });
       } else {
         setState(() {
-          _errorMessage = 'خطأ في الخادم (رمز الاستجابة: ${response.statusCode})';
+          _errorMessage = statsRes['message'] ?? 'فشل في استرجاع البيانات من الخادم.';
           _isLoading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'تعذر الاتصال بالخادم. تأكد من اتصال الإنترنت أو صحة رابط الـ API.';
         _isLoading = false;
@@ -71,19 +59,49 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
     }
   }
 
+  Future<void> _generateDailyTrips() async {
+    setState(() => _isGenerating = true);
+    final res = await _apiService.generateDailyTrips();
+    if (!mounted) return;
+    setState(() => _isGenerating = false);
+
+    final success = res['success'] == true || res['status'] == true;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          res['message'] ?? (success ? 'تم توليد رحلات اليوم بنجاح.' : 'تعذر توليد رحلات اليوم.'),
+        ),
+        backgroundColor: success ? DerbiColors.successEmerald : DerbiColors.dangerRose,
+      ),
+    );
+    if (success) {
+      _fetchDashboardData();
+    }
+  }
+
+  static const Map<String, _StatMeta> _statMeta = {
+    'total_users': _StatMeta('إجمالي المستخدمين', Icons.group_rounded, 'up'),
+    'total_drivers': _StatMeta('إجمالي السائقين', Icons.badge_rounded, 'up'),
+    'pending_drivers': _StatMeta('سائقون بانتظار المراجعة', Icons.hourglass_top_rounded, 'warning'),
+    'total_parents': _StatMeta('إجمالي أولياء الأمور', Icons.family_restroom_rounded, 'info'),
+    'active_subscriptions': _StatMeta('الاشتراكات النشطة', Icons.verified_rounded, 'up'),
+    'active_trips_today': _StatMeta('الرحلات النشطة اليوم', Icons.navigation_rounded, 'live'),
+    'total_revenue_dinar': _StatMeta('إجمالي الإيرادات (د.ل)', Icons.payments_rounded, 'info'),
+  };
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header & Refresh Button
+          // 1. Header & Action Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'لوحة المتابعة الشاملة والإحصائيات الحية',
                     style: TextStyle(
@@ -94,7 +112,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'مرتبط مباشرة بقاعدة بيانات منظومة دَرْبي (Laravel API - Dashboard Stats)',
+                    'مرتبط مباشرة بقاعدة بيانات منظومة دَرْبي (Laravel API)',
                     style: TextStyle(
                       fontSize: 12,
                       color: DerbiColors.textSecondary,
@@ -102,15 +120,37 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                   ),
                 ],
               ),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DerbiColors.primaryBlue,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: _fetchDashboardStats,
-                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-                label: const Text('تحديث البيانات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: DerbiColors.borderSlate),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _isGenerating ? null : _generateDailyTrips,
+                    icon: _isGenerating
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: DerbiColors.primaryBlue),
+                          )
+                        : const Icon(Icons.auto_awesome_rounded, size: 16, color: DerbiColors.primaryBlue),
+                    label: const Text('توليد رحلات اليوم', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DerbiColors.primaryBlue,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _isLoading ? null : _fetchDashboardData,
+                    icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                    label: const Text('تحديث البيانات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
             ],
           ),
@@ -143,14 +183,14 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                     ),
                   ),
                   TextButton(
-                    onPressed: _fetchDashboardStats,
+                    onPressed: _fetchDashboardData,
                     child: const Text('إعادة المحاولة', style: TextStyle(color: DerbiColors.primaryBlue)),
                   )
                 ],
               ),
             )
           else ...[
-            // 3. The 7 Official Stats Cards Grid
+            // 3. Stats Cards Grid (مطابقة لتوثيق /admin/dashboard/stats)
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -160,23 +200,23 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 2.1,
               ),
-              itemCount: _statsData.keys.length,
+              itemCount: _statMeta.length,
               itemBuilder: (context, index) {
-                final key = _statsData.keys.elementAt(index);
-                final item = _statsData[key] ?? {};
-                
+                final key = _statMeta.keys.elementAt(index);
+                final meta = _statMeta[key]!;
+                final rawValue = _statsData[key];
+
                 return _ApiStatCard(
-                  title: item['label'] ?? key,
-                  value: '${item['value'] ?? '0'}',
-                  change: item['change'] ?? '',
-                  trend: item['trend'] ?? 'info',
-                  icon: _getIconForStatKey(key),
+                  title: meta.label,
+                  value: _formatStatValue(key, rawValue),
+                  trend: meta.trend,
+                  icon: meta.icon,
                 );
               },
             ),
             const SizedBox(height: 24),
 
-            // 4. Radar / Operational Status Box
+            // 4. Radar / Active Trips Now
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -184,44 +224,92 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: DerbiColors.borderSlate),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: DerbiColors.successEmerald.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.verified_user_rounded, color: DerbiColors.successEmerald, size: 28),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'حالة الربط مع خادم قاعدة البيانات نشطة وآمنة',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: DerbiColors.successEmerald.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'جميع المؤشرات أعلاه تُسترجع في الوقت الفعلي عبر الـ API باستخدام الاستعلامات المعتمدة.',
-                          style: TextStyle(color: DerbiColors.textSecondary, fontSize: 11),
+                        child: const Icon(Icons.radar_rounded, color: DerbiColors.successEmerald, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'الرادار الحي للرحلات النشطة الآن',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
-                    ),
+                        child: Text(
+                          '${_activeTrips.length} رحلة نشطة',
+                          style: const TextStyle(color: DerbiColors.primaryBlue, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 16),
+                  if (_activeTrips.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text('لا توجد رحلات نشطة في الوقت الحالي', style: TextStyle(color: DerbiColors.textMuted, fontSize: 12)),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _activeTrips.length,
+                      separatorBuilder: (_, __) => const Divider(color: DerbiColors.borderSlate, height: 20),
+                      itemBuilder: (ctx, i) {
+                        final trip = _activeTrips[i] as Map<String, dynamic>;
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: DerbiColors.successEmerald.withValues(alpha: 0.15),
+                              child: const Icon(Icons.local_shipping_rounded, color: DerbiColors.successEmerald, size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    trip['driver_name'] ?? 'سائق غير معروف',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'رحلة #${trip['trip_id']} • بدأت ${trip['started_at'] ?? ''} • ${trip['students_count'] ?? 0} طالب',
+                                    style: const TextStyle(color: DerbiColors.textMuted, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: DerbiColors.successEmerald.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                _tripStatusLabel(trip['status']),
+                                style: const TextStyle(color: DerbiColors.successEmerald, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                    child: const Text(
-                      'Sanctum Verified',
-                      style: TextStyle(color: DerbiColors.primaryBlue, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  )
                 ],
               ),
             ),
@@ -231,41 +319,46 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
     );
   }
 
-  // ربط الأيقونات المناسبة حسب مفتاح الإحصائية القادم من الباك إند
-  IconData _getIconForStatKey(String key) {
-    switch (key) {
-      case 'total_users':
-        return Icons.group_rounded;
-      case 'active_drivers':
-        return Icons.badge_rounded;
-      case 'total_parents':
-        return Icons.family_restroom_rounded;
-      case 'subscribed_children':
-        return Icons.child_care_rounded;
-      case 'daily_subscriptions':
-        return Icons.today_rounded;
-      case 'monthly_subscriptions':
-        return Icons.calendar_month_rounded;
-      case 'drivers_with_active_trips':
-        return Icons.navigation_rounded;
+  String _formatStatValue(String key, dynamic value) {
+    if (value == null) return '0';
+    if (key == 'total_revenue_dinar') {
+      final numeric = value is num ? value : num.tryParse(value.toString()) ?? 0;
+      return '${numeric.toStringAsFixed(2)} د.ل';
+    }
+    return value.toString();
+  }
+
+  String _tripStatusLabel(dynamic status) {
+    switch (status) {
+      case 'in_progress':
+        return 'قيد التنفيذ';
+      case 'completed':
+        return 'مكتملة';
+      case 'pending':
+        return 'بالانتظار';
       default:
-        return Icons.analytics_rounded;
+        return status?.toString() ?? 'غير معروف';
     }
   }
+}
+
+class _StatMeta {
+  final String label;
+  final IconData icon;
+  final String trend;
+  const _StatMeta(this.label, this.icon, this.trend);
 }
 
 // Widget مخصص لعرض كارد الإحصائية بشكل أنيق ومتوافق مع بيانات الـ API
 class _ApiStatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String change;
   final String trend;
   final IconData icon;
 
   const _ApiStatCard({
     required this.title,
     required this.value,
-    required this.change,
     required this.trend,
     required this.icon,
   });
@@ -277,8 +370,10 @@ class _ApiStatCard extends StatelessWidget {
       trendColor = DerbiColors.successEmerald;
     } else if (trend == 'live') {
       trendColor = DerbiColors.primaryBlue;
+    } else if (trend == 'warning') {
+      trendColor = DerbiColors.warningAmber;
     } else {
-      trendColor = DerbiColors.textMuted;
+      trendColor = DerbiColors.infoCyan;
     }
 
     return Container(
@@ -307,23 +402,10 @@ class _ApiStatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  change,
-                  style: TextStyle(fontSize: 9, color: trendColor, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          Text(
+            value,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

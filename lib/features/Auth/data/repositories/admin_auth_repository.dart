@@ -8,6 +8,9 @@ class AdminAuthRepository {
 
   AdminAuthRepository(this._apiClient);
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Login
+  // ────────────────────────────────────────────────────────────────────────────
   Future<AdminUserModel> login(LoginRequestModel request) async {
     try {
       final response = await _apiClient.post(
@@ -43,6 +46,9 @@ class AdminAuthRepository {
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Logout
+  // ────────────────────────────────────────────────────────────────────────────
   Future<bool> logout() async {
     try {
       final response = await _apiClient.post(ApiEndpoints.logout);
@@ -55,42 +61,67 @@ class AdminAuthRepository {
     }
   }
 
-  Future<Map<String, dynamic>> sendPasswordResetCode(String phoneNumber) async {
+  // ────────────────────────────────────────────────────────────────────────────
+  // Password Reset – Step 1: Send OTP
+  // POST /api/auth/password/send-otp
+  // Body: { "email": "admin@darby.test" }
+  // ────────────────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> sendOtp(String email) async {
     try {
       final response = await _apiClient.post(
-        '/auth/forgot-password',
-        data: {'phone_number': phoneNumber},
+        ApiEndpoints.passwordSendOtp,
+        data: {'email': email},
       );
-      return response.data;
-    } catch (_) {
-      return {
-        'status': true,
-        'message': 'تم إرسال رمز استعادة كلمة المرور بنجاح إلى الرقم $phoneNumber',
-      };
+      if (response.data is Map<String, dynamic>) return response.data;
+      throw Exception('استجابة غير متوقعة من الخادم');
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Password Reset – Step 2: Verify OTP
+  // POST /api/auth/password/verify-otp
+  // Body: { "email": "admin@darby.test", "otp": "123456" }
+  // ────────────────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.passwordVerifyOtp,
+        data: {'email': email, 'otp': otp},
+      );
+      if (response.data is Map<String, dynamic>) return response.data;
+      throw Exception('استجابة غير متوقعة من الخادم');
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Password Reset – Step 3: Reset Password
+  // POST /api/auth/password/reset
+  // Body: { "email": "...", "otp": "...", "password": "...",
+  //         "password_confirmation": "..." }
+  // ────────────────────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> resetPassword({
-    required String phoneNumber,
-    required String code,
+    required String email,
+    required String otp,
     required String newPassword,
   }) async {
     try {
       final response = await _apiClient.post(
-        '/auth/reset-password',
+        ApiEndpoints.passwordReset,
         data: {
-          'phone_number': phoneNumber,
-          'code': code,
+          'email': email,
+          'otp': otp,
           'password': newPassword,
           'password_confirmation': newPassword,
         },
       );
-      return response.data;
-    } catch (_) {
-      return {
-        'status': true,
-        'message': 'تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.',
-      };
+      if (response.data is Map<String, dynamic>) return response.data;
+      throw Exception('استجابة غير متوقعة من الخادم');
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
 }

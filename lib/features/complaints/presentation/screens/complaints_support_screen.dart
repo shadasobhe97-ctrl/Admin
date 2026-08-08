@@ -202,7 +202,7 @@ class _ComplaintsSupportViewState extends State<ComplaintsSupportView> {
                   final res = await _apiService.reviewComplaint(
                     complaint['id'],
                     action: selectedAction,
-                    actionDetails: detailsController.text.trim(),
+                    adminNotes: detailsController.text.trim(),
                   );
                   if (ctx.mounted) Navigator.pop(ctx);
                   messenger.showSnackBar(

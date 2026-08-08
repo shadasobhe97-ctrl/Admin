@@ -194,6 +194,7 @@ class _FinancialCashoutViewState extends State<FinancialCashoutView> with Single
   }
 
   void _processWithdrawalModal(BuildContext context, Map<String, dynamic> w) {
+    final reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
@@ -202,12 +203,28 @@ class _FinancialCashoutViewState extends State<FinancialCashoutView> with Single
           backgroundColor: DerbiColors.surfaceCard,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text('معالجة طلب سحب: ${w['driver_name']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          content: Text('المبلغ المستحق: ${w['amount']}\nالمصرف: ${w['bank_name']}\nIBAN: ${w['iban']}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('المبلغ المستحق: ${w['amount']}\nالمصرف: ${w['bank_name']}\nIBAN: ${w['iban']}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reasonController,
+                  maxLines: 2,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  decoration: const InputDecoration(labelText: 'سبب الرفض (عند الرفض فقط)'),
+                ),
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
-                final res = await _apiService.processWithdrawal(w['id'], action: 'reject', rejectionReason: 'بيانات غير مطابقة');
+                final res = await _apiService.processWithdrawal(w['id'], action: 'reject', rejectionReason: reasonController.text.trim());
                 if (ctx.mounted) Navigator.pop(ctx);
                 messenger.showSnackBar(SnackBar(content: Text(res['message'] ?? 'تم رفض الطلب'), backgroundColor: DerbiColors.dangerRose));
                 _loadFinancialData();
@@ -232,6 +249,7 @@ class _FinancialCashoutViewState extends State<FinancialCashoutView> with Single
   }
 
   void _processRechargeModal(BuildContext context, Map<String, dynamic> r) {
+    final reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
@@ -240,12 +258,28 @@ class _FinancialCashoutViewState extends State<FinancialCashoutView> with Single
           backgroundColor: DerbiColors.surfaceCard,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text('تأكيد شحن محفظة: ${r['user_name']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          content: Text('مبلغ الشحن: ${r['amount']}\nوسيلة الدفع: ${r['payment_method'] ?? 'سداد'}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('مبلغ الشحن: ${r['amount']}\nوسيلة الدفع: ${r['payment_method'] ?? 'سداد'}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reasonController,
+                  maxLines: 2,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  decoration: const InputDecoration(labelText: 'سبب الإخفاق (عند الإلغاء فقط)'),
+                ),
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
-                final res = await _apiService.processRecharge(r['id'], action: 'fail', reason: 'عدم توفر الرصيد');
+                final res = await _apiService.processRecharge(r['id'], action: 'fail', reason: reasonController.text.trim());
                 if (ctx.mounted) Navigator.pop(ctx);
                 messenger.showSnackBar(SnackBar(content: Text(res['message'] ?? 'تم إلغاء الشحن'), backgroundColor: DerbiColors.dangerRose));
                 _loadFinancialData();

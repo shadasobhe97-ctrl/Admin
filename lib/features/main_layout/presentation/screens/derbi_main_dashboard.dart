@@ -13,6 +13,7 @@ import '../../../zones/presentation/screens/zones_management_screen.dart';
 import '../../../complaints/presentation/screens/complaints_support_screen.dart';
 import '../../../driver_reviews/presentation/screens/driver_reviews_screen.dart';
 import '../../../financial/presentation/screens/financial_cashout_screen.dart';
+import '../../../treasury/presentation/screens/treasury_ledger_screen.dart';
 import '../../../reports/presentation/screens/analytical_reports_screen.dart';
 import '../../../profile/presentation/screens/admin_profile_screen.dart';
 
@@ -45,6 +46,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
     NavigationItem('reviews', 'التقييمات والتعليقات', Icons.rate_review_rounded, badge: 0),
     NavigationItem('financial', 'المالية والعمليات', Icons.account_balance_wallet_rounded, badge: 5),
+    NavigationItem('treasury', 'الخزينة ودفتر الحسابات', Icons.account_balance_rounded, badge: 0),
     NavigationItem('reports', 'التقارير التحليلية', Icons.analytics_rounded, badge: 0),
     NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
   ];
@@ -310,8 +312,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 8:
         return const FinancialCashoutView();
       case 9:
-        return const AnalyticalReportsView();
+        return const TreasuryLedgerView();
       case 10:
+        return const AnalyticalReportsView();
+      case 11:
         return AdminProfileView(
           adminName: _adminName,
           onNameChanged: (newName) => setState(() => _adminName = newName),

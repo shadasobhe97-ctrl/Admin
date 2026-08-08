@@ -92,7 +92,9 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
                             ),
                             subtitle: Text(
-                              'معرّف البلدية الفرعية: ${zone['sub_municipality_id'] ?? 1}',
+                              zone['parent_id'] == null
+                                  ? 'منطقة رئيسية'
+                                  : 'تابعة لـ: ${_parentZoneName(zone['parent_id'])}',
                               style: const TextStyle(fontSize: 11, color: DerbiColors.textMuted),
                             ),
                             trailing: Row(
@@ -119,46 +121,74 @@ class _ZonesManagementScreenState extends State<ZonesManagementScreen> {
     );
   }
 
+  String _parentZoneName(dynamic parentId) {
+    final match = _zones.firstWhere(
+      (z) => z['id'] == parentId,
+      orElse: () => null,
+    );
+    return match != null ? (match['name'] ?? '#$parentId') : '#$parentId';
+  }
+
   void _showAddZoneModal(BuildContext context) {
     final nameController = TextEditingController();
+    dynamic selectedParentId;
 
     showDialog(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: DerbiColors.surfaceCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('إضافة منطقة جغرافية جديدة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          content: SizedBox(
-            width: 380,
-            child: TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-              decoration: const InputDecoration(labelText: 'اسم المنطقة (مثال: منطقة عين زارة)'),
+        child: StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: DerbiColors.surfaceCard,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('إضافة منطقة جغرافية جديدة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            content: SizedBox(
+              width: 380,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(labelText: 'اسم المنطقة (مثال: منطقة عين زارة)'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<dynamic>(
+                    value: selectedParentId,
+                    dropdownColor: DerbiColors.surfaceCard,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(labelText: 'المنطقة الأب (اختياري)'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('بدون — منطقة رئيسية')),
+                      ..._zones.map((z) => DropdownMenuItem(value: z['id'], child: Text(z['name'] ?? '#${z['id']}'))),
+                    ],
+                    onChanged: (val) => setDialogState(() => selectedParentId = val),
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted))),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.primaryBlue),
+                onPressed: () async {
+                  if (nameController.text.isNotEmpty) {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final res = await _apiService.createZone({
+                      "name": nameController.text.trim(),
+                      "parent_id": selectedParentId,
+                    });
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(res['message'] ?? 'تم إضافة المنطقة بنجاح!'), backgroundColor: DerbiColors.successEmerald),
+                    );
+                    _loadZones();
+                  }
+                },
+                child: const Text('إضافة المنطقة'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted))),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.primaryBlue),
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final res = await _apiService.createZone({
-                    "name": nameController.text.trim(),
-                    "sub_municipality_id": 2,
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(res['message'] ?? 'تم إضافة المنطقة بنجاح!'), backgroundColor: DerbiColors.successEmerald),
-                  );
-                  _loadZones();
-                }
-              },
-              child: const Text('إضافة المنطقة'),
-            ),
-          ],
         ),
       ),
     );
