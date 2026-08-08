@@ -64,10 +64,13 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: DerbiColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             Positioned(
@@ -78,7 +81,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -90,7 +93,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.1),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -100,11 +103,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Card(
-                    color: DerbiColors.surfaceCard,
-                    elevation: 16,
+                    color: theme.cardColor,
+                    elevation: isDark ? 0 : 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
-                      side: const BorderSide(color: DerbiColors.borderSlate),
+                      side: BorderSide(color: theme.dividerColor),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(36.0),
@@ -116,23 +119,22 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: DerbiColors.primaryBlue
-                                    .withValues(alpha: 0.15),
+                                color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.password_rounded,
                                 size: 40,
-                                color: DerbiColors.primaryBlue,
+                                color: Color(0xFF2563EB),
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Text(
-                              'كلمة المرور الجديدة',
+                            Text(
+                              'تعيين كلمة مرور جديدة',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 8),

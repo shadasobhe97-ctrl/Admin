@@ -52,61 +52,29 @@ class AdminApiService {
   // ---------------------------------------------------------------------------
 
   Future<Map<String, dynamic>> getDashboardStats() async {
-    try {
-      final response = await _apiClient.get(ApiEndpoints.dashboardStats);
-      if (response.data is Map<String, dynamic>) {
-        return response.data;
-      }
-    } catch (_) {}
-    return {
-      "success": true,
-      "data": {
-        "total_users": 150,
-        "total_drivers": 45,
-        "pending_drivers": 5,
-        "total_parents": 105,
-        "active_subscriptions": 80,
-        "active_trips_today": 35,
-        "total_revenue_dinar": 12500.50,
-      },
-    };
+    final response = await _apiClient.get(ApiEndpoints.dashboardStats);
+    if (response.data is Map<String, dynamic>) {
+      return response.data;
+    }
+    throw Exception('استجابة غير متوافقة من الخادم عند جلب الإحصائيات');
   }
 
   /// POST /api/admin/trips/generate-daily
   Future<Map<String, dynamic>> generateDailyTrips({String? date}) async {
-    try {
-      final response = await _apiClient.post(
-        ApiEndpoints.generateDailyTrips,
-        data: date != null ? {"date": date} : {},
-      );
-      if (response.data is Map<String, dynamic>) return response.data;
-    } catch (_) {}
-    return {
-      "success": true,
-      "message": "تم توليد رحلات اليوم لجميع السائقين النشطين بنجاح.",
-      "generated_trips_count": 0,
-    };
+    final response = await _apiClient.post(
+      ApiEndpoints.generateDailyTrips,
+      data: date != null ? {"date": date} : {},
+    );
+    if (response.data is Map<String, dynamic>) return response.data;
+    throw Exception('استجابة غير متوافقة من الخادم عند توليد الرحلات');
   }
 
   Future<List<dynamic>> getActiveTrips() async {
-    try {
-      final response = await _apiClient.get(ApiEndpoints.activeTrips);
-      if (response.data is Map<String, dynamic> && response.data['data'] is List) {
-        return response.data['data'];
-      }
-    } catch (_) {}
-    return [
-      {
-        "trip_id": 105,
-        "driver_id": 3,
-        "driver_name": "أحمد محمود",
-        "status": "in_progress",
-        "current_lat": 32.8872,
-        "current_lng": 13.1913,
-        "students_count": 8,
-        "started_at": "07:15",
-      },
-    ];
+    final response = await _apiClient.get(ApiEndpoints.activeTrips);
+    if (response.data is Map<String, dynamic> && response.data['data'] is List) {
+      return response.data['data'];
+    }
+    return [];
   }
 
   // ---------------------------------------------------------------------------

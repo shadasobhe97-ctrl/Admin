@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../network/api_client.dart';
+import '../theme/cubit/theme_cubit.dart';
 import '../../features/Auth/data/datasources/password_reset_remote_data_source.dart';
 import '../../features/Auth/data/repositories/admin_auth_repository.dart';
 import '../../features/Auth/data/repositories/admin_password_reset_repository.dart';
@@ -11,6 +12,9 @@ import '../../features/dashboard/logic/dashboard_cubit.dart';
 final GetIt sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  // Register ThemeCubit as a LazySingleton
+  sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
+
   // Register ApiClient as a Singleton
   sl.registerLazySingleton<ApiClient>(() => ApiClient());
 

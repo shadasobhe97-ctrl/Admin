@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/theme/cubit/theme_cubit.dart';
+import '../../../../core/theme/cubit/theme_state.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -13,7 +15,7 @@ class DashboardHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      color: context.surfaceColor,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -25,7 +27,7 @@ class DashboardHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: context.colorScheme.onSurface,
+                  color: Theme.of(context).textTheme.headlineLarge?.color ?? Colors.black,
                 ),
               ),
               const SizedBox(height: 4),
@@ -33,15 +35,60 @@ class DashboardHeader extends StatelessWidget {
                 'الصلاحية: $roleName',
                 style: TextStyle(
                   fontSize: 14,
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
                 ),
               ),
             ],
           ),
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-            child: Icon(Icons.person, color: context.primaryColor),
+          Row(
+            children: [
+              BlocBuilder<ThemeCubit, ThemeState>(
+                builder: (context, themeState) {
+                  final activeDark = themeState.isDarkMode;
+                  return Tooltip(
+                    message: activeDark ? 'التحويل للوضع النهاري (Light Mode)' : 'التحويل للوضع الليلي (Dark Mode)',
+                    child: InkWell(
+                      onTap: () => context.read<ThemeCubit>().toggleTheme(),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: activeDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: activeDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              activeDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                              color: activeDark ? Colors.amber : const Color(0xFF2563EB),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              activeDark ? '☀️ نهاري' : '🌙 ليلي',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: activeDark ? Colors.amber : const Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                child: const Icon(Icons.person, color: Color(0xFF2563EB)),
+              ),
+            ],
           ),
         ],
       ),

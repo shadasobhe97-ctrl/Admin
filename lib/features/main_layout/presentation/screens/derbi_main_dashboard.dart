@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/theme/cubit/theme_cubit.dart';
+import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../Auth/logic/admin_auth_cubit.dart';
 
 import '../../../dashboard/presentation/screens/live_tracking_dashboard_screen.dart';
@@ -226,6 +228,23 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          BlocBuilder<ThemeCubit, ThemeState>(
+                            builder: (context, themeState) {
+                              final isDark = themeState.isDarkMode;
+                              return Tooltip(
+                                message: isDark ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي',
+                                child: IconButton(
+                                  onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                                  icon: Icon(
+                                    isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                                    color: isDark ? Colors.amber : const Color(0xFF2563EB),
+                                    size: 20,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
                           Stack(
                             children: [
                               IconButton(

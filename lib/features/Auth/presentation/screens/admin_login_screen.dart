@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/cubit/theme_cubit.dart';
+import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../../core/theme/derbi_colors.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
@@ -25,292 +27,280 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      final cubit = context.read<AdminAuthCubit>();
-      final messenger = ScaffoldMessenger.of(context);
-
-      final success = await cubit.login(
-        phone: _phoneController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (success && mounted) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(cubit.state.successMessage ?? 'تم تسجيل الدخول بنجاح!'),
-            backgroundColor: DerbiColors.successEmerald,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      } else if (mounted) {
-        final error = cubit.state.errorMessage;
-        if (error != null) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: DerbiColors.dangerRose,
-            ),
-          );
-        }
-      }
+  void _handleLogin() {
+    if (_formKey.currentState?.validate() ?? false) {
+      final phone = _phoneController.text.trim();
+      final password = _passwordController.text.trim();
+      context.read<AdminAuthCubit>().login(phone: phone, password: password);
     }
   }
 
   void _fillDemoCredentials() {
     setState(() {
       _phoneController.text = '0910000000';
-      _passwordController.text = 'password123';
+      _passwordController.text = '12345678';
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: DerbiColors.background,
-        body: Stack(
-          children: [
-            // Ambient Radial Gradients Background
-            Positioned(
-              top: -120,
-              right: -120,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.12),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: BlocListener<AdminAuthCubit, AdminAuthState>(
+          listener: (context, state) {
+            if (state.isAuthenticated) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('تم تسجيل الدخول بنجاح! جاري التوجيه...'),
+                  backgroundColor: DerbiColors.successEmerald,
                 ),
-              ),
-            ),
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.08),
+              );
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            } else if (state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: DerbiColors.dangerRose,
                 ),
-              ),
-            ),
-
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+              );
+            }
+          },
+          child: Stack(
+            children: [
+              // Background circles
+              Positioned(
+                top: -100,
+                right: -100,
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 460),
-                  child: Card(
-                    color: DerbiColors.surfaceCard,
-                    elevation: 16,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0),
-                      side: const BorderSide(color: DerbiColors.borderSlate),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(36.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Brand Logo Header
-                            Container(
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.admin_panel_settings_rounded,
-                                size: 54,
-                                color: DerbiColors.primaryBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'دَربِي Derbi',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'لوحة التحكم الإدارية للمسؤولين والمشرفين',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: DerbiColors.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 32),
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.12 : 0.06),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -150,
+                left: -150,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.08 : 0.04),
+                  ),
+                ),
+              ),
 
-                            // Phone Field
-                            TextFormField(
-                              controller: _phoneController,
-                              style: const TextStyle(color: Colors.white, fontSize: 14),
-                              keyboardType: TextInputType.phone,
-                              decoration: InputDecoration(
-                                labelText: 'رقم الهاتف',
-                                hintText: '0910000000',
-                                prefixIcon: const Icon(Icons.phone_android_rounded, color: DerbiColors.primaryBlue),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                labelStyle: const TextStyle(color: DerbiColors.textSecondary, fontSize: 13),
-                                hintStyle: const TextStyle(color: DerbiColors.textMuted, fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.borderSlate),
+              // Theme Toggle Button at top corner
+              Positioned(
+                top: 20,
+                left: 20,
+                child: BlocBuilder<ThemeCubit, ThemeState>(
+                  builder: (context, themeState) {
+                    final activeDark = themeState.isDarkMode;
+                    return Tooltip(
+                      message: activeDark ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي',
+                      child: IconButton.filledTonal(
+                        onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                        icon: Icon(
+                          activeDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                          color: activeDark ? Colors.amber : const Color(0xFF2563EB),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Card(
+                      color: theme.cardColor,
+                      elevation: isDark ? 0 : 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24.0),
+                        side: BorderSide(color: theme.dividerColor),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(36.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Brand Logo Header
+                              Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.primaryBlue, width: 2),
+                                child: const Icon(
+                                  Icons.admin_panel_settings_rounded,
+                                  size: 54,
+                                  color: Color(0xFF2563EB),
                                 ),
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'الرجاء إدخال رقم الهاتف';
-                                }
-                                if (val.trim().length < 8) {
-                                  return 'رقم هاتف غير صحيح';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
+                              const SizedBox(height: 20),
+                              Text(
+                                'دَربِي Derbi',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'لوحة التحكم الإدارية للمسؤولين والمشرفين',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 32),
 
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: !_isPasswordVisible,
-                              style: const TextStyle(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                labelText: 'كلمة المرور',
-                                hintText: '••••••••',
-                                prefixIcon: const Icon(Icons.lock_outline_rounded, color: DerbiColors.primaryBlue),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                                    color: DerbiColors.textMuted,
+                              // Phone Field
+                              TextFormField(
+                                controller: _phoneController,
+                                style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+                                keyboardType: TextInputType.phone,
+                                decoration: const InputDecoration(
+                                  labelText: 'رقم الهاتف',
+                                  hintText: '0910000000',
+                                  prefixIcon: Icon(Icons.phone_android_rounded, color: Color(0xFF2563EB)),
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return 'الرجاء إدخال رقم الهاتف';
+                                  }
+                                  if (val.trim().length < 8) {
+                                    return 'رقم هاتف غير صحيح';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Password Field
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_isPasswordVisible,
+                                style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+                                decoration: InputDecoration(
+                                  labelText: 'كلمة المرور',
+                                  hintText: '••••••••',
+                                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB)),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                                      color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isPasswordVisible = !_isPasswordVisible;
+                                      });
+                                    },
                                   ),
+                                ),
+                                validator: (val) => val == null || val.isEmpty ? 'الرجاء إدخال كلمة المرور' : null,
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Forgot Password Link
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton(
                                   onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                                    );
                                   },
-                                ),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                labelStyle: const TextStyle(color: DerbiColors.textSecondary, fontSize: 13),
-                                hintStyle: const TextStyle(color: DerbiColors.textMuted, fontSize: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.borderSlate),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: DerbiColors.primaryBlue, width: 2),
+                                  child: const Text(
+                                    'نسيت كلمة المرور؟',
+                                    style: TextStyle(
+                                      color: Color(0xFF2563EB),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              validator: (val) => val == null || val.isEmpty ? 'الرجاء إدخال كلمة المرور' : null,
-                            ),
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 24),
 
-                            // Forgot Password Link
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                              // Submit Button
+                              BlocBuilder<AdminAuthCubit, AdminAuthState>(
+                                builder: (context, state) {
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF2563EB),
+                                        foregroundColor: Colors.white,
+                                        elevation: 4,
+                                        shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                      ),
+                                      onPressed: state.isLoading ? null : _handleLogin,
+                                      child: state.isLoading
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                            )
+                                          : const Text(
+                                              'تسجيل الدخول',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                    ),
                                   );
                                 },
-                                child: const Text(
-                                  'نسيت كلمة المرور؟',
-                                  style: TextStyle(
-                                    color: DerbiColors.primaryBlue,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Demo Quick Fill Preset Button
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: theme.dividerColor),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                ),
+                                onPressed: _fillDemoCredentials,
+                                icon: const Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFFF59E0B)),
+                                label: Text(
+                                  'تعبئة بيانات التجربة السريعة (0910000000)',
+                                  style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Submit Button
-                            BlocBuilder<AdminAuthCubit, AdminAuthState>(
-                              builder: (context, state) {
-                                return SizedBox(
-                                  width: double.infinity,
-                                  height: 52,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: DerbiColors.primaryBlue,
-                                      foregroundColor: Colors.white,
-                                      elevation: 4,
-                                      shadowColor: DerbiColors.primaryBlue.withValues(alpha: 0.4),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    onPressed: state.isLoading ? null : _handleLogin,
-                                    child: state.isLoading
-                                        ? const SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                                          )
-                                        : const Text(
-                                            'تسجيل الدخول',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Demo Quick Fill Preset Button
-                            OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: DerbiColors.borderSlate),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              ),
-                              onPressed: _fillDemoCredentials,
-                              icon: const Icon(Icons.flash_on_rounded, size: 16, color: DerbiColors.warningAmber),
-                              label: const Text(
-                                'تعبئة بيانات التجربة السريعة (0910000000)',
-                                style: TextStyle(fontSize: 11, color: DerbiColors.textSecondary),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

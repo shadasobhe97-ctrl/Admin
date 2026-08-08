@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import '../../data/models/active_trip_model.dart';
 
 class TripInspectorModal extends StatelessWidget {
-  final ActiveTripModel trip; // تم التحديث إلى ActiveTripModel
+  final ActiveTripModel trip;
 
   const TripInspectorModal({super.key, required this.trip});
 
-  static void show(BuildContext context, ActiveTripModel trip) { // تم التحديث هنا أيضاً
+  static void show(BuildContext context, ActiveTripModel trip) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: TripInspectorModal(trip: trip),
       ),
@@ -24,13 +25,16 @@ class TripInspectorModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
         // مؤشر السحب والترويسة
         Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: theme.dividerColor)),
           ),
           child: Column(
             children: [
@@ -39,7 +43,7 @@ class TripInspectorModal extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
+                  color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -49,15 +53,16 @@ class TripInspectorModal extends StatelessWidget {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundImage: NetworkImage(trip.driverAvatar),
+                        backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
                         radius: 24,
+                        child: const Icon(Icons.person, color: Color(0xFF2563EB)),
                       ),
                       const SizedBox(width: 16),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(trip.driverName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                          Text('${trip.carModel} • ${trip.carPlate}', style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                          Text(trip.driverName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          Text('سائق ID: #${trip.driverId} • انطلاق: ${trip.startedAt}', style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                         ],
                       ),
                     ],
@@ -75,11 +80,11 @@ class TripInspectorModal extends StatelessWidget {
         // قائمة الركاب (الأطفال)
         Expanded(
           child: trip.passengers.isEmpty
-              ? const Center(child: Text('لا يوجد ركاب حالياً في هذه الرحلة', style: TextStyle(color: Color(0xFF94A3B8))))
+              ? Center(child: Text('لا يوجد ركاب حالياً في هذه الرحلة', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))))
               : ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: trip.passengers.length,
-                  separatorBuilder: (context, index) => const Divider(color: Color(0xFFF1F5F9), height: 32),
+                  separatorBuilder: (context, index) => Divider(color: theme.dividerColor, height: 32),
                   itemBuilder: (context, index) {
                     final passenger = trip.passengers[index];
                     return Row(
@@ -93,13 +98,13 @@ class TripInspectorModal extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(passenger.childName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text(passenger.childName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
                                   const Icon(Icons.school, size: 12, color: Color(0xFF94A3B8)),
                                   const SizedBox(width: 4),
-                                  Text(passenger.schoolName, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                  Text(passenger.schoolName, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                                 ],
                               ),
                               const SizedBox(height: 2),
@@ -109,7 +114,7 @@ class TripInspectorModal extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     passenger.status == 'وصل' ? passenger.dropoffLocation : passenger.pickupLocation, 
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
@@ -119,9 +124,7 @@ class TripInspectorModal extends StatelessWidget {
 
                         // زر الاتصال بولي الأمر
                         IconButton(
-                          onPressed: () {
-                            // TODO: إضافة كود الاتصال بولي الأمر
-                          },
+                          onPressed: () {},
                           icon: const Icon(Icons.phone, color: Color(0xFF10B981)),
                           tooltip: 'الاتصال بولي الأمر (${passenger.parentName})',
                         )

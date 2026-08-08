@@ -86,10 +86,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: DerbiColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             Positioned(
@@ -100,7 +103,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -112,7 +115,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.1),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -122,11 +125,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Card(
-                    color: DerbiColors.surfaceCard,
-                    elevation: 16,
+                    color: theme.cardColor,
+                    elevation: isDark ? 0 : 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
-                      side: const BorderSide(color: DerbiColors.borderSlate),
+                      side: BorderSide(color: theme.dividerColor),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(36.0),
@@ -138,71 +141,48 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: DerbiColors.successEmerald
-                                    .withValues(alpha: 0.15),
+                                color: const Color(0xFF10B981).withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.verified_outlined,
                                 size: 40,
-                                color: DerbiColors.successEmerald,
+                                color: Color(0xFF10B981),
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Text(
+                            Text(
                               'التحقق من الرمز',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'تم إرسال رمز التحقق (OTP) إلى ${widget.email}. أدخل الرمز للمتابعة.',
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  color: DerbiColors.textSecondary),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 32),
                             TextFormField(
                               controller: _otpController,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  letterSpacing: 4),
+                              style: TextStyle(
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontSize: 14,
+                                letterSpacing: 4,
+                              ),
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
                               maxLength: 6,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 labelText: 'رمز التحقق (OTP)',
                                 hintText: '1234',
-                                prefixIcon: const Icon(Icons.pin_outlined,
-                                    color: DerbiColors.successEmerald),
-                                labelStyle: const TextStyle(
-                                    color: DerbiColors.textSecondary,
-                                    fontSize: 13),
-                                hintStyle: const TextStyle(
-                                    color: DerbiColors.textMuted, fontSize: 13),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.successEmerald,
-                                      width: 2),
-                                ),
+                                prefixIcon: Icon(Icons.pin_outlined, color: Color(0xFF10B981)),
                               ),
                               validator: (val) {
                                 final value = val?.trim() ?? '';

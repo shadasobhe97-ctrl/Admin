@@ -4,7 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/di/service_locator.dart';
 import 'core/services/storage_service.dart';
-import 'core/theme/derbi_theme.dart';
+import 'core/theme/admin_theme.dart';
+import 'core/theme/cubit/theme_cubit.dart';
+import 'core/theme/cubit/theme_state.dart';
 import 'features/Auth/logic/admin_auth_cubit.dart';
 import 'features/Auth/logic/admin_password_reset_cubit.dart';
 import 'features/Auth/presentation/screens/admin_login_screen.dart';
@@ -27,6 +29,9 @@ class DerbiApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ThemeCubit>(
+          create: (context) => sl<ThemeCubit>(),
+        ),
         BlocProvider<AdminAuthCubit>(
           create: (context) => sl<AdminAuthCubit>(),
         ),
@@ -34,31 +39,35 @@ class DerbiApp extends StatelessWidget {
           create: (context) => sl<AdminPasswordResetCubit>(),
         ),
       ],
-      child: MaterialApp(
-        title: 'دَربِي Derbi - لوحة التحكم الإدارية',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        theme: DerbiTheme.darkTheme,
-        darkTheme: DerbiTheme.darkTheme,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('ar', 'LY'),
-          Locale('ar', 'AE'),
-        ],
-        locale: const Locale('ar', 'LY'),
-        initialRoute: '/splash',
-        routes: {
-          '/splash': (context) => const AdminSplashScreen(),
-          '/login': (context) => const AdminLoginScreen(),
-          '/forgot-password': (context) => const ResetPasswordScreen(),
-          '/dashboard': (context) => const Directionality(
-                textDirection: TextDirection.rtl,
-                child: DerbiMainDashboard(),
-              ),
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'دَربِي Derbi - لوحة التحكم الإدارية',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            theme: AdminTheme.lightTheme,
+            darkTheme: AdminTheme.darkTheme,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('ar', 'LY'),
+              Locale('ar', 'AE'),
+            ],
+            locale: const Locale('ar', 'LY'),
+            initialRoute: '/splash',
+            routes: {
+              '/splash': (context) => const AdminSplashScreen(),
+              '/login': (context) => const AdminLoginScreen(),
+              '/forgot-password': (context) => const ResetPasswordScreen(),
+              '/dashboard': (context) => const Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: DerbiMainDashboard(),
+                  ),
+            },
+          );
         },
       ),
     );

@@ -41,6 +41,8 @@ dependencies:
   dio: ^5.11.0
   bloc: ^9.2.1
   get_it: ^9.2.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   flutter_localizations:
     sdk: flutter
   font_awesome_flutter: ^10.9.1

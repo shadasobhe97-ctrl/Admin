@@ -60,10 +60,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: DerbiColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             Positioned(
@@ -74,7 +77,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -86,7 +89,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DerbiColors.primaryBlue.withValues(alpha: 0.1),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -96,11 +99,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Card(
-                    color: DerbiColors.surfaceCard,
-                    elevation: 16,
+                    color: theme.cardColor,
+                    elevation: isDark ? 0 : 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
-                      side: const BorderSide(color: DerbiColors.borderSlate),
+                      side: BorderSide(color: theme.dividerColor),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(36.0),
@@ -112,122 +115,95 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: DerbiColors.primaryBlue
-                                    .withValues(alpha: 0.15),
+                                color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.lock_reset_rounded,
                                 size: 40,
-                                color: DerbiColors.primaryBlue,
+                                color: Color(0xFF2563EB),
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Text(
+                            Text(
                               'إعادة تعيين كلمة المرور',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'أدخل البريد الإلكتروني المسجل في النظام لإرسال رمز التحقق',
                               style: TextStyle(
-                                  fontSize: 13,
-                                  color: DerbiColors.textSecondary),
+                                fontSize: 13,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 32),
                             TextFormField(
                               controller: _emailController,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
+                              style: TextStyle(
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontSize: 14,
+                              ),
                               keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 labelText: 'البريد الإلكتروني',
                                 hintText: 'admin@darbi.com',
-                                prefixIcon: const Icon(Icons.email_outlined,
-                                    color: DerbiColors.primaryBlue),
-                                labelStyle: const TextStyle(
-                                    color: DerbiColors.textSecondary,
-                                    fontSize: 13),
-                                hintStyle: const TextStyle(
-                                    color: DerbiColors.textMuted, fontSize: 13),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.primaryBlue, width: 2),
-                                ),
+                                prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
                               ),
                               validator: (val) {
                                 if (val == null || val.trim().isEmpty) {
                                   return 'الرجاء إدخال البريد الإلكتروني';
                                 }
-                                if (!RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$')
-                                    .hasMatch(val.trim())) {
-                                  return 'البريد الإلكتروني غير صحيح';
+                                if (!val.contains('@')) {
+                                  return 'بريد إلكتروني غير صحيح';
                                 }
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 28),
-                            BlocBuilder<AdminPasswordResetCubit,
-                                AdminPasswordResetState>(
+                            const SizedBox(height: 24),
+                            BlocBuilder<AdminPasswordResetCubit, AdminPasswordResetState>(
                               builder: (context, state) {
                                 return SizedBox(
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: DerbiColors.primaryBlue,
+                                      backgroundColor: const Color(0xFF2563EB),
+                                      foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(14)),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
                                     ),
-                                    onPressed:
-                                        state.isLoading ? null : _handleSendOtp,
+                                    onPressed: state.isLoading ? null : _handleSendOtp,
                                     child: state.isLoading
                                         ? const SizedBox(
                                             width: 24,
                                             height: 24,
-                                            child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2.5),
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                           )
                                         : const Text(
-                                            'إرسال رمز التحقق',
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white),
+                                            'إرسال رمز التحقق (OTP)',
+                                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                                           ),
                                   ),
                                 );
                               },
                             ),
-                            const SizedBox(height: 20),
-                            TextButton.icon(
+                            const SizedBox(height: 16),
+                            TextButton(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back,
-                                  size: 16, color: DerbiColors.textMuted),
-                              label: const Text('العودة لتسجيل الدخول',
-                                  style: TextStyle(
-                                      color: DerbiColors.textMuted,
-                                      fontSize: 13)),
+                              child: Text(
+                                'العودة لتسجيل الدخول',
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           ],
                         ),

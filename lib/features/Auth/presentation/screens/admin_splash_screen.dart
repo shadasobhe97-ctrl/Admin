@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/derbi_colors.dart';
 import '../../logic/admin_auth_cubit.dart';
 
 class AdminSplashScreen extends StatefulWidget {
@@ -52,10 +51,13 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: DerbiColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -65,33 +67,33 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: DerbiColors.primaryBlue.withValues(alpha: 0.3), width: 2),
+                    border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3), width: 2),
                   ),
                   child: const Icon(
                     Icons.admin_panel_settings_rounded,
                     size: 80,
-                    color: DerbiColors.primaryBlue,
+                    color: Color(0xFF2563EB),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'دَربِي Derbi',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'منظومة الربط والنقل الذكي طرابلس',
                 style: TextStyle(
                   fontSize: 12,
-                  color: DerbiColors.textSecondary,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -100,8 +102,8 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 width: 160,
                 child: LinearProgressIndicator(
                   borderRadius: BorderRadius.circular(10),
-                  backgroundColor: DerbiColors.surfaceCard,
-                  color: DerbiColors.primaryBlue,
+                  backgroundColor: theme.cardColor,
+                  color: const Color(0xFF2563EB),
                 ),
               ),
             ],
