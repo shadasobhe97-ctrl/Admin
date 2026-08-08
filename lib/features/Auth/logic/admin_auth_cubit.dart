@@ -154,7 +154,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
   Future<void> logout() async {
     emit(state.copyWith(isLoading: true));
     await _repository.logout();
-    await StorageService.clearAll();
+    await StorageService.clearSession();
     emit(const AdminAuthState());
   }
 }

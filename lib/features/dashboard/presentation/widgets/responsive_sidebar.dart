@@ -73,7 +73,7 @@ class ResponsiveSidebar extends StatelessWidget {
       trailing: Switch(
         value: isDark,
         onChanged: (_) => context.read<ThemeCubit>().toggleTheme(),
-        activeColor: context.primaryColor,
+        activeThumbColor: context.primaryColor,
       ),
     );
   }

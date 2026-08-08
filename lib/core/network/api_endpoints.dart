@@ -6,9 +6,9 @@ class ApiEndpoints {
   static const String logout = '/auth/logout';
 
   // Password Reset Flow (3-step)
-  static const String passwordSendOtp    = '/auth/password/send-otp';
-  static const String passwordVerifyOtp  = '/auth/password/verify-otp';
-  static const String passwordReset      = '/auth/password/reset';
+  static const String passwordSendOtp = '/auth/password/send-otp';
+  static const String passwordVerifyOtp = '/auth/password/verify-otp';
+  static const String passwordReset = '/auth/password/reset';
 
   // ── Profile ─────────────────────────────────────────────────────────────────
   static const String profile = '/user/profile';
@@ -20,53 +20,66 @@ class ApiEndpoints {
   static const String adminResetPassword = '/admin/auth/password/reset';
 
   // ── 1. Dashboard & Operations ──────────────────────────────────────────────
-  static const String dashboardStats     = '/admin/dashboard/stats';
-  static const String activeTrips        = '/admin/dashboard/active-trips';
+  static const String dashboardStats = '/admin/dashboard/stats';
+  static const String activeTrips = '/admin/dashboard/active-trips';
   static const String generateDailyTrips = '/admin/trips/generate-daily';
 
   // ── 2. Drivers ──────────────────────────────────────────────────────────────
   static const String drivers = '/admin/drivers';
-  static String driverDetails(dynamic id)       => '/admin/drivers/$id';
-  static String driverReview(dynamic id)         => '/admin/drivers/$id/review';
-  static const String pendingChanges             = '/admin/drivers/pending-changes';
-  static String pendingChangeDetails(dynamic id) => '/admin/drivers/pending-changes/$id';
-  static String pendingChangeReview(dynamic id)  => '/admin/drivers/pending-changes/$id/review';
+  static String driverDetails(dynamic id) => '/admin/drivers/$id';
+  static String driverReview(dynamic id) => '/admin/drivers/$id/review';
+  static const String pendingChanges = '/admin/drivers/pending-changes';
+  static String pendingChangeDetails(dynamic id) =>
+      '/admin/drivers/pending-changes/$id';
+  static String pendingChangeReview(dynamic id) =>
+      '/admin/drivers/pending-changes/$id/review';
+
+  // Driver Reviews
+  static const String driverReviewsAll = '/admin/driver-reviews/all';
+  static String driverReviewsForDriver(dynamic id) =>
+      '/admin/driver-reviews/driver/$id';
+  static String deleteDriverReview(dynamic id) => '/admin/driver-reviews/$id';
 
   // ── 3. Admins ───────────────────────────────────────────────────────────────
   static const String admins = '/admin/admins';
   static String adminDetails(dynamic id) => '/admin/admins/$id';
+  static String adminEmailApprove(String token) =>
+      '/admin/admin/email/approve/$token';
+  static String adminEmailReject(String token) =>
+      '/admin/admin/email/reject/$token';
 
   // ── 4. Schools ──────────────────────────────────────────────────────────────
   static const String schools = '/admin/schools';
   static String schoolDetails(dynamic id) => '/admin/schools/$id';
 
   // ── 5. Zones & Geography ────────────────────────────────────────────────────
-  static const String zones     = '/admin/zones';
+  static const String zones = '/admin/zones';
   static const String zonesTree = '/admin/zones-tree';
   static String zoneDetails(dynamic id) => '/admin/zones/$id';
 
   // ── 6. Complaints ───────────────────────────────────────────────────────────
   static const String complaints = '/admin/complaints';
-  static String complaintDetails(dynamic id)          => '/admin/complaints/$id';
-  static String driverComplaints(dynamic driverId)    => '/admin/complaints/driver/$driverId';
-  static String complaintReview(dynamic id)           => '/admin/complaints/$id/review';
+  static String complaintDetails(dynamic id) => '/admin/complaints/$id';
+  static String driverComplaints(dynamic driverId) =>
+      '/admin/complaints/driver/$driverId';
+  static String complaintReview(dynamic id) => '/admin/complaints/$id/review';
 
   // ── 7. Driver Reviews ───────────────────────────────────────────────────────
-  static const String driverReviewsAll = '/admin/driver-reviews/all';
-  static String driverReviewsForDriver(dynamic driverId) => '/admin/driver-reviews/driver/$driverId';
-  static String driverReviewDetails(dynamic id)           => '/admin/driver-reviews/$id';
+  static String driverReviewDetails(dynamic id) => '/admin/driver-reviews/$id';
 
   // ── 8. Financial ────────────────────────────────────────────────────────────
   static const String invoices = '/admin/financial/invoices';
-  static String invoiceDetails(dynamic id)        => '/admin/financial/invoices/$id';
-  static const String withdrawals                 = '/admin/financial/withdrawals';
-  static String withdrawalProcess(dynamic id)     => '/admin/financial/withdrawals/$id/process';
-  static const String recharges                   = '/admin/financial/recharges';
-  static String rechargeProcess(dynamic id)       => '/admin/financial/recharges/$id/process';
+  static String invoiceDetails(dynamic id) => '/admin/financial/invoices/$id';
+  static const String withdrawals = '/admin/financial/withdrawals';
+  static String withdrawalProcess(dynamic id) =>
+      '/admin/financial/withdrawals/$id/process';
+  static const String recharges = '/admin/financial/recharges';
+  static String rechargeProcess(dynamic id) =>
+      '/admin/financial/recharges/$id/process';
 
   // ── 9. Treasury, Ledger & Advanced Financial Engine ─────────────────────────
-  static const String solvencyCheck  = '/admin/financial/solvency-check';
-  static const String ledger         = '/admin/financial/ledger';
+  static const String solvencyCheck = '/admin/financial/solvency-check';
+  static const String ledger = '/admin/financial/ledger';
   static const String releaseEscrows = '/admin/financial/release-escrows';
 
   static String disputeResolve(dynamic disputeId) =>

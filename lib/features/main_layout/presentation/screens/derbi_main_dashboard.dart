@@ -7,13 +7,11 @@ import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../Auth/logic/admin_auth_cubit.dart';
 
 import '../../../dashboard/presentation/screens/live_tracking_dashboard_screen.dart';
-import '../../../driver_inspector/presentation/screens/driver_inspector_screen.dart';
-import '../../../driver_updates/presentation/screens/driver_updates_manager_screen.dart';
-import '../../../admins/presentation/screens/admins_management_screen.dart';
+import '../../../drivers_management/presentation/screens/drivers_screen.dart';
+import '../../../admin_management/presentation/screens/admins_screen.dart';
 import '../../../schools/presentation/screens/schools_management_screen.dart';
 import '../../../zones/presentation/screens/zones_management_screen.dart';
 import '../../../complaints/presentation/screens/complaints_support_screen.dart';
-import '../../../driver_reviews/presentation/screens/driver_reviews_screen.dart';
 import '../../../financial/presentation/screens/financial_cashout_screen.dart';
 import '../../../treasury/presentation/screens/treasury_ledger_screen.dart';
 import '../../../reports/presentation/screens/analytical_reports_screen.dart';
@@ -315,11 +313,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 0:
         return const LiveTrackingDashboardView();
       case 1:
-        return const DriverInspectorView();
       case 2:
-        return const DriverUpdatesManagerView();
+        return const DriversScreen();
       case 3:
-        return const AdminsManagementScreen();
+        return const AdminsScreen();
       case 4:
         return const SchoolsManagementScreen();
       case 5:
@@ -327,7 +324,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 6:
         return const ComplaintsSupportView();
       case 7:
-        return const DriverReviewsScreen();
+        return const DriversScreen();
       case 8:
         return const FinancialCashoutView();
       case 9:

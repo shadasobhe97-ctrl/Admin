@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../models/login_request_model.dart';
@@ -8,8 +10,34 @@ class AdminAuthRepository {
 
   AdminAuthRepository(this._apiClient);
 
+  Exception _handleDioError(DioException e, String method, String endpoint) {
+    final status = e.response?.statusCode ?? 0;
+    String message = 'حدث خطأ في الاتصال بالخادم ($status)';
+
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
+        final firstVal = (data['errors'] as Map).values.first;
+        if (firstVal is List && firstVal.isNotEmpty) {
+          message = firstVal.first.toString();
+        } else {
+          message = firstVal.toString();
+        }
+      } else if (data['message'] != null && data['message'].toString().isNotEmpty) {
+        message = data['message'].toString();
+      }
+    } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+      message = 'انتهت مهلة الاتصال بالخادم، يرجى التحقق من الشبكة.';
+    } else if (e.type == DioExceptionType.connectionError) {
+      message = 'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل الخادم والاتصال بالإنترنت.';
+    }
+
+    debugPrint('[AUTH API ERROR] $method $endpoint | Status: $status | Message: $message');
+    return Exception(message);
+  }
+
   // ────────────────────────────────────────────────────────────────────────────
-  // Login
+  // Login: POST /api/auth/login
   // ────────────────────────────────────────────────────────────────────────────
   Future<AdminUserModel> login(LoginRequestModel request) async {
     try {
@@ -20,34 +48,25 @@ class AdminAuthRepository {
 
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        if (data['status'] == true || data['access_token'] != null) {
+        if (data['status'] == true || data['access_token'] != null || data['token'] != null) {
           return AdminUserModel.fromJson(data);
         } else {
-          throw Exception(data['message'] ?? 'فشل عملية تسجيل الدخول');
+          final msg = data['message']?.toString() ?? 'فشل عملية تسجيل الدخول';
+          debugPrint('[AUTH API ERROR] POST ${ApiEndpoints.login} | Status: 200 | Message: $msg');
+          throw Exception(msg);
         }
       } else {
         throw Exception('استجابة الخادم غير متوافقة');
       }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', ApiEndpoints.login);
     } catch (e) {
-      // Fallback for local demo/testing when server is offline
-      if (request.phoneNumber == '0910000000' && request.password == 'password123') {
-        return AdminUserModel(
-          id: 1,
-          fullName: 'الآدمن الرئيسي',
-          phoneNumber: request.phoneNumber,
-          email: 'admin@darby.ly',
-          roleId: 1,
-          roleName: 'مدير النظام',
-          isActive: true,
-          accessToken: '1|fallback_demo_sanctum_token_123456789',
-        );
-      }
       rethrow;
     }
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // Logout
+  // Logout: POST /api/auth/logout
   // ────────────────────────────────────────────────────────────────────────────
   Future<bool> logout() async {
     try {
@@ -56,52 +75,55 @@ class AdminAuthRepository {
         return response.data['status'] == true;
       }
       return true;
+    } on DioException catch (e) {
+      _handleDioError(e, 'POST', ApiEndpoints.logout);
+      return false;
     } catch (_) {
-      return true;
+      return false;
     }
   }
 
   // ────────────────────────────────────────────────────────────────────────────
   // Password Reset – Step 1: Send OTP
-  // POST /api/auth/password/send-otp
-  // Body: { "email": "admin@darby.test" }
+  // POST /api/admin/auth/password/send-otp
   // ────────────────────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> sendOtp(String email) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.passwordSendOtp,
+        ApiEndpoints.adminSendOtp,
         data: {'email': email},
       );
       if (response.data is Map<String, dynamic>) return response.data;
       throw Exception('استجابة غير متوقعة من الخادم');
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', ApiEndpoints.adminSendOtp);
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      rethrow;
     }
   }
 
   // ────────────────────────────────────────────────────────────────────────────
   // Password Reset – Step 2: Verify OTP
-  // POST /api/auth/password/verify-otp
-  // Body: { "email": "admin@darby.test", "otp": "123456" }
+  // POST /api/admin/auth/password/verify-otp
   // ────────────────────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.passwordVerifyOtp,
+        ApiEndpoints.adminVerifyOtp,
         data: {'email': email, 'otp': otp},
       );
       if (response.data is Map<String, dynamic>) return response.data;
       throw Exception('استجابة غير متوقعة من الخادم');
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', ApiEndpoints.adminVerifyOtp);
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      rethrow;
     }
   }
 
   // ────────────────────────────────────────────────────────────────────────────
   // Password Reset – Step 3: Reset Password
-  // POST /api/auth/password/reset
-  // Body: { "email": "...", "otp": "...", "password": "...",
-  //         "password_confirmation": "..." }
+  // POST /api/admin/auth/password/reset
   // ────────────────────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> resetPassword({
     required String email,
@@ -110,7 +132,7 @@ class AdminAuthRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.passwordReset,
+        ApiEndpoints.adminResetPassword,
         data: {
           'email': email,
           'otp': otp,
@@ -120,8 +142,10 @@ class AdminAuthRepository {
       );
       if (response.data is Map<String, dynamic>) return response.data;
       throw Exception('استجابة غير متوقعة من الخادم');
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', ApiEndpoints.adminResetPassword);
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      rethrow;
     }
   }
 }

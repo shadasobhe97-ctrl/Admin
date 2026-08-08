@@ -35,13 +35,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
   }
 
-  void _fillDemoCredentials() {
-    setState(() {
-      _phoneController.text = '0910000000';
-      _passwordController.text = '12345678';
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -274,22 +267,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                     ),
                                   );
                                 },
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Demo Quick Fill Preset Button
-                              OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: theme.dividerColor),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                ),
-                                onPressed: _fillDemoCredentials,
-                                icon: const Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFFF59E0B)),
-                                label: Text(
-                                  'تعبئة بيانات التجربة السريعة (0910000000)',
-                                  style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                                ),
                               ),
                             ],
                           ),

@@ -15,6 +15,8 @@ class ApiClient {
           'Accept': 'application/json',
           'Accept-Language': 'ar',
           'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+          'Bypass-Tunnel-Reminder': 'true',
         },
       ),
     );

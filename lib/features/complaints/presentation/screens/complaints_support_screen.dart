@@ -169,7 +169,7 @@ class _ComplaintsSupportViewState extends State<ComplaintsSupportView> {
                   const Text('حدد القرار الإداري:', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: selectedAction,
+                    initialValue: selectedAction,
                     dropdownColor: DerbiColors.surfaceCard,
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                     items: const [

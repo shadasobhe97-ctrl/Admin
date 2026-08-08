@@ -163,7 +163,7 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<dynamic>(
-                    value: selectedZoneId,
+                    initialValue: selectedZoneId,
                     dropdownColor: DerbiColors.surfaceCard,
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                     decoration: const InputDecoration(labelText: 'المنطقة الجغرافية'),

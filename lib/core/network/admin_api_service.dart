@@ -613,7 +613,7 @@ class AdminApiService {
 
   Future<Map<String, dynamic>> deleteDriverReview(dynamic id) async {
     try {
-      final response = await _apiClient.delete(ApiEndpoints.driverReviewDetails(id));
+      final response = await _apiClient.delete(ApiEndpoints.deleteDriverReview(id));
       if (response.data is Map<String, dynamic>) {
         return response.data;
       }

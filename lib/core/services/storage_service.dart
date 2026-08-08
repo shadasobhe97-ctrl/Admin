@@ -50,6 +50,16 @@ class StorageService {
     return await _prefs?.setString(_userEmailKey, userEmail) ?? false;
   }
 
+  static Future<void> clearSession() async {
+    await _prefs?.remove(_tokenKey);
+    await _prefs?.remove(_roleIdKey);
+    await _prefs?.remove(_roleNameKey);
+    await _prefs?.remove(_userIdKey);
+    await _prefs?.remove(_userNameKey);
+    await _prefs?.remove(_userPhoneKey);
+    await _prefs?.remove(_userEmailKey);
+  }
+
   static Future<bool> clearAll() async {
     return await _prefs?.clear() ?? false;
   }
