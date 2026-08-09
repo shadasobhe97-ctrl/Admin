@@ -6,8 +6,10 @@ import '../../../../core/theme/cubit/theme_cubit.dart';
 import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../Auth/logic/admin_auth_cubit.dart';
 
-import '../../../dashboard/presentation/screens/live_tracking_dashboard_screen.dart';
+import '../../../dashboard/presentation/screens/dashboard_overview_screen.dart';
 import '../../../drivers_management/presentation/screens/drivers_screen.dart';
+import '../../../drivers_management/presentation/screens/driver_change_requests_screen.dart';
+import '../../../drivers_management/presentation/screens/driver_reviews_screen.dart';
 import '../../../admin_management/presentation/screens/admins_screen.dart';
 import '../../../schools/presentation/screens/schools_management_screen.dart';
 import '../../../zones/presentation/screens/zones_management_screen.dart';
@@ -15,7 +17,7 @@ import '../../../complaints/presentation/screens/complaints_support_screen.dart'
 import '../../../financial/presentation/screens/financial_cashout_screen.dart';
 import '../../../treasury/presentation/screens/treasury_ledger_screen.dart';
 import '../../../reports/presentation/screens/analytical_reports_screen.dart';
-import '../../../profile/presentation/screens/admin_profile_screen.dart';
+import '../../../profile/presentation/screen/admin_profile_screen.dart';
 
 class DerbiMainDashboard extends StatefulWidget {
   const DerbiMainDashboard({super.key});
@@ -38,13 +40,13 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
   final List<NavigationItem> _navItems = [
     NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
-    NavigationItem('drivers', 'فحص وثائق السائقين', Icons.badge_rounded, badge: 24),
-    NavigationItem('updates', 'طلبات تعديل البيانات', Icons.sync_rounded, badge: 3),
+    NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0),
+    NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3),
     NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0),
     NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0),
     NavigationItem('zones', 'المناطق والجغرافيا', Icons.map_rounded, badge: 0),
     NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
-    NavigationItem('reviews', 'التقييمات والتعليقات', Icons.rate_review_rounded, badge: 0),
+    NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
     NavigationItem('financial', 'المالية والعمليات', Icons.account_balance_wallet_rounded, badge: 5),
     NavigationItem('treasury', 'الخزينة ودفتر الحسابات', Icons.account_balance_rounded, badge: 0),
     NavigationItem('reports', 'التقارير التحليلية', Icons.analytics_rounded, badge: 0),
@@ -97,7 +99,23 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                             ),
                           ],
                         ),
-                      )
+                      ),
+                      BlocBuilder<ThemeCubit, ThemeState>(
+                        builder: (context, themeState) {
+                          final isDark = themeState.isDarkMode;
+                          return Tooltip(
+                            message: isDark ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي',
+                            child: IconButton(
+                              onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                              icon: Icon(
+                                isDark ? Icons.wb_sunny_rounded : Icons.brightness_3_rounded,
+                                color: isDark ? Colors.amber : Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -226,23 +244,6 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          BlocBuilder<ThemeCubit, ThemeState>(
-                            builder: (context, themeState) {
-                              final isDark = themeState.isDarkMode;
-                              return Tooltip(
-                                message: isDark ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي',
-                                child: IconButton(
-                                  onPressed: () => context.read<ThemeCubit>().toggleTheme(),
-                                  icon: Icon(
-                                    isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-                                    color: isDark ? Colors.amber : const Color(0xFF2563EB),
-                                    size: 20,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 8),
                           Stack(
                             children: [
                               IconButton(
@@ -311,10 +312,11 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   Widget _buildCurrentTabScreen(int index) {
     switch (index) {
       case 0:
-        return const LiveTrackingDashboardView();
+        return const DashboardOverviewScreen();
       case 1:
-      case 2:
         return const DriversScreen();
+      case 2:
+        return const DriverChangeRequestsScreen();
       case 3:
         return const AdminsScreen();
       case 4:
@@ -324,7 +326,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 6:
         return const ComplaintsSupportView();
       case 7:
-        return const DriversScreen();
+        return const DriverReviewsScreen();
       case 8:
         return const FinancialCashoutView();
       case 9:
@@ -337,7 +339,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
           onNameChanged: (newName) => setState(() => _adminName = newName),
         );
       default:
-        return const LiveTrackingDashboardView();
+        return const DashboardOverviewScreen();
     }
   }
 

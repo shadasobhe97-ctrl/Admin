@@ -4,29 +4,18 @@ import '../../services/storage_service.dart';
 import 'theme_state.dart';
 
 class ThemeCubit extends Cubit<ThemeState> {
-  ThemeCubit()
-      : super(ThemeState(
-          themeData: AdminTheme.lightTheme,
-          isDarkMode: StorageService.getThemeMode(),
-        )) {
-    _loadThemeFromStorage();
-  }
+  ThemeCubit() : super(_stateFor(StorageService.getThemeMode()));
 
-  void _loadThemeFromStorage() {
-    final bool isDark = StorageService.getThemeMode();
-    emit(ThemeState(
-      themeData: isDark ? AdminTheme.darkTheme : AdminTheme.lightTheme,
-      isDarkMode: isDark,
-    ));
-  }
+  /// يبني الحالة من قيمة واحدة حتى لا يتعارض [ThemeState.themeData]
+  /// مع [ThemeState.isDarkMode] عند أول إقلاع.
+  static ThemeState _stateFor(bool isDark) => ThemeState(
+        themeData: isDark ? AdminTheme.darkTheme : AdminTheme.lightTheme,
+        isDarkMode: isDark,
+      );
 
-  void toggleTheme() async {
+  Future<void> toggleTheme() async {
     final bool newIsDarkMode = !state.isDarkMode;
+    emit(_stateFor(newIsDarkMode));
     await StorageService.saveThemeMode(newIsDarkMode);
-
-    emit(ThemeState(
-      themeData: newIsDarkMode ? AdminTheme.darkTheme : AdminTheme.lightTheme,
-      isDarkMode: newIsDarkMode,
-    ));
   }
 }

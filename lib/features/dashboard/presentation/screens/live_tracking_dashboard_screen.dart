@@ -13,7 +13,6 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
   final AdminApiService _apiService = AdminApiService();
 
   bool _isLoading = true;
-  bool _isGenerating = false;
   String? _errorMessage;
 
   Map<String, dynamic> _statsData = {};
@@ -59,26 +58,6 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
     }
   }
 
-  Future<void> _generateDailyTrips() async {
-    setState(() => _isGenerating = true);
-    final res = await _apiService.generateDailyTrips();
-    if (!mounted) return;
-    setState(() => _isGenerating = false);
-
-    final success = res['success'] == true || res['status'] == true;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          res['message'] ?? (success ? 'تم توليد رحلات اليوم بنجاح.' : 'تعذر توليد رحلات اليوم.'),
-        ),
-        backgroundColor: success ? DerbiColors.successEmerald : DerbiColors.dangerRose,
-      ),
-    );
-    if (success) {
-      _fetchDashboardData();
-    }
-  }
-
   static const Map<String, _StatMeta> _statMeta = {
     'total_users': _StatMeta('إجمالي المستخدمين', Icons.group_rounded, 'up'),
     'total_drivers': _StatMeta('إجمالي السائقين', Icons.badge_rounded, 'up'),
@@ -120,37 +99,15 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: DerbiColors.borderSlate),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: _isGenerating ? null : _generateDailyTrips,
-                    icon: _isGenerating
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: DerbiColors.primaryBlue),
-                          )
-                        : const Icon(Icons.auto_awesome_rounded, size: 16, color: DerbiColors.primaryBlue),
-                    label: const Text('توليد رحلات اليوم', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DerbiColors.primaryBlue,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: _isLoading ? null : _fetchDashboardData,
-                    icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-                    label: const Text('تحديث البيانات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DerbiColors.primaryBlue,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: _isLoading ? null : _fetchDashboardData,
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                label: const Text('تحديث البيانات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

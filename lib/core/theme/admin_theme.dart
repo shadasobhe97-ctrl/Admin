@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'admin_colors.dart';
+
 class AdminTheme {
+  static const String fontFamily = 'Tajawal';
+
   static const double radiusSmall = 12;
   static const double radiusMedium = 16;
   static const double radiusLarge = 24;
@@ -119,170 +123,169 @@ class AdminTheme {
     );
   }
 
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      fontFamily: 'Tajawal',
-      brightness: Brightness.light,
-      primaryColor: const Color(0xFF2563EB),
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      canvasColor: Colors.white,
-      cardColor: Colors.white,
-      dividerColor: const Color(0xFFE2E8F0),
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFF2563EB),
-        onPrimary: Colors.white,
-        secondary: Color(0xFF10B981),
-        onSecondary: Colors.white,
-        surface: Colors.white,
-        onSurface: Color(0xFF0F172A),
-        error: Color(0xFFF43F5E),
-        onError: Colors.white,
-      ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: Colors.white,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: const TextStyle(
-          fontFamily: 'Tajawal',
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF0F172A),
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFF1F5F9),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        labelStyle: const TextStyle(color: Color(0xFF64748B), fontFamily: 'Tajawal'),
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontFamily: 'Tajawal'),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFF43F5E), width: 1.5),
-        ),
-      ),
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
-        headlineMedium: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF0F172A)),
-        bodyMedium: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF475569)),
-        bodySmall: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF64748B)),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2563EB),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          textStyle: const TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
+  static ThemeData get lightTheme => _build(Brightness.light);
 
-  static ThemeData get darkTheme {
+  static ThemeData get darkTheme => _build(Brightness.dark);
+
+  /// يبني الثيم من رموز [AdminColors] فقط — مصدر واحد للألوان في التطبيق كله.
+  static ThemeData _build(Brightness brightness) {
+    final bool isDark = brightness == Brightness.dark;
+
+    T pick<T>(T light, T dark) => isDark ? dark : light;
+
+    final Color background = pick(AdminColors.bgLight, AdminColors.bgDark);
+    final Color card = pick(AdminColors.cardLight, AdminColors.cardDark);
+    final Color surfaceVariant =
+        pick(AdminColors.surfaceVariantLight, AdminColors.surfaceVariantDark);
+    final Color borderSoft =
+        pick(AdminColors.borderSoftLight, AdminColors.borderSoftDark);
+    final Color borderStrong =
+        pick(AdminColors.borderStrongLight, AdminColors.borderStrongDark);
+    final Color textPrimary =
+        pick(AdminColors.textPrimaryLight, AdminColors.textPrimaryDark);
+    final Color textSecondary =
+        pick(AdminColors.textSecondaryLight, AdminColors.textSecondaryDark);
+    final Color textTertiary =
+        pick(AdminColors.textTertiaryLight, AdminColors.textTertiaryDark);
+    final Color textMuted =
+        pick(AdminColors.textMutedLight, AdminColors.textMutedDark);
+
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Tajawal',
-      brightness: Brightness.dark,
-      primaryColor: const Color(0xFF2563EB),
-      scaffoldBackgroundColor: const Color(0xFF0F172A),
-      canvasColor: const Color(0xFF1E293B),
-      cardColor: const Color(0xFF1E293B),
-      dividerColor: const Color(0xFF334155),
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF2563EB),
-        onPrimary: Colors.white,
-        secondary: Color(0xFF10B981),
-        onSecondary: Colors.white,
-        surface: Color(0xFF1E293B),
-        onSurface: Colors.white,
-        error: Color(0xFFF43F5E),
-        onError: Colors.white,
+      fontFamily: fontFamily,
+      brightness: brightness,
+      primaryColor: AdminColors.brandPrimary,
+      scaffoldBackgroundColor: background,
+      canvasColor: card,
+      cardColor: card,
+      dividerColor: borderSoft,
+      colorScheme: ColorScheme(
+        brightness: brightness,
+        primary: AdminColors.brandPrimary,
+        onPrimary: AdminColors.onBrand,
+        secondary: AdminColors.statusSuccess,
+        onSecondary: AdminColors.onBrand,
+        surface: card,
+        onSurface: textPrimary,
+        surfaceContainerHighest: surfaceVariant,
+        outline: borderStrong,
+        outlineVariant: borderSoft,
+        error: AdminColors.statusDanger,
+        onError: AdminColors.onBrand,
+      ),
+      dividerTheme: DividerThemeData(color: borderSoft, space: 1, thickness: 1),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: pick(
+          AdminColors.textPrimaryLight,
+          AdminColors.cardDark,
+        ),
+        contentTextStyle: const TextStyle(
+          fontFamily: fontFamily,
+          color: AdminColors.onBrand,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: card,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: const TextStyle(
-          fontFamily: 'Tajawal',
+        titleTextStyle: TextStyle(
+          fontFamily: fontFamily,
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: textPrimary,
+        ),
+        contentTextStyle: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 14,
+          color: textSecondary,
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
+      ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1E293B),
-        elevation: 0,
+        color: card,
+        elevation: isDark ? 0 : 2,
+        shadowColor: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF334155), width: 1),
+          side: BorderSide(color: borderSoft, width: 1),
         ),
+      ),
+      iconTheme: IconThemeData(color: textTertiary),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AdminColors.brandPrimary,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF0F172A),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontFamily: 'Tajawal'),
-        hintStyle: const TextStyle(color: Color(0xFF64748B), fontFamily: 'Tajawal'),
+        fillColor: surfaceVariant,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        labelStyle: TextStyle(color: textTertiary, fontFamily: fontFamily),
+        hintStyle: TextStyle(color: textMuted, fontFamily: fontFamily),
+        prefixIconColor: AdminColors.brandPrimary,
+        suffixIconColor: textMuted,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF334155), width: 1),
+          borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF334155), width: 1),
+          borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+          borderSide:
+              const BorderSide(color: AdminColors.brandPrimary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFF43F5E), width: 1.5),
+          borderSide:
+              const BorderSide(color: AdminColors.statusDanger, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: AdminColors.statusDanger, width: 2),
         ),
       ),
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontWeight: FontWeight.bold),
-        headlineMedium: TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(fontFamily: 'Tajawal', color: Colors.white),
-        bodyMedium: TextStyle(fontFamily: 'Tajawal', color: Color(0xFFCBD5E1)),
-        bodySmall: TextStyle(fontFamily: 'Tajawal', color: Color(0xFF94A3B8)),
+      textTheme: TextTheme(
+        headlineLarge: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
+        headlineMedium: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(fontFamily: fontFamily, color: textPrimary),
+        bodyMedium: TextStyle(fontFamily: fontFamily, color: textSecondary),
+        bodySmall: TextStyle(fontFamily: fontFamily, color: textTertiary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2563EB),
-          foregroundColor: Colors.white,
+          backgroundColor: AdminColors.brandPrimary,
+          foregroundColor: AdminColors.onBrand,
+          disabledBackgroundColor: borderStrong,
+          disabledForegroundColor: textMuted,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          textStyle: const TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontWeight: FontWeight.bold),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AdminColors.brandPrimary,
+          side: BorderSide(color: borderStrong),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontWeight: FontWeight.bold),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AdminColors.brandPrimary,
+          textStyle: const TextStyle(fontFamily: fontFamily),
         ),
       ),
     );

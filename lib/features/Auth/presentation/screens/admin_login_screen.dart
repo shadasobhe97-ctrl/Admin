@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/cubit/theme_cubit.dart';
-import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../../core/theme/derbi_colors.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
@@ -92,26 +90,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               ),
 
               // Theme Toggle Button at top corner
-              Positioned(
-                top: 20,
-                left: 20,
-                child: BlocBuilder<ThemeCubit, ThemeState>(
-                  builder: (context, themeState) {
-                    final activeDark = themeState.isDarkMode;
-                    return Tooltip(
-                      message: activeDark ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي',
-                      child: IconButton.filledTonal(
-                        onPressed: () => context.read<ThemeCubit>().toggleTheme(),
-                        icon: Icon(
-                          activeDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-                          color: activeDark ? Colors.amber : const Color(0xFF2563EB),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
               Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
@@ -133,15 +111,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             children: [
                               // Brand Logo Header
                               Container(
-                                padding: const EdgeInsets.all(18),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Icon(
-                                  Icons.admin_panel_settings_rounded,
-                                  size: 54,
-                                  color: Color(0xFF2563EB),
+                                child: Image.asset(
+                                  isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
+                                  height: 70,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.admin_panel_settings_rounded,
+                                    size: 54,
+                                    color: Color(0xFF2563EB),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 20),

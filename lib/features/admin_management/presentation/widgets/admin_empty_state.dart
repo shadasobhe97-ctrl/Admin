@@ -9,7 +9,8 @@ class AdminEmptyState extends StatelessWidget {
     super.key,
     required this.onAddAdmin,
     this.title = 'لا يوجد مشرفون حالياً في النظام',
-    this.description = 'يمكنك إضافة مشرف جديد وتعيين صلاحيات الوصول والبريد الإلكتروني للبدء.',
+    this.description =
+        'يمكنك إضافة مشرف جديد وتعيين صلاحيات الوصول والبريد الإلكتروني للبدء.',
   });
 
   @override
@@ -57,23 +58,6 @@ class AdminEmptyState extends StatelessWidget {
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: onAddAdmin,
-            icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-            label: const Text(
-              'إضافة مشرف جديد',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
           ),
         ],
       ),

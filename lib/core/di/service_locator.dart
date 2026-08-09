@@ -17,6 +17,10 @@ import '../../features/drivers_management/data/datasources/drivers_management_re
 import '../../features/drivers_management/data/repositories/drivers_management_repository.dart';
 import '../../features/drivers_management/logic/drivers_management_cubit.dart';
 
+import '../../features/profile/data/datasources/admin_profile_remote_data_source.dart';
+import '../../features/profile/data/repositories/admin_profile_repository.dart';
+import '../../features/profile/logic/cubit/profile_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
@@ -85,5 +89,18 @@ Future<void> setupServiceLocator() async {
 
   sl.registerFactory<DriversManagementCubit>(
     () => DriversManagementCubit(sl<DriversManagementRepository>()),
+  );
+
+  // ── Profile Feature ───────────────────────────────────────────────────────
+  sl.registerLazySingleton<AdminProfileRemoteDataSource>(
+    () => AdminProfileRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+
+  sl.registerLazySingleton<AdminProfileRepository>(
+    () => AdminProfileRepository(sl<AdminProfileRemoteDataSource>()),
+  );
+
+  sl.registerFactory<ProfileCubit>(
+    () => ProfileCubit(sl<AdminProfileRepository>()),
   );
 }

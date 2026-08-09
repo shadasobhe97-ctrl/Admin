@@ -84,4 +84,117 @@ class AdminColors {
   // Primary Gradient Pair
   static const Color primaryGradientEnd = Color(0xFF0E78C4);
   static const Color primarySoft = Color(0xFFD1F0FA);
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Derbi Design Tokens — المصدر الوحيد لألوان الواجهة
+  // كل رمز له نسخة Light ونسخة Dark، ويُقرأ عبر AdminThemeContext فقط.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Brand
+  static const Color brandPrimary = Color(0xFF2563EB);
+  static const Color brandPrimaryDeep = Color(0xFF1D4ED8);
+  static const Color onBrand = Color(0xFFFFFFFF);
+  static const Color onBrandMuted = Color(0xB3FFFFFF);
+
+  // Surfaces
+  static const Color bgLight = Color(0xFFF8FAFC);
+  static const Color bgDark = Color(0xFF0F172A);
+  static const Color cardLight = Color(0xFFFFFFFF);
+  static const Color cardDark = Color(0xFF1E293B);
+  static const Color surfaceVariantLight = Color(0xFFF1F5F9);
+  static const Color surfaceVariantDark = Color(0xFF0F172A);
+
+  // Borders & Dividers
+  static const Color borderSoftLight = Color(0xFFE2E8F0);
+  static const Color borderSoftDark = Color(0xFF334155);
+  static const Color borderStrongLight = Color(0xFFCBD5E1);
+  static const Color borderStrongDark = Color(0xFF475569);
+
+  // Text
+  static const Color textPrimaryLight = Color(0xFF0F172A);
+  static const Color textPrimaryDark = Color(0xFFFFFFFF);
+  static const Color textSecondaryLight = Color(0xFF475569);
+  static const Color textSecondaryDark = Color(0xFFCBD5E1);
+  static const Color textTertiaryLight = Color(0xFF64748B);
+  static const Color textTertiaryDark = Color(0xFF94A3B8);
+  static const Color textMutedLight = Color(0xFF94A3B8);
+  static const Color textMutedDark = Color(0xFF64748B);
+
+  // Success
+  static const Color successFgLight = Color(0xFF059669);
+  static const Color successFgDark = Color(0xFF34D399);
+  static const Color successBgLight = Color(0xFFECFDF5);
+  static const Color successBgDark = Color(0xFF0C2C22);
+  static const Color successBorderLight = Color(0xFFA7F3D0);
+  static const Color successBorderDark = Color(0xFF14532D);
+
+  // Warning / Pending
+  static const Color warningFgLight = Color(0xFF92400E);
+  static const Color warningFgDark = Color(0xFFFBBF24);
+  static const Color warningBgLight = Color(0xFFFFFBEB);
+  static const Color warningBgDark = Color(0xFF2E2410);
+  static const Color warningBorderLight = Color(0xFFFDE68A);
+  static const Color warningBorderDark = Color(0xFF553A0E);
+
+  // Danger / Error
+  static const Color dangerFgLight = Color(0xFFB91C1C);
+  static const Color dangerFgDark = Color(0xFFFB7185);
+  static const Color dangerBgLight = Color(0xFFFEF2F2);
+  static const Color dangerBgDark = Color(0xFF2C1418);
+  static const Color dangerBorderLight = Color(0xFFFECACA);
+  static const Color dangerBorderDark = Color(0xFF7F1D2B);
+
+  // Info
+  static const Color infoFgLight = Color(0xFF1E40AF);
+  static const Color infoFgDark = Color(0xFF93C5FD);
+  static const Color infoBgLight = Color(0xFFEFF6FF);
+  static const Color infoBgDark = Color(0xFF14213D);
+  static const Color infoBorderLight = Color(0xFFBFDBFE);
+  static const Color infoBorderDark = Color(0xFF1E3A8A);
+
+  // Semantic (theme-independent brand accents used for charts / stat accents)
+  static const Color statusSuccess = Color(0xFF10B981);
+  static const Color statusWarning = Color(0xFFF59E0B);
+  static const Color statusDanger = Color(0xFFF43F5E);
+  static const Color statusInfo = Color(0xFF3B82F6);
+  static const Color accentIndigo = Color(0xFF6366F1);
+  static const Color accentPink = Color(0xFFEC4899);
+  static const Color accentCyan = Color(0xFF06B6D4);
+
+  // Map surface tokens — تُرسم فوق بلاطات OpenStreetMap (فاتحة دائماً)،
+  // لذلك تتبع سطوع الخريطة لا سطوع التطبيق. راجع dashboard_overview_screen.
+  static const Color mapMarkerLabelBg = Color(0xFF0F172A);
+  static const Color onMapMarkerLabel = Color(0xFFFFFFFF);
+  static const Color onMapMarkerLabelMuted = Color(0xB3FFFFFF);
+  static const Color mapScrim = Color(0xFF0F172A);
+  static const Color mapMarkerShadow = Color(0x4D000000);
+
+  // Derbi & App Compatibility Tokens
+  static const Color background = Color(0xFF0F172A);
+  static const Color surfaceCard = Color(0xFF1E293B);
+  static const Color sidebarBackground = Color(0xFF0F172A);
+  static const Color borderSlate = Color(0xFF334155);
+  static const Color primaryBlue = Color(0xFF2563EB);
+  static const Color primaryBlueHover = Color(0xFF1D4ED8);
+  static const Color successEmerald = Color(0xFF10B981);
+  static const Color warningAmber = Color(0xFFF59E0B);
+  static const Color dangerRose = Color(0xFFF43F5E);
+  static const Color infoCyan = Color(0xFF06B6D4);
+  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFF94A3B8);
+  static const Color sidebarActiveItem = Color(0xFF1D61E7);
+  static const Color sidebarInactiveText = Color(0xFF8C9BAE);
+  static const Color sidebarBorder = Color(0xFF162238);
+  static const Color badgeBackground = Color(0xFF2A1525);
+  static const Color badgeText = Color(0xFFFF4D4D);
+  static const Color statusGreenBg = Color(0xFFECFDF5);
+  static const Color statusGreenText = Color(0xFF10B981);
+  static const Color statusGreenBorder = Color(0xFFA7F3D0);
+  static const Color mainBackground = Color(0xFFF4F6F9);
+  static const Color headerBackground = Colors.white;
+  static const Color cardBackground = Colors.white;
+  static const Color borderLight = Color(0xFFE2E8F0);
 }
+
+typedef DerbiColors = AdminColors;
+typedef AppColors = AdminColors;
