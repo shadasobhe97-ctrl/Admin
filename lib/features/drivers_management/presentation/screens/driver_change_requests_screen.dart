@@ -4,6 +4,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_empty_state.dart';
+import '../widgets/driver_search_field.dart';
 import '../widgets/driver_status_badge.dart';
 import 'driver_change_details_screen.dart';
 
@@ -13,14 +14,31 @@ class DriverChangeRequestsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<DriversManagementCubit>()..fetchPendingDriverChanges(),
+      create: (context) =>
+          sl<DriversManagementCubit>()..fetchPendingDriverChanges(),
       child: const _DriverChangeRequestsContent(),
     );
   }
 }
 
-class _DriverChangeRequestsContent extends StatelessWidget {
+class _DriverChangeRequestsContent extends StatefulWidget {
   const _DriverChangeRequestsContent();
+
+  @override
+  State<_DriverChangeRequestsContent> createState() =>
+      _DriverChangeRequestsContentState();
+}
+
+class _DriverChangeRequestsContentState
+    extends State<_DriverChangeRequestsContent> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _openChangeModal(BuildContext context, int changeId) {
     DriverChangeDetailsScreen.show(context, changeId);
@@ -39,17 +57,38 @@ class _DriverChangeRequestsContent extends StatelessWidget {
           listener: (context, state) {
             if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red),
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
-            if (state.successMessage != null && state.successMessage!.isNotEmpty) {
+            if (state.successMessage != null &&
+                state.successMessage!.isNotEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.successMessage!), backgroundColor: Colors.green),
+                SnackBar(
+                  content: Text(state.successMessage!),
+                  backgroundColor: Colors.green,
+                ),
               );
             }
           },
           builder: (context, state) {
             final cubit = context.read<DriversManagementCubit>();
+
+            // تصفية طلبات التعديل بناءً على نص البحث
+            final filteredChanges = state.pendingChanges.where((change) {
+              if (_searchQuery.trim().isEmpty) return true;
+              final q = _searchQuery.trim().toLowerCase();
+              final driverName = (change.driverName ?? '').toLowerCase();
+              final changeType = change.translatedType.toLowerCase();
+              final idStr = change.id.toString();
+              final driverIdStr = change.driverId.toString();
+              return driverName.contains(q) ||
+                  changeType.contains(q) ||
+                  idStr.contains(q) ||
+                  driverIdStr.contains(q);
+            }).toList();
 
             return RefreshIndicator(
               onRefresh: () async => await cubit.fetchPendingDriverChanges(),
@@ -59,7 +98,7 @@ class _DriverChangeRequestsContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header Title Bar
+                    // 1. Header Title Bar
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -71,7 +110,9 @@ class _DriverChangeRequestsContent extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -79,70 +120,146 @@ class _DriverChangeRequestsContent extends StatelessWidget {
                               'مراجعة الطلبات المقدمة من السائقين لتحديث بيانات المركبة، الكتيب والرخصة مع مقارنة التغييرات',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                           ],
                         ),
                         IconButton.filledTonal(
                           onPressed: () => cubit.fetchPendingDriverChanges(),
-                          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2563EB)),
+                          icon: const Icon(Icons.refresh_rounded,
+                              color: Color(0xFF2563EB)),
                           tooltip: 'تحديث طلبات التعديل من Backend',
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Content
+                    // 2. Search Field
+                    DriverSearchField(
+                      hintText: 'ابحث باسم السائق، رقم الطلب، أو نوع التعديل...',
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
+                      onClear: _searchQuery.isNotEmpty
+                          ? () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 3. Content List / Loading / Empty
                     if (state.isLoading)
                       const SizedBox(
                         height: 300,
                         child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                          child: CircularProgressIndicator(
+                              color: Color(0xFF2563EB)),
                         ),
                       )
                     else if (state.isPendingChangesEmpty)
                       DriverEmptyState(
                         title: 'لا توجد طلبات تعديل معلقة حالياً',
-                        description: 'لم يقدم أي سائق طلبات لتحديث بيانات المركبة أو الوثائق حالياً.',
+                        description:
+                            'لم يقدم أي سائق طلبات لتحديث بيانات المركبة أو الوثائق حالياً.',
                         onRefresh: () => cubit.fetchPendingDriverChanges(),
+                      )
+                    else if (filteredChanges.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: theme.dividerColor),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.search_off_rounded,
+                                size: 48, color: Color(0xFF94A3B8)),
+                            const SizedBox(height: 12),
+                            Text(
+                              'لا توجد طلبات تعديل تطابق نتيجة البحث',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF334155),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'جرب البحث باسم سائق آخر أو نوع تعديل مختلف.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
                       )
                     else
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: state.pendingChanges.length,
+                        itemCount: filteredChanges.length,
                         itemBuilder: (context, index) {
-                          final change = state.pendingChanges[index];
-                          return Card(
-                            color: theme.cardColor,
+                          final change = filteredChanges[index];
+                          return Container(
                             margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
+                            decoration: BoxDecoration(
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: theme.dividerColor),
+                              border: Border.all(color: theme.dividerColor),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black
+                                      .withValues(alpha: isDark ? 0.2 : 0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               leading: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                  color: const Color(0xFF2563EB)
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.sync_rounded, color: Color(0xFF2563EB)),
+                                child: const Icon(Icons.sync_rounded,
+                                    color: Color(0xFF2563EB)),
                               ),
                               title: Text(
                                 'طلب تعديل: ${change.translatedType}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                               subtitle: Text(
                                 'السائق: ${change.driverName ?? "#${change.driverId}"} | طلب رقم: #${change.id}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  color: isDark
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                               trailing: Row(
@@ -154,12 +271,21 @@ class _DriverChangeRequestsContent extends StatelessWidget {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF2563EB),
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 14, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
                                     ),
-                                    onPressed: () => _openChangeModal(context, change.id),
-                                    icon: const Icon(Icons.compare_arrows_rounded, size: 16),
-                                    label: const Text('مقارنة المقترح والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                    onPressed: () =>
+                                        _openChangeModal(context, change.id),
+                                    icon: const Icon(
+                                        Icons.compare_arrows_rounded,
+                                        size: 16),
+                                    label: const Text('مقارنة المقترح والتفعيل',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
