@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/theme/admin_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
 import '../../../../core/theme/cubit/theme_state.dart';
 import '../../../Auth/logic/admin_auth_cubit.dart';
@@ -56,48 +57,42 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DerbiColors.background,
+      backgroundColor: context.scaffoldBackgroundColor,
       body: Row(
         children: [
           // Sidebar Navigation
           Container(
             width: 260,
-            color: DerbiColors.sidebarBackground,
+            color: context.sidebarBg,
             child: Column(
               children: [
                 // Brand Header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: DerbiColors.borderSlate)),
+                  height: 65,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: context.sidebarBorder)),
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: DerbiColors.primaryBlue,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.local_taxi, color: Colors.white, size: 20),
-                      ),
-                      const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'دَربِي Derbi',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'منظومة الربط الآمن طرابلس',
-                              style: TextStyle(fontSize: 10, color: DerbiColors.primaryBlue, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        child: BlocBuilder<ThemeCubit, ThemeState>(
+                          builder: (context, themeState) {
+                            final isDark = themeState.isDarkMode;
+                            return Image.asset(
+                              isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
+                              height: 38,
+                              alignment: Alignment.centerRight,
+                              errorBuilder: (_, __, ___) => Text(
+                                'دَربِي Derbi',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       BlocBuilder<ThemeCubit, ThemeState>(
@@ -109,7 +104,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                               onPressed: () => context.read<ThemeCubit>().toggleTheme(),
                               icon: Icon(
                                 isDark ? Icons.wb_sunny_rounded : Icons.brightness_3_rounded,
-                                color: isDark ? Colors.amber : Colors.white,
+                                color: isDark ? context.warningColor : context.textTertiary,
                                 size: 20,
                               ),
                             ),
@@ -133,12 +128,13 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                         child: ListTile(
                           selected: isSelected,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          selectedTileColor: DerbiColors.primaryBlue,
-                          tileColor: Colors.transparent,
+                          selectedTileColor: context.sidebarActiveBg,
+                          tileColor: context.transparent,
+                          hoverColor: context.sidebarHover,
                           onTap: () => setState(() => _selectedTabIndex = index),
                           leading: Icon(
                             item.icon,
-                            color: isSelected ? Colors.white : DerbiColors.textSecondary,
+                            color: isSelected ? context.onSidebarActive : context.sidebarItemText,
                             size: 18,
                           ),
                           title: Text(
@@ -146,7 +142,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? Colors.white : DerbiColors.textSecondary,
+                              color: isSelected ? context.onSidebarActive : context.sidebarItemText,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -154,7 +150,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                               ? Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white24 : DerbiColors.dangerRose.withValues(alpha: 0.2),
+                                    color: isSelected
+                                        ? AdminColors.onBrandOverlay
+                                        : context.dangerBg,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -162,7 +160,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : DerbiColors.dangerRose,
+                                      color: isSelected ? context.onSidebarActive : context.dangerColor,
                                     ),
                                   ),
                                 )
@@ -176,16 +174,16 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                 // Admin Footer Info
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: DerbiColors.borderSlate)),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: context.sidebarBorder)),
                   ),
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: DerbiColors.primaryBlue,
+                        backgroundColor: context.primaryColor,
                         child: Text(
                           _adminName.isNotEmpty ? _adminName[0] : 'أ',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: context.onPrimary, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -195,19 +193,23 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                           children: [
                             Text(
                               _adminName,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               _roleName,
-                              style: const TextStyle(fontSize: 9, color: DerbiColors.textMuted),
+                              style: TextStyle(fontSize: 9, color: context.textMuted),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: DerbiColors.dangerRose, size: 18),
+                        icon: Icon(Icons.logout_rounded, color: context.dangerColor, size: 18),
                         onPressed: () => _showLogoutDialog(context),
                       )
                     ],
@@ -217,7 +219,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
             ),
           ),
 
-          const VerticalDivider(width: 1, color: DerbiColors.borderSlate),
+          VerticalDivider(width: 1, color: context.sidebarBorder),
 
           // Main Content Area
           Expanded(
@@ -227,9 +229,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                 Container(
                   height: 65,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(
-                    color: DerbiColors.sidebarBackground,
-                    border: Border(bottom: BorderSide(color: DerbiColors.borderSlate)),
+                  decoration: BoxDecoration(
+                    color: context.headerBg,
+                    border: Border(bottom: BorderSide(color: context.sidebarBorder)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,7 +239,11 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                       Expanded(
                         child: Text(
                           _navItems[_selectedTabIndex].title,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: context.textPrimary,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -247,12 +253,12 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                           Stack(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.notifications_outlined, color: DerbiColors.textSecondary, size: 20),
+                                icon: Icon(Icons.notifications_outlined, color: context.textTertiary, size: 20),
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('تنبيهات النظام متصلة بالخادم الرئيسي'),
-                                      backgroundColor: DerbiColors.primaryBlue,
+                                    SnackBar(
+                                      content: const Text('تنبيهات النظام متصلة بالخادم الرئيسي'),
+                                      backgroundColor: context.primaryColor,
                                     ),
                                   );
                                 },
@@ -263,7 +269,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                                 child: Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(color: DerbiColors.dangerRose, shape: BoxShape.circle),
+                                  decoration: BoxDecoration(color: context.dangerColor, shape: BoxShape.circle),
                                 ),
                               )
                             ],
@@ -272,18 +278,22 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: DerbiColors.successEmerald.withValues(alpha: 0.1),
+                              color: context.successBg,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: DerbiColors.successEmerald.withValues(alpha: 0.3)),
+                              border: Border.all(color: context.successBorder),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                CircleAvatar(radius: 3, backgroundColor: DerbiColors.successEmerald),
-                                SizedBox(width: 6),
+                              children: [
+                                CircleAvatar(radius: 3, backgroundColor: context.successColor),
+                                const SizedBox(width: 6),
                                 Text(
                                   'السيرفر متصل (Sanctum Auth)',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: DerbiColors.successEmerald),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.successColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -349,26 +359,35 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: DerbiColors.surfaceCard,
-          title: const Text('تأكيد تسجيل الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: const Text(
+          backgroundColor: ctx.cardColor,
+          title: Text(
+            'تأكيد تسجيل الخروج',
+            style: TextStyle(color: ctx.textPrimary, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
             'هل أنت تأكد من رغبتك في تسجيل الخروج من لوحة تحكم منظومة "دَربِي"؟',
-            style: TextStyle(color: DerbiColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: ctx.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء', style: TextStyle(color: DerbiColors.textMuted)),
+              child: Text('إلغاء', style: TextStyle(color: ctx.textMuted)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: DerbiColors.dangerRose),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ctx.dangerColor,
+                foregroundColor: ctx.onPrimary,
+              ),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
                 final nav = Navigator.of(context);
                 if (ctx.mounted) Navigator.pop(ctx);
                 await context.read<AdminAuthCubit>().logout();
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('تم تسجيل الخروج بنجاح'), backgroundColor: DerbiColors.dangerRose),
+                  SnackBar(
+                    content: const Text('تم تسجيل الخروج بنجاح'),
+                    backgroundColor: AdminColors.dangerFgLight,
+                  ),
                 );
                 nav.pushReplacementNamed('/login');
               },
