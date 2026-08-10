@@ -66,7 +66,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
             color: context.sidebarBg,
             child: Column(
               children: [
-                // Brand Header
+                // Admin Profile Header
                 Container(
                   height: 65,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -75,30 +75,42 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                   ),
                   child: Row(
                     children: [
-                      BlocBuilder<ThemeCubit, ThemeState>(
-                        builder: (context, themeState) {
-                          final isDark = themeState.isDarkMode;
-                          return Image.asset(
-                            isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
-                            height: 34,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.dashboard_rounded,
-                              color: context.primaryColor,
-                              size: 24,
-                            ),
-                          );
-                        },
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: context.primaryColor.withValues(alpha: 0.1),
+                        child: Text(
+                          _adminName.isNotEmpty ? _adminName[0] : 'أ',
+                          style: TextStyle(
+                            color: context.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          'لوحة التحكم',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            color: context.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _adminName,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              _roleName,
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: context.textMuted,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                       BlocBuilder<ThemeCubit, ThemeState>(
@@ -177,48 +189,30 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                   ),
                 ),
 
-                // Admin Footer Info
+                // Admin Footer (Logout only)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
                     border: Border(top: BorderSide(color: context.sidebarBorder)),
                   ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: context.primaryColor,
-                        child: Text(
-                          _adminName.isNotEmpty ? _adminName[0] : 'أ',
-                          style: TextStyle(color: context.onPrimary, fontWeight: FontWeight.bold),
-                        ),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    tileColor: context.transparent,
+                    hoverColor: context.dangerBg.withValues(alpha: 0.1),
+                    onTap: () => _showLogoutDialog(context),
+                    leading: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                      size: 18,
+                    ),
+                    title: const Text(
+                      'تسجيل الخروج',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _adminName,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: context.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _roleName,
-                              style: TextStyle(fontSize: 9, color: context.textMuted),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.logout_rounded, color: context.dangerColor, size: 18),
-                        onPressed: () => _showLogoutDialog(context),
-                      )
-                    ],
+                    ),
                   ),
                 )
               ],
