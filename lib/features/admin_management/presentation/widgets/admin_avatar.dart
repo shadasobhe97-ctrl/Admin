@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/network/api_endpoints.dart';
 
 class AdminAvatar extends StatelessWidget {
   final String? avatarUrl;
@@ -21,16 +22,37 @@ class AdminAvatar extends StatelessWidget {
     return fullName.trim()[0];
   }
 
+  String? _getCleanUrl() {
+    if (avatarUrl == null || avatarUrl!.trim().isEmpty) return null;
+    
+    String url = avatarUrl!.trim();
+    
+    // If it's a relative path, prefix it with baseUrl host (without /api)
+    if (!url.startsWith('http')) {
+      final base = ApiEndpoints.baseUrl.replaceAll('/api', '');
+      final path = url.startsWith('/') ? url : '/$url';
+      return '$base$path';
+    }
+    
+    // If it has http://localhost/ but the app is communicating with localhost:8000
+    if (url.startsWith('http://localhost/') && ApiEndpoints.baseUrl.contains(':8000')) {
+      url = url.replaceAll('http://localhost/', 'http://127.0.0.1:8000/');
+    }
+    
+    return url;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final cleanUrl = _getCleanUrl();
 
-    if (avatarUrl != null && avatarUrl!.trim().isNotEmpty && avatarUrl!.startsWith('http')) {
+    if (cleanUrl != null) {
       return CircleAvatar(
         radius: radius,
         backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-        backgroundImage: NetworkImage(avatarUrl!),
+        backgroundImage: NetworkImage(cleanUrl),
         onBackgroundImageError: (_, __) {},
         child: Text(
           _initials,
