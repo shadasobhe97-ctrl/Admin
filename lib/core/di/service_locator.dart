@@ -21,6 +21,13 @@ import '../../features/profile/data/datasources/admin_profile_remote_data_source
 import '../../features/profile/data/repositories/admin_profile_repository.dart';
 import '../../features/profile/logic/cubit/profile_cubit.dart';
 
+import '../../features/schools/data/datasources/schools_remote_datasource.dart';
+import '../../features/schools/data/repositories/schools_repository_impl.dart';
+import '../../features/schools/logic/cubit/schools_cubit.dart';
+import '../../features/zones/data/datasources/zones_remote_datasource.dart';
+import '../../features/zones/data/repositories/zones_repository_impl.dart';
+import '../../features/zones/logic/cubit/zones_cubit.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
@@ -102,5 +109,27 @@ Future<void> setupServiceLocator() async {
 
   sl.registerFactory<ProfileCubit>(
     () => ProfileCubit(sl<AdminProfileRepository>()),
+  );
+
+  // Register Schools RemoteDataSource, Repository, and Cubit
+  sl.registerLazySingleton<SchoolsRemoteDataSource>(
+    () => SchoolsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<SchoolsRepository>(
+    () => SchoolsRepositoryImpl(sl<SchoolsRemoteDataSource>()),
+  );
+  sl.registerFactory<SchoolsCubit>(
+    () => SchoolsCubit(sl<SchoolsRepository>()),
+  );
+
+  // Register Zones RemoteDataSource, Repository, and Cubit
+  sl.registerLazySingleton<ZonesRemoteDataSource>(
+    () => ZonesRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<ZonesRepository>(
+    () => ZonesRepositoryImpl(sl<ZonesRemoteDataSource>()),
+  );
+  sl.registerFactory<ZonesCubit>(
+    () => ZonesCubit(sl<ZonesRepository>()),
   );
 }
