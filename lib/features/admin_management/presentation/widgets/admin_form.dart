@@ -32,7 +32,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
 
-  late int _roleId;
   late bool _isActive;
   bool _isPasswordVisible = false;
 
@@ -44,12 +43,14 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialAdmin?.fullName ?? '');
-    _emailController = TextEditingController(text: widget.initialAdmin?.email ?? '');
-    _phoneController = TextEditingController(text: widget.initialAdmin?.phoneNumber ?? '');
+    _nameController =
+        TextEditingController(text: widget.initialAdmin?.fullName ?? '');
+    _emailController =
+        TextEditingController(text: widget.initialAdmin?.email ?? '');
+    _phoneController =
+        TextEditingController(text: widget.initialAdmin?.phoneNumber ?? '');
     _passwordController = TextEditingController();
 
-    _roleId = widget.initialAdmin?.roleId ?? 2;
     _isActive = widget.initialAdmin?.isActive ?? true;
   }
 
@@ -97,8 +98,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        password: _passwordController.text.trim().isNotEmpty ? _passwordController.text.trim() : null,
-        roleId: _roleId,
+        password: _passwordController.text.trim().isNotEmpty
+            ? _passwordController.text.trim()
+            : null,
         isActive: _isActive,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -109,10 +111,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        password: _passwordController.text.trim(),
-        roleId: _roleId,
-        isActive: _isActive,
-        createdBy: widget.currentUserId > 0 ? widget.currentUserId : 1,
+        password: _passwordController.text.trim().isNotEmpty
+            ? _passwordController.text.trim()
+            : null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
       );
@@ -137,14 +138,21 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
               children: [
                 CircleAvatar(
                   radius: 44,
-                  backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  backgroundColor:
+                      const Color(0xFF2563EB).withValues(alpha: 0.1),
                   backgroundImage: _avatarBytes != null
                       ? MemoryImage(_avatarBytes!)
-                      : (widget.initialAdmin?.avatarUrl != null && widget.initialAdmin!.avatarUrl!.startsWith('http')
-                          ? NetworkImage(widget.initialAdmin!.avatarUrl!) as ImageProvider
+                      : (widget.initialAdmin?.avatarUrl != null &&
+                              widget.initialAdmin!.avatarUrl!.startsWith('http')
+                          ? NetworkImage(widget.initialAdmin!.avatarUrl!)
+                              as ImageProvider
                           : null),
-                  child: (_avatarBytes == null && (widget.initialAdmin?.avatarUrl == null || !widget.initialAdmin!.avatarUrl!.startsWith('http')))
-                      ? const Icon(Icons.person, size: 48, color: Color(0xFF2563EB))
+                  child: (_avatarBytes == null &&
+                          (widget.initialAdmin?.avatarUrl == null ||
+                              !widget.initialAdmin!.avatarUrl!
+                                  .startsWith('http')))
+                      ? const Icon(Icons.person,
+                          size: 48, color: Color(0xFF2563EB))
                       : null,
                 ),
                 Positioned(
@@ -154,7 +162,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     message: 'رفع/تعديل الصورة الشخصية',
                     child: IconButton.filledTonal(
                       onPressed: _pickAvatar,
-                      icon: const Icon(Icons.camera_alt_rounded, size: 18, color: Color(0xFF2563EB)),
+                      icon: const Icon(Icons.camera_alt_rounded,
+                          size: 18, color: Color(0xFF2563EB)),
                     ),
                   ),
                 ),
@@ -166,14 +175,23 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Full Name
           TextFormField(
             controller: _nameController,
-            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+            style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                fontSize: 14),
             decoration: const InputDecoration(
-              labelText: 'الاسم الكامل',
-              hintText: 'مثال: طه القمودي',
-              prefixIcon: Icon(Icons.person_outline_rounded, color: Color(0xFF2563EB)),
+              labelText: 'الاسم الثلاثي الكامل',
+              hintText: 'مثال: سارة توفيق العجيلي',
+              prefixIcon:
+                  Icon(Icons.person_outline_rounded, color: Color(0xFF2563EB)),
             ),
             validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'الرجاء إدخال الاسم الكامل';
+              if (val == null || val.trim().isEmpty) {
+                return 'حقل الاسم الكامل مطلوب، لا يمكنك تركه فارغاً.';
+              }
+              final words = val.trim().split(RegExp(r'\s+'));
+              if (words.length < 3) {
+                return 'الرجاء إدخال الاسم الثلاثي للمشرف بالكامل لتوثيق الحساب.';
+              }
               return null;
             },
           ),
@@ -182,16 +200,23 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Email
           TextFormField(
             controller: _emailController,
-            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+            style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                fontSize: 14),
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
               labelText: 'البريد الإلكتروني',
-              hintText: 'taha@darby.ly',
-              prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
+              hintText: 'sara.supervisor@derbi.ly',
+              prefixIcon:
+                  Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
             ),
             validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'الرجاء إدخال البريد الإلكتروني';
-              if (!val.contains('@')) return 'بريد إلكتروني غير صحيح';
+              if (val == null || val.trim().isEmpty) {
+                return 'البريد الإلكتروني حقل إجباري لتسجيل حساب المشرف.';
+              }
+              if (!val.contains('@') || !val.contains('.')) {
+                return 'صيغة البريد الإلكتروني غير صحيحة.';
+              }
               return null;
             },
           ),
@@ -200,16 +225,30 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Phone Number
           TextFormField(
             controller: _phoneController,
-            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+            style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                fontSize: 14),
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
-              labelText: 'رقم الهاتف',
-              hintText: '0912223344',
-              prefixIcon: Icon(Icons.phone_android_rounded, color: Color(0xFF2563EB)),
+              labelText: 'رقم الهاتف (10 أرقام تبدأ بـ 09)',
+              hintText: '0928669900',
+              prefixIcon:
+                  Icon(Icons.phone_android_rounded, color: Color(0xFF2563EB)),
             ),
             validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'الرجاء إدخال رقم الهاتف';
-              if (val.trim().length < 8) return 'رقم هاتف غير صحيح';
+              final trimmed = val?.trim() ?? '';
+              if (trimmed.isEmpty) {
+                return 'رقم الهاتف مطلوب لاستكمال عملية التسجيل.';
+              }
+              if (!RegExp(r'^\d+$').hasMatch(trimmed)) {
+                return 'رقم الهاتف يجب أن يحتوي على أرقام فقط.';
+              }
+              if (trimmed.length != 10) {
+                return 'رقم الهاتف يجب أن يتكون من 10 أرقام بالضبط.';
+              }
+              if (!trimmed.startsWith('09')) {
+                return 'رقم الهاتف غير صحيح، يجب أن يبدأ بـ 09.';
+              }
               return null;
             },
           ),
@@ -219,93 +258,92 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           TextFormField(
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
-            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+            style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                fontSize: 14),
             decoration: InputDecoration(
-              labelText: _isEditMode ? 'كلمة المرور الجديدة (اختياري عند التعديل)' : 'كلمة المرور',
+              labelText: _isEditMode
+                  ? 'كلمة المرور الجديدة (اختياري عند التعديل)'
+                  : 'كلمة المرور (اختياري - يولدها النظام تلقائياً إن تركت فارغة)',
               hintText: '••••••••',
-              prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB)),
+              prefixIcon:
+                  const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB)),
               suffixIcon: IconButton(
-                icon: Icon(_isPasswordVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded),
-                onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                icon: Icon(_isPasswordVisible
+                    ? Icons.visibility_rounded
+                    : Icons.visibility_off_rounded),
+                onPressed: () =>
+                    setState(() => _isPasswordVisible = !_isPasswordVisible),
               ),
             ),
             validator: (val) {
-              if (!_isEditMode && (val == null || val.trim().isEmpty)) {
-                return 'الرجاء إدخال كلمة المرور';
-              }
-              if (val != null && val.trim().isNotEmpty && val.trim().length < 8) {
-                return 'كلمة المرور يجب أن تتكون من 8 أحرف على الأقل';
+              if (val != null &&
+                  val.trim().isNotEmpty &&
+                  val.trim().length < 6) {
+                return 'كلمة المرور يجب ألا تقل عن 6 خانات.';
               }
               return null;
             },
           ),
-          const SizedBox(height: 16),
-
-          // Role Dropdown
-          DropdownButtonFormField<int>(
-            initialValue: _roleId,
-            dropdownColor: theme.cardColor,
-            style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
-            decoration: const InputDecoration(
-              labelText: 'الدور والصلاحية',
-              prefixIcon: Icon(Icons.admin_panel_settings_outlined, color: Color(0xFF2563EB)),
-            ),
-            items: const [
-              DropdownMenuItem(value: 1, child: Text('أدمن نظام (Admin)')),
-              DropdownMenuItem(value: 2, child: Text('مشرف عام (Supervisor)')),
-            ],
-            onChanged: (val) {
-              if (val != null) setState(() => _roleId = val);
-            },
-          ),
           const SizedBox(height: 20),
 
-          // Is Active Switch
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: theme.dividerColor),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      _isActive ? Icons.check_circle_rounded : Icons.pause_circle_rounded,
-                      color: _isActive ? const Color(0xFF10B981) : const Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'حالة الحساب:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+          // Is Active Switch (عند التعديل)
+          if (_isEditMode) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.dividerColor),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        _isActive
+                            ? Icons.check_circle_rounded
+                            : Icons.pause_circle_rounded,
+                        color: _isActive
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF64748B),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _isActive ? 'نشط (مفعل)' : 'غير نشط (معطل)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: _isActive ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                      const SizedBox(width: 10),
+                      Text(
+                        'حالة تفعيل الحساب:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Switch(
-                  value: _isActive,
-                  onChanged: (val) => setState(() => _isActive = val),
-                  activeThumbColor: const Color(0xFF10B981),
-                ),
-              ],
+                      const SizedBox(width: 8),
+                      Text(
+                        _isActive ? 'نشط (مفعل)' : 'غير نشط (معطل)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: _isActive
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Switch(
+                    value: _isActive,
+                    onChanged: (val) => setState(() => _isActive = val),
+                    activeThumbColor: const Color(0xFF10B981),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 28),
+            const SizedBox(height: 20),
+          ],
 
           // Submit Button
           SizedBox(
@@ -324,12 +362,20 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
                     )
-                  : Icon(_isEditMode ? Icons.save_rounded : Icons.person_add_rounded, size: 20),
+                  : Icon(
+                      _isEditMode
+                          ? Icons.save_rounded
+                          : Icons.person_add_rounded,
+                      size: 20),
               label: Text(
-                _isEditMode ? 'حفظ التعديلات في Backend' : 'إضافة المشرف في Backend',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                _isEditMode
+                    ? 'حفظ التعديلات في Backend'
+                    : 'إضافة المشرف في Backend',
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
           ),

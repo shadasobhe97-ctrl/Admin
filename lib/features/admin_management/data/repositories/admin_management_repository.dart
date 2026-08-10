@@ -9,9 +9,9 @@ class AdminManagementRepository {
 
   AdminManagementRepository(this._remoteDataSource);
 
-  Future<List<AdminModel>> getAdmins({String? search}) async {
+  Future<List<AdminModel>> getAdmins({String? search, int page = 1, int perPage = 10}) async {
     try {
-      return await _remoteDataSource.getAdmins(search: search);
+      return await _remoteDataSource.getAdmins(search: search, page: page, perPage: perPage);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
@@ -33,9 +33,17 @@ class AdminManagementRepository {
     }
   }
 
-  Future<AdminModel> updateAdmin(int id, UpdateAdminRequestModel request) async {
+  Future<Map<String, dynamic>> updateAdmin(int id, UpdateAdminRequestModel request) async {
     try {
       return await _remoteDataSource.updateAdmin(id, request);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<String> deleteAdmin(int id) async {
+    try {
+      return await _remoteDataSource.deleteAdmin(id);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }

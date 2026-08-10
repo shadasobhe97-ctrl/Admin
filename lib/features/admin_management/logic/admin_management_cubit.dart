@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../data/models/admin_model.dart';
 import '../data/models/create_admin_request_model.dart';
 import '../data/models/update_admin_request_model.dart';
 import '../data/repositories/admin_management_repository.dart';
@@ -17,8 +18,8 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     return super.close();
   }
 
-  /// 1. GET /api/admin/admins (with optional search)
-  Future<void> fetchAdmins({String? search}) async {
+  /// 1. GET /api/admin/admins (مع دعم البحث والترقيم)
+  Future<void> fetchAdmins({String? search, int page = 1}) async {
     emit(state.copyWith(
       isLoading: true,
       clearError: true,
@@ -27,7 +28,7 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     ));
 
     try {
-      final adminsList = await _repository.getAdmins(search: search);
+      final adminsList = await _repository.getAdmins(search: search, page: page);
       emit(state.copyWith(
         isLoading: false,
         admins: adminsList,
@@ -107,10 +108,15 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     ));
 
     try {
-      final updatedAdmin = await _repository.updateAdmin(id, request);
+      final result = await _repository.updateAdmin(id, request);
+      final updatedAdmin = result['admin'] as AdminModel;
+      final serverMsg = result['message'] as String;
+
       emit(state.copyWith(
         isUpdating: false,
-        successMessage: 'تم تحديث بيانات المشرف (${updatedAdmin.fullName}) بنجاح!',
+        successMessage: serverMsg.isNotEmpty
+            ? serverMsg
+            : 'تم تحديث بيانات المشرف (${updatedAdmin.fullName}) بنجاح!',
       ));
       // Re-fetch clean list directly from Backend REST API
       await fetchAdmins(search: state.searchQuery);
@@ -118,6 +124,31 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     } catch (e) {
       emit(state.copyWith(
         isUpdating: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  /// 5. DELETE /api/admin/admins/{id} (Delete)
+  Future<bool> deleteAdmin(int id) async {
+    emit(state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearSuccess: true,
+    ));
+
+    try {
+      final message = await _repository.deleteAdmin(id);
+      emit(state.copyWith(
+        isLoading: false,
+        successMessage: message,
+      ));
+      await fetchAdmins(search: state.searchQuery);
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
       return false;

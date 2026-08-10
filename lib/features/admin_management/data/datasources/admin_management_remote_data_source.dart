@@ -25,41 +25,60 @@ class AdminManagementRemoteDataSource {
         } else {
           message = firstVal.toString();
         }
-      } else if (data['message'] != null && data['message'].toString().isNotEmpty) {
+      } else if (data['message'] != null &&
+          data['message'].toString().isNotEmpty) {
         message = data['message'].toString();
       }
-    } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+    } else if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
       message = 'انتهت مهلة الاتصال بالخادم، يرجى التحقق من الشبكة.';
     } else if (e.type == DioExceptionType.connectionError) {
-      message = 'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل الخادم والاتصال بالإنترنت.';
+      message =
+          'تعذر الاتصال بالخادم، يرجى التأكد من تشغيل الخادم والاتصال بالإنترنت.';
     }
 
-    debugPrint('[ADMIN MANAGEMENT API ERROR]\nMETHOD: $method\nENDPOINT: $endpoint\nSTATUS: $status\nMESSAGE: $message');
+    debugPrint(
+        '[ADMIN MANAGEMENT API ERROR]\nMETHOD: $method\nENDPOINT: $endpoint\nSTATUS: $status\nMESSAGE: $message');
     return Exception(message);
   }
 
-  /// GET /api/admin/admins
-  /// GET /api/admin/admins?search=...
-  Future<List<AdminModel>> getAdmins({String? search}) async {
+  /// GET /api/admin/admins (مع دعم الباراميترات per_page, page, search)
+  Future<List<AdminModel>> getAdmins({String? search, int page = 1, int perPage = 10}) async {
     try {
-      final queryParams = <String, dynamic>{};
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
       if (search != null && search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
       }
 
       final response = await _apiClient.get(
         ApiEndpoints.admins,
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        queryParameters: queryParams,
       );
 
       final data = response.data;
       if (data is Map<String, dynamic>) {
-        final list = data['data'];
-        if (list is List) {
-          return list.map((item) => AdminModel.fromJson(item as Map<String, dynamic>)).toList();
+        final innerData = data['data'];
+
+        // حسب توثيق الـ API: التداخل هو response.data.data (قائمة) وبداخله meta
+        if (innerData is Map<String, dynamic>) {
+          final list = innerData['data'];
+          if (list is List) {
+            return list
+                .map((item) => AdminModel.fromJson(item as Map<String, dynamic>))
+                .toList();
+          }
+        } else if (innerData is List) {
+          return innerData
+              .map((item) => AdminModel.fromJson(item as Map<String, dynamic>))
+              .toList();
         }
       } else if (data is List) {
-        return data.map((item) => AdminModel.fromJson(item as Map<String, dynamic>)).toList();
+        return data
+            .map((item) => AdminModel.fromJson(item as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } on DioException catch (e) {
@@ -75,7 +94,8 @@ class AdminManagementRemoteDataSource {
     try {
       final response = await _apiClient.get(endpoint);
       if (response.data is Map<String, dynamic>) {
-        return AdminDetailsModel.fromJson(response.data as Map<String, dynamic>);
+        return AdminDetailsModel.fromJson(
+            response.data as Map<String, dynamic>);
       }
       throw Exception('استجابة غير متوافقة من الخادم عند جلب تفاصيل المشرف');
     } on DioException catch (e) {
@@ -96,7 +116,8 @@ class AdminManagementRemoteDataSource {
 
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        final adminData = data['data'] is Map<String, dynamic> ? data['data'] : data;
+        final adminData =
+            data['data'] is Map<String, dynamic> ? data['data'] : data;
         return AdminModel.fromJson(adminData as Map<String, dynamic>);
       }
       throw Exception('استجابة الخادم غير متوافقة عند إنشاء المشرف');
@@ -108,7 +129,8 @@ class AdminManagementRemoteDataSource {
   }
 
   /// POST /api/admin/admins/{id} (multipart/form-data)
-  Future<AdminModel> updateAdmin(int id, UpdateAdminRequestModel request) async {
+  Future<Map<String, dynamic>> updateAdmin(
+      int id, UpdateAdminRequestModel request) async {
     final endpoint = ApiEndpoints.adminDetails(id);
     try {
       final formData = await request.toFormData();
@@ -119,12 +141,37 @@ class AdminManagementRemoteDataSource {
 
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        final adminData = data['data'] is Map<String, dynamic> ? data['data'] : data;
-        return AdminModel.fromJson(adminData as Map<String, dynamic>);
+        final adminData =
+            data['data'] is Map<String, dynamic> ? data['data'] : data;
+        final adminModel =
+            AdminModel.fromJson(adminData as Map<String, dynamic>);
+        final message = data['message']?.toString() ??
+            'تم تحديث بيانات المشرف بنجاح.';
+        return {
+          'admin': adminModel,
+          'message': message,
+        };
       }
       throw Exception('استجابة الخادم غير متوافقة عند تحديث بيانات المشرف');
     } on DioException catch (e) {
       throw _handleDioError(e, 'POST', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// DELETE /api/admin/admins/{id}
+  Future<String> deleteAdmin(int id) async {
+    final endpoint = ApiEndpoints.adminDetails(id);
+    try {
+      final response = await _apiClient.delete(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return response.data['message']?.toString() ??
+            'تم حذف المشرف نهائياً بنجاح.';
+      }
+      return 'تم حذف المشرف نهائياً بنجاح.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'DELETE', endpoint);
     } catch (e) {
       rethrow;
     }
@@ -136,7 +183,8 @@ class AdminManagementRemoteDataSource {
     try {
       final response = await _apiClient.get(endpoint);
       if (response.data is Map<String, dynamic>) {
-        return response.data['message']?.toString() ?? 'تم تفعيل وتحديث بريدك الإلكتروني بنجاح!';
+        return response.data['message']?.toString() ??
+            'تم تفعيل وتحديث بريدك الإلكتروني بنجاح!';
       }
       return 'تم تفعيل وتحديث بريدك الإلكتروني بنجاح!';
     } on DioException catch (e) {
@@ -152,7 +200,8 @@ class AdminManagementRemoteDataSource {
     try {
       final response = await _apiClient.get(endpoint);
       if (response.data is Map<String, dynamic>) {
-        return response.data['message']?.toString() ?? 'تم رفض تغيير البريد الإلكتروني.';
+        return response.data['message']?.toString() ??
+            'تم رفض تغيير البريد الإلكتروني.';
       }
       return 'تم رفض تغيير البريد الإلكتروني.';
     } on DioException catch (e) {

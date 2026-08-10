@@ -7,6 +7,7 @@ class AdminCard extends StatelessWidget {
   final AdminModel admin;
   final VoidCallback onTapDetails;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
   final ValueChanged<bool> onToggleStatus;
 
   const AdminCard({
@@ -14,13 +15,65 @@ class AdminCard extends StatelessWidget {
     required this.admin,
     required this.onTapDetails,
     required this.onEdit,
+    required this.onDelete,
     required this.onToggleStatus,
   });
+
+  void _showDeleteDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: theme.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'تأكيد حذف المشرف',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
+          content: Text(
+            'هل أنت محتار أو متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                onDelete();
+              },
+              icon: const Icon(Icons.delete_forever_rounded, size: 16),
+              label: const Text('حذف المشرف', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isMainAdmin = admin.roleId == 1;
 
     return Card(
       color: theme.cardColor,
@@ -123,7 +176,7 @@ class AdminCard extends StatelessWidget {
                   children: [
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         side: BorderSide(color: theme.dividerColor),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -131,18 +184,26 @@ class AdminCard extends StatelessWidget {
                       icon: const Icon(Icons.visibility_outlined, size: 14),
                       label: const Text('التفاصيل', style: TextStyle(fontSize: 12)),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2563EB),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       onPressed: onEdit,
                       icon: const Icon(Icons.edit_outlined, size: 14),
                       label: const Text('تعديل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
+                    if (!isMainAdmin) ...[
+                      const SizedBox(width: 6),
+                      IconButton(
+                        tooltip: 'حذف المشرف نهائياً',
+                        icon: const Icon(Icons.delete_forever_outlined, color: Color(0xFFE11D48), size: 20),
+                        onPressed: () => _showDeleteDialog(context),
+                      ),
+                    ],
                   ],
                 ),
               ],

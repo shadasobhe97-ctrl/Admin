@@ -194,6 +194,7 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                               admins: state.admins,
                               onTapDetails: (admin) => _openDetailsModal(context, admin),
                               onEdit: (admin) => _openEditModal(context, admin),
+                              onDelete: (admin) => cubit.deleteAdmin(admin.id),
                               onToggleStatus: (admin, newStatus) {
                                 cubit.toggleAdminStatus(admin.id, !admin.isActive);
                               },
@@ -210,6 +211,7 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                                 admin: admin,
                                 onTapDetails: () => _openDetailsModal(context, admin),
                                 onEdit: () => _openEditModal(context, admin),
+                                onDelete: () => cubit.deleteAdmin(admin.id),
                                 onToggleStatus: (newStatus) {
                                   cubit.toggleAdminStatus(admin.id, !admin.isActive);
                                 },
