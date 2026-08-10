@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/dashboard_stats_model.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/theme/admin_colors.dart';
 
 class StatsCardsWidget extends StatelessWidget {
   final DashboardStatsModel stats;
@@ -31,21 +32,21 @@ class StatsCardsWidget extends StatelessWidget {
               'إجمالي المستخدمين',
               stats.statTotalUsers.value,
               Icons.people,
-              Colors.blue,
+              AdminColors.blue,
             ),
             _buildStatCard(
               context,
               'السائقين المفعلين',
               stats.statActiveDrivers.value,
               Icons.drive_eta,
-              Colors.orange,
+              AdminColors.orange,
             ),
             _buildStatCard(
               context,
               'الاشتراكات النشطة',
               stats.statActiveSubscriptions.value,
               Icons.card_membership,
-              Colors.green,
+              AdminColors.green,
             ),
             _buildStatCard(
               context,

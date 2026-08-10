@@ -27,16 +27,11 @@ class AdminAvatar extends StatelessWidget {
     
     String url = avatarUrl!.trim();
     
-    // If it's a relative path, prefix it with baseUrl host (without /api)
+    // If it's a relative path, prefix it dynamically using ApiEndpoints.baseUrl (without /api)
     if (!url.startsWith('http')) {
       final base = ApiEndpoints.baseUrl.replaceAll('/api', '');
       final path = url.startsWith('/') ? url : '/$url';
       return '$base$path';
-    }
-    
-    // If it has http://localhost/ but the app is communicating with localhost:8000
-    if (url.startsWith('http://localhost/') && ApiEndpoints.baseUrl.contains(':8000')) {
-      url = url.replaceAll('http://localhost/', 'http://127.0.0.1:8000/');
     }
     
     return url;

@@ -74,8 +74,26 @@ extension AdminThemeContext on BuildContext {
   Color get infoBorder =>
       _pick(AdminColors.infoBorderLight, AdminColors.infoBorderDark);
 
-  // ── Elevation ─────────────────────────────────────────────────────────────
+  // ── Sidebar / Header ──────────────────────────────────────────────────────
+  Color get sidebarBg =>
+      _pick(AdminColors.sidebarBgLight, AdminColors.sidebarBgDark);
+  Color get sidebarBorder =>
+      _pick(AdminColors.sidebarBorderLight, AdminColors.sidebarBorderDark);
+  Color get sidebarItemText =>
+      _pick(AdminColors.sidebarItemTextLight, AdminColors.sidebarItemTextDark);
+  Color get sidebarActiveBg => AdminColors.sidebarActiveBg;
+  Color get onSidebarActive => AdminColors.onSidebarActive;
+  Color get sidebarHover =>
+      _pick(AdminColors.sidebarHoverLight, AdminColors.sidebarHoverDark);
+  Color get headerBg =>
+      _pick(AdminColors.headerBgLight, AdminColors.headerBgDark);
+  Color get brandTagline =>
+      _pick(AdminColors.brandTaglineLight, AdminColors.brandTaglineDark);
+
+  // ── Overlays / Elevation ──────────────────────────────────────────────────
   /// ظل البطاقات: أعمق في الوضع الليلي حتى يبقى الفصل بين الأسطح مرئياً.
   Color get cardShadow =>
-      Colors.black.withValues(alpha: isDarkMode ? 0.20 : 0.04);
+      _pick(AdminColors.shadowLight, AdminColors.shadowDark);
+  Color get scrim => _pick(AdminColors.scrimLight, AdminColors.scrimDark);
+  Color get transparent => AdminColors.transparent;
 }

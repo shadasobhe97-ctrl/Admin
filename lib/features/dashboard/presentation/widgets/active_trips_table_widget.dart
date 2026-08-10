@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/active_trip_model.dart';
+import '../../../../core/theme/admin_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class ActiveDriverCard extends StatelessWidget {
   final ActiveTripModel trip; // تم التعديل هنا ليتطابق مع الموديل الجديد
@@ -17,13 +19,13 @@ class ActiveDriverCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: BorderSide(color: context.borderSoft),
       ),
-      color: Colors.white,
+      color: context.cardColor,
       child: InkWell(
         onTap: onTapInspect,
         borderRadius: BorderRadius.circular(16),
-        hoverColor: const Color(0xFFEFF6FF),
+        hoverColor: context.infoBg,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -43,11 +45,11 @@ class ActiveDriverCard extends StatelessWidget {
                       children: [
                         Text(
                           trip.driverName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary),
                         ),
                         Text(
                           trip.driverPhone,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 11, color: context.textTertiary),
                           textDirection: TextDirection.ltr,
                         ),
                       ],
@@ -56,13 +58,13 @@ class ActiveDriverCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: context.surfaceVariant,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: context.borderSoft),
                     ),
                     child: Text(
                       trip.carPlate,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary),
                     ),
                   ),
                 ],
@@ -73,19 +75,19 @@ class ActiveDriverCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: context.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                  border: Border.all(color: context.borderSoft),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(trip.carModel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    Text(trip.carModel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textPrimary)),
                     Flexible(
                       child: Text(
                         trip.currentLocationName,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF2563EB), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: context.primaryColor, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -96,11 +98,11 @@ class ActiveDriverCard extends StatelessWidget {
               // العدادات الثلاثية
               Row(
                 children: [
-                  Expanded(child: _buildStatusBadge('🚖 راكب معاه', '${trip.ridingCount} أطفال', const Color(0xFFECFDF5), const Color(0xFFA7F3D0), const Color(0xFF065F46))),
+                  Expanded(child: _buildStatusBadge('🚖 راكب معاه', '${trip.ridingCount} أطفال', context.successBg, context.successBorder, context.successColor)),
                   const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('⏳ ينتظر', '${trip.waitingCount} أطفال', const Color(0xFFFFFBEB), const Color(0xFFFDE68A), const Color(0xFF92400E))),
+                  Expanded(child: _buildStatusBadge('⏳ ينتظر', '${trip.waitingCount} أطفال', context.warningBg, context.warningBorder, context.warningColor)),
                   const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('✅ وصل', '${trip.arrivedCount} أطفال', const Color(0xFFEFF6FF), const Color(0xFFBFDBFE), const Color(0xFF1E40AF))),
+                  Expanded(child: _buildStatusBadge('✅ وصل', '${trip.arrivedCount} أطفال', context.infoBg, context.infoBorder, context.infoColor)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -111,13 +113,13 @@ class ActiveDriverCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onTapInspect,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
-                    foregroundColor: Colors.white,
+                    backgroundColor: context.primaryColor,
+                    foregroundColor: AdminColors.onBrand,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
-                  icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF60A5FA)),
+                  icon: const Icon(Icons.auto_awesome, size: 14, color: AdminColors.onBrand),
                   label: const Text('عرض ركاب الرحلة الذكية', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),

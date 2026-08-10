@@ -79,7 +79,8 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                 ),
               );
             }
-            if (state.successMessage != null && state.successMessage!.isNotEmpty) {
+            if (state.successMessage != null &&
+                state.successMessage!.isNotEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.successMessage!),
@@ -113,24 +114,20 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              'إضافة، تعديل، والبحث في قائمة المشرفين بالربط مع Backend REST API',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
                           ],
                         ),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2563EB),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -139,7 +136,8 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                           icon: const Icon(Icons.person_add_rounded, size: 18),
                           label: const Text(
                             'إضافة مشرف جديد',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -162,8 +160,10 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                         ),
                         const SizedBox(width: 12),
                         IconButton.filledTonal(
-                          onPressed: () => cubit.fetchAdmins(search: _searchController.text.trim()),
-                          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2563EB)),
+                          onPressed: () => cubit.fetchAdmins(
+                              search: _searchController.text.trim()),
+                          icon: const Icon(Icons.refresh_rounded,
+                              color: Color(0xFF2563EB)),
                           tooltip: 'تحديث بيانات القائمة من Backend',
                         ),
                       ],
@@ -175,7 +175,8 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                       const SizedBox(
                         height: 300,
                         child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                          child: CircularProgressIndicator(
+                              color: Color(0xFF2563EB)),
                         ),
                       )
                     // Empty State
@@ -192,11 +193,13 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                           if (isDesktop) {
                             return AdminsTable(
                               admins: state.admins,
-                              onTapDetails: (admin) => _openDetailsModal(context, admin),
+                              onTapDetails: (admin) =>
+                                  _openDetailsModal(context, admin),
                               onEdit: (admin) => _openEditModal(context, admin),
                               onDelete: (admin) => cubit.deleteAdmin(admin.id),
                               onToggleStatus: (admin, newStatus) {
-                                cubit.toggleAdminStatus(admin.id, !admin.isActive);
+                                cubit.toggleAdminStatus(
+                                    admin.id, !admin.isActive);
                               },
                             );
                           }
@@ -209,11 +212,13 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                               final admin = state.admins[index];
                               return AdminCard(
                                 admin: admin,
-                                onTapDetails: () => _openDetailsModal(context, admin),
+                                onTapDetails: () =>
+                                    _openDetailsModal(context, admin),
                                 onEdit: () => _openEditModal(context, admin),
                                 onDelete: () => cubit.deleteAdmin(admin.id),
                                 onToggleStatus: (newStatus) {
-                                  cubit.toggleAdminStatus(admin.id, !admin.isActive);
+                                  cubit.toggleAdminStatus(
+                                      admin.id, !admin.isActive);
                                 },
                               );
                             },

@@ -10,6 +10,8 @@ import '../../data/models/dashboard_stats_model.dart';
 import '../../logic/dashboard_cubit.dart';
 import '../../logic/dashboard_state.dart';
 import '../widgets/trip_inspector_modal.dart';
+import '../../../../core/theme/admin_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DashboardOverviewScreen extends StatelessWidget {
   const DashboardOverviewScreen({super.key});
@@ -64,7 +66,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('إحداثيات موقع السائق غير متاحة حالياً على الخريطة.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AdminColors.orange,
         ),
       );
       return;
@@ -93,7 +95,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
           'تم التمركز على موقع السائق "${trip.driverName}" في الخريطة 🎯',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: AdminColors.brandPrimary,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -102,7 +104,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -152,16 +153,14 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color:
-                                isDark ? Colors.white : const Color(0xFF0F172A),
+                                context.textPrimary,
                           ),
                         ),
                         Text(
                           '← اسحب  لعرض باقي الكروت',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B),
+                            color: context.textTertiary,
                           ),
                         ),
                       ],
@@ -173,7 +172,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         height: 120,
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF2563EB)),
+                              color: AdminColors.brandPrimary),
                         ),
                       )
                     else if (state.errorMessage != null && state.stats == null)
@@ -187,7 +186,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -209,7 +208,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color:
-                                isDark ? Colors.white : const Color(0xFF0F172A),
+                                context.textPrimary,
                           ),
                         ),
                         Container(
@@ -217,14 +216,14 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color:
-                                const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                AdminColors.brandPrimary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             'إجمالي الرحلات: ${state.activeTrips.length}',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF2563EB),
+                              color: AdminColors.brandPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -258,9 +257,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   }
 
   Widget _buildHeader(BuildContext context, DashboardState state) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -272,7 +268,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -280,8 +276,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         ),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            foregroundColor: Colors.white,
+            backgroundColor: AdminColors.brandPrimary,
+            foregroundColor: AdminColors.onBrand,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -300,25 +296,25 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: AdminColors.dangerBgLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade200),
+        border: Border.all(color: AdminColors.dangerBorderLight),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
+          const Icon(Icons.error_outline, color: AdminColors.red),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Colors.red, fontSize: 13),
+              style: const TextStyle(color: AdminColors.red, fontSize: 13),
             ),
           ),
           TextButton(
             onPressed: () =>
                 context.read<DashboardCubit>().fetchDashboardData(),
             child: const Text('إعادة المحاولة',
-                style: TextStyle(color: Color(0xFF2563EB))),
+                style: TextStyle(color: AdminColors.brandPrimary)),
           ),
         ],
       ),
@@ -334,31 +330,31 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
           'إجمالي المستخدمين',
           stats.totalUsers.toString(),
           Icons.people_outline,
-          const Color(0xFF10B981)),
+          AdminColors.statusSuccess),
       _buildCompactStatCard(
           context,
           'إجمالي السائقين',
           stats.totalDrivers.toString(),
           Icons.directions_car_outlined,
-          const Color(0xFF3B82F6)),
+          AdminColors.statusInfo),
       _buildCompactStatCard(
           context,
           'سائقون بانتظار المراجعة',
           stats.pendingDrivers.toString(),
           Icons.hourglass_top_outlined,
-          const Color(0xFFF59E0B)),
+          AdminColors.statusWarning),
       _buildCompactStatCard(
           context,
           'إجمالي أولياء الأمور',
           stats.totalParents.toString(),
           Icons.family_restroom,
-          const Color(0xFF6366F1)),
+          AdminColors.accentIndigo),
       _buildCompactStatCard(
           context,
           'الاشتراكات النشطة',
           stats.activeSubscriptions.toString(),
           Icons.verified_outlined,
-          const Color(0xFF8B5CF6)),
+          AdminColors.accentPurple),
       _buildCompactHighlightedStatCard('الرحلات النشطة اليوم',
           stats.activeTripsToday.toString(), Icons.navigation_outlined),
       _buildCompactStatCard(
@@ -366,7 +362,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
           'إجمالي الإيرادات (د.ل)',
           '${stats.totalRevenueDinar.toStringAsFixed(2)} د.ل',
           Icons.payments_outlined,
-          const Color(0xFFEC4899)),
+          AdminColors.accentPink),
     ];
 
     return SizedBox(
@@ -389,7 +385,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   Widget _buildCompactStatCard(BuildContext context, String title, String count,
       IconData icon, Color accentColor) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: 210,
@@ -400,7 +395,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: context.cardShadow,
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -426,9 +421,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   title,
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
+                    color: context.textTertiary,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -440,7 +433,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -458,12 +451,12 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+          colors: [AdminColors.brandPrimary, AdminColors.brandPrimaryDeep],
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+            color: AdminColors.brandPrimary.withValues(alpha: 0.25),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -474,10 +467,10 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AdminColors.onBrandOverlay,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: AdminColors.onBrand, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -489,7 +482,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   title,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Colors.white70,
+                    color: AdminColors.onBrandMuted,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -501,7 +494,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AdminColors.onBrand,
                   ),
                 ),
               ],
@@ -516,7 +509,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   Widget _buildRealMapSection(
       BuildContext context, List<ActiveTripModel> trips) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     bool isValidCoord(double lat, double lng) {
       return !lat.isNaN &&
@@ -551,13 +543,13 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(8),
                     border:
-                        Border.all(color: const Color(0xFF2563EB), width: 1.5),
+                        Border.all(color: AdminColors.brandPrimary, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
+                        color: AdminColors.mapMarkerShadow,
                         blurRadius: 6,
                       ),
                     ],
@@ -569,7 +561,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         child: Text(
                           trip.driverName,
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: AdminColors.onMapMarkerLabel,
                               fontSize: 10,
                               fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
@@ -580,13 +572,13 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF059669),
+                          color: AdminColors.successFgLight,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           '${trip.studentsCount} طلاب',
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: AdminColors.onMapMarkerLabel,
                               fontSize: 8,
                               fontWeight: FontWeight.bold),
                         ),
@@ -598,17 +590,17 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF2563EB),
+                    color: AdminColors.brandPrimary,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black26,
+                          color: AdminColors.mapMarkerShadow,
                           blurRadius: 4,
                           offset: Offset(0, 2)),
                     ],
                   ),
                   child: const Icon(Icons.directions_bus_filled,
-                      color: Colors.white, size: 18),
+                      color: AdminColors.onMapMarkerLabel, size: 18),
                 ),
               ],
             ),
@@ -624,7 +616,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: context.cardShadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -648,7 +640,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color:
-                                isDark ? Colors.white : const Color(0xFF0F172A),
+                                context.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -656,22 +648,22 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
+                            color: AdminColors.successBgLight,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: const Color(0xFF10B981)
+                                color: AdminColors.statusSuccess
                                     .withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             children: [
                               const Icon(Icons.circle,
-                                  size: 8, color: Color(0xFF10B981)),
+                                  size: 8, color: AdminColors.statusSuccess),
                               const SizedBox(width: 4),
                               Text(
                                 '${validTrips.length} رحلة مباشرة على الخريطة',
                                 style: const TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF059669),
+                                    color: AdminColors.successFgLight,
                                     fontWeight: FontWeight.bold),
                               ),
                             ],
@@ -684,9 +676,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       'تتحول الإحداثيات الواردة من Backend (current_lat, current_lng) فوراً إلى حافلات نشطة',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
@@ -696,15 +686,13 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
                       color: _isMapInteractive
-                          ? const Color(0xFF10B981)
-                          : (isDark
-                              ? const Color(0xFF475569)
-                              : const Color(0xFFCBD5E1)),
+                          ? AdminColors.statusSuccess
+                          : (context.borderStrong),
                       width: 1.5,
                     ),
                     backgroundColor: _isMapInteractive
-                        ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                        : Colors.transparent,
+                        ? AdminColors.statusSuccess.withValues(alpha: 0.1)
+                        : AdminColors.transparent,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -721,8 +709,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         : Icons.lock_outline_rounded,
                     size: 16,
                     color: _isMapInteractive
-                        ? const Color(0xFF10B981)
-                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                        ? AdminColors.statusSuccess
+                        : (context.textSecondary),
                   ),
                   label: Text(
                     _isMapInteractive
@@ -732,8 +720,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: _isMapInteractive
-                          ? const Color(0xFF10B981)
-                          : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                          ? AdminColors.statusSuccess
+                          : (context.textSecondary),
                     ),
                   ),
                 ),
@@ -748,7 +736,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color:
-                    isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    context.borderStrong,
               ),
             ),
             child: ClipRRect(
@@ -789,21 +777,21 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color:
-                                const Color(0xFF0F172A).withValues(alpha: 0.85),
+                                AdminColors.mapScrim.withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2)),
+                                color: AdminColors.onMapMarkerLabelMuted),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.touch_app_outlined,
-                                  color: Colors.amber, size: 16),
+                                  color: AdminColors.amber, size: 16),
                               const SizedBox(width: 6),
                               const Text(
                                 'الخريطة مقفلة مؤقتاً لتسهيل سحب الشاشة لأسفل — انقر زر "تفعيل سحب الخريطة" للتحكم بها.',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: AdminColors.onMapMarkerLabel,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500),
                               ),
@@ -815,18 +803,18 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
 
                   if (validTrips.isEmpty)
                     Container(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.75),
+                      color: AdminColors.mapScrim.withValues(alpha: 0.75),
                       child: const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.directions_bus_outlined,
-                                size: 48, color: Colors.white70),
+                                size: 48, color: AdminColors.onMapMarkerLabelMuted),
                             SizedBox(height: 12),
                             Text(
                               'لا توجد رحلات نشطة حالياً على خريطة OpenStreetMap',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: AdminColors.onMapMarkerLabel,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold),
                             ),
@@ -834,7 +822,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             Text(
                               'سيتم إظهار موقع كل حافلة فور وصول إحداثيات حيّة من Backend',
                               style: TextStyle(
-                                  color: Colors.white70, fontSize: 12),
+                                  color: AdminColors.onMapMarkerLabelMuted, fontSize: 12),
                             ),
                           ],
                         ),
@@ -851,7 +839,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
 
   Widget _buildEmptyTripsWidget(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -863,15 +850,15 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.directions_bus_filled_outlined,
-              size: 48, color: Color(0xFF94A3B8)),
+          Icon(Icons.directions_bus_filled_outlined,
+              size: 48, color: context.textMuted),
           const SizedBox(height: 12),
           Text(
             'لا توجد رحلات نشطة حالياً',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF334155)),
+                color: context.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
@@ -879,7 +866,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
             style: TextStyle(
                 fontSize: 12,
                 color:
-                    isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    context.textTertiary),
           ),
         ],
       ),
@@ -894,14 +881,14 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151F32) : Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
+          color: context.borderSoft,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            color: context.cardShadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -918,12 +905,10 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFEFF6FF),
+                      backgroundColor: context.infoBg,
                       radius: 20,
                       child: const Icon(Icons.person,
-                          color: Color(0xFF2563EB), size: 20),
+                          color: AdminColors.brandPrimary, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -937,9 +922,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                  color: context.textPrimary,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -947,11 +930,11 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF059669)
+                                  color: AdminColors.successFgLight
                                       .withValues(alpha: isDark ? 0.3 : 0.15),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                      color: const Color(0xFF10B981)
+                                      color: AdminColors.statusSuccess
                                           .withValues(alpha: 0.4)),
                                 ),
                                 child: Text(
@@ -959,7 +942,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF10B981),
+                                    color: AdminColors.statusSuccess,
                                   ),
                                 ),
                               ),
@@ -970,9 +953,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             'سائق معرف: #${trip.driverId}  |  وقت الانطلاق: ${trip.startedAt.isNotEmpty ? trip.startedAt : 'غير محدد'}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF64748B),
+                              color: context.textTertiary,
                             ),
                           ),
                         ],
@@ -983,9 +964,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                 const SizedBox(height: 14),
                 Divider(
                     height: 1,
-                    color: isDark
-                        ? const Color(0xFF26334D)
-                        : const Color(0xFFE2E8F0)),
+                    color: context.borderSoft),
                 const SizedBox(height: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,7 +974,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF38BDF8),
+                        color: AdminColors.accentCyan,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1003,9 +982,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       'الإحداثيات: ${trip.currentLng.toStringAsFixed(4)} , ${trip.currentLat.toStringAsFixed(4)}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
@@ -1017,13 +994,9 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
-                            color: isDark
-                                ? const Color(0xFF1E3A8A)
-                                : const Color(0xFF93C5FD),
+                            color: context.infoBorder,
                           ),
-                          foregroundColor: isDark
-                              ? const Color(0xFF60A5FA)
-                              : const Color(0xFF2563EB),
+                          foregroundColor: context.infoColor,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1040,8 +1013,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
+                          backgroundColor: AdminColors.brandPrimary,
+                          foregroundColor: AdminColors.onBrand,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1069,12 +1042,10 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: isDark
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFFEFF6FF),
+                    backgroundColor: context.infoBg,
                     radius: 20,
                     child: const Icon(Icons.person,
-                        color: Color(0xFF2563EB), size: 20),
+                        color: AdminColors.brandPrimary, size: 20),
                   ),
                   const SizedBox(width: 14),
                   Column(
@@ -1088,9 +1059,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
+                              color: context.textPrimary,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -1098,11 +1067,11 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF059669)
+                              color: AdminColors.successFgLight
                                   .withValues(alpha: isDark ? 0.3 : 0.15),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                  color: const Color(0xFF10B981)
+                                  color: AdminColors.statusSuccess
                                       .withValues(alpha: 0.4)),
                             ),
                             child: Text(
@@ -1110,7 +1079,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF10B981),
+                                color: AdminColors.statusSuccess,
                               ),
                             ),
                           ),
@@ -1121,9 +1090,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         'سائق معرف: #${trip.driverId}  |  وقت الانطلاق: ${trip.startedAt.isNotEmpty ? trip.startedAt : 'غير محدد'}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF64748B),
+                          color: context.textTertiary,
                         ),
                       ),
                     ],
@@ -1141,7 +1108,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF38BDF8),
+                      color: AdminColors.accentCyan,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1149,9 +1116,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     'الإحداثيات: ${trip.currentLng.toStringAsFixed(4)} , ${trip.currentLat.toStringAsFixed(4)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF64748B),
+                      color: context.textTertiary,
                     ),
                   ),
                 ],
@@ -1163,13 +1128,9 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                        color: isDark
-                            ? const Color(0xFF1E3A8A)
-                            : const Color(0xFF93C5FD),
+                        color: context.infoBorder,
                       ),
-                      foregroundColor: isDark
-                          ? const Color(0xFF60A5FA)
-                          : const Color(0xFF2563EB),
+                      foregroundColor: context.infoColor,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(
@@ -1187,8 +1148,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   const SizedBox(width: 10),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AdminColors.brandPrimary,
+                      foregroundColor: AdminColors.onBrand,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(

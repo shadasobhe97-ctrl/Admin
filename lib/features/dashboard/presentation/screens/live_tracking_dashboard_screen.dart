@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/admin_api_service.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/theme/admin_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class LiveTrackingDashboardView extends StatefulWidget {
   const LiveTrackingDashboardView({super.key});
@@ -78,7 +80,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -86,7 +88,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: AdminColors.white,
                     ),
                   ),
                   SizedBox(height: 4),
@@ -94,20 +96,20 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                     'مرتبط مباشرة بقاعدة بيانات منظومة دَرْبي (Laravel API)',
                     style: TextStyle(
                       fontSize: 12,
-                      color: DerbiColors.textSecondary,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DerbiColors.primaryBlue,
+                  backgroundColor: context.primaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: _isLoading ? null : _fetchDashboardData,
-                icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-                label: const Text('تحديث البيانات', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: AdminColors.white),
+                label: const Text('تحديث البيانات', style: TextStyle(color: AdminColors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -115,33 +117,33 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
 
           // 2. Loading State / Error State / Data Display
           if (_isLoading)
-            const Center(
+            Center(
               child: Padding(
                 padding: EdgeInsets.all(50.0),
-                child: CircularProgressIndicator(color: DerbiColors.primaryBlue),
+                child: CircularProgressIndicator(color: context.primaryColor),
               ),
             )
           else if (_errorMessage != null)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: DerbiColors.dangerRose.withValues(alpha: 0.1),
+                color: context.dangerColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: DerbiColors.dangerRose.withValues(alpha: 0.3)),
+                border: Border.all(color: context.dangerColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: DerbiColors.dangerRose),
+                  Icon(Icons.error_outline, color: context.dangerColor),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: AdminColors.white, fontSize: 12),
                     ),
                   ),
                   TextButton(
                     onPressed: _fetchDashboardData,
-                    child: const Text('إعادة المحاولة', style: TextStyle(color: DerbiColors.primaryBlue)),
+                    child: Text('إعادة المحاولة', style: TextStyle(color: context.primaryColor)),
                   )
                 ],
               ),
@@ -177,9 +179,9 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: DerbiColors.surfaceCard,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: DerbiColors.borderSlate),
+                border: Border.all(color: context.borderSoft),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,36 +191,36 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: DerbiColors.successEmerald.withValues(alpha: 0.1),
+                          color: context.successColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.radar_rounded, color: DerbiColors.successEmerald, size: 22),
+                        child: Icon(Icons.radar_rounded, color: context.successColor, size: 22),
                       ),
                       const SizedBox(width: 12),
                       const Text(
                         'الرادار الحي للرحلات النشطة الآن',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(color: AdminColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: DerbiColors.primaryBlue.withValues(alpha: 0.15),
+                          color: context.primaryColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           '${_activeTrips.length} رحلة نشطة',
-                          style: const TextStyle(color: DerbiColors.primaryBlue, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: context.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   if (_activeTrips.isEmpty)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(
-                        child: Text('لا توجد رحلات نشطة في الوقت الحالي', style: TextStyle(color: DerbiColors.textMuted, fontSize: 12)),
+                        child: Text('لا توجد رحلات نشطة في الوقت الحالي', style: TextStyle(color: context.textMuted, fontSize: 12)),
                       ),
                     )
                   else
@@ -226,14 +228,14 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _activeTrips.length,
-                      separatorBuilder: (_, __) => const Divider(color: DerbiColors.borderSlate, height: 20),
+                      separatorBuilder: (_, __) => Divider(color: context.borderSoft, height: 20),
                       itemBuilder: (ctx, i) {
                         final trip = _activeTrips[i] as Map<String, dynamic>;
                         return Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: DerbiColors.successEmerald.withValues(alpha: 0.15),
-                              child: const Icon(Icons.local_shipping_rounded, color: DerbiColors.successEmerald, size: 18),
+                              backgroundColor: context.successColor.withValues(alpha: 0.15),
+                              child: Icon(Icons.local_shipping_rounded, color: context.successColor, size: 18),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -242,12 +244,12 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                                 children: [
                                   Text(
                                     trip['driver_name'] ?? 'سائق غير معروف',
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                    style: const TextStyle(color: AdminColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'رحلة #${trip['trip_id']} • بدأت ${trip['started_at'] ?? ''} • ${trip['students_count'] ?? 0} طالب',
-                                    style: const TextStyle(color: DerbiColors.textMuted, fontSize: 11),
+                                    style: TextStyle(color: context.textMuted, fontSize: 11),
                                   ),
                                 ],
                               ),
@@ -255,12 +257,12 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: DerbiColors.successEmerald.withValues(alpha: 0.12),
+                                color: context.successColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 _tripStatusLabel(trip['status']),
-                                style: const TextStyle(color: DerbiColors.successEmerald, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: context.successColor, fontSize: 10, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -324,21 +326,21 @@ class _ApiStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     Color trendColor;
     if (trend == 'up') {
-      trendColor = DerbiColors.successEmerald;
+      trendColor = context.successColor;
     } else if (trend == 'live') {
-      trendColor = DerbiColors.primaryBlue;
+      trendColor = context.primaryColor;
     } else if (trend == 'warning') {
-      trendColor = DerbiColors.warningAmber;
+      trendColor = context.warningColor;
     } else {
-      trendColor = DerbiColors.infoCyan;
+      trendColor = context.infoColor;
     }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: DerbiColors.surfaceCard,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DerbiColors.borderSlate),
+        border: Border.all(color: context.borderSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +352,7 @@ class _ApiStatCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 11, color: DerbiColors.textSecondary, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -361,7 +363,7 @@ class _ApiStatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AdminColors.white),
             overflow: TextOverflow.ellipsis,
           ),
         ],

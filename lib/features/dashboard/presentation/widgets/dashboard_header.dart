@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/theme/admin_colors.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -24,7 +25,7 @@ class DashboardHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.headlineLarge?.color ?? Colors.black,
+                  color: Theme.of(context).textTheme.headlineLarge?.color ?? AdminColors.black,
                 ),
               ),
               const SizedBox(height: 4),
@@ -32,7 +33,7 @@ class DashboardHeader extends StatelessWidget {
                 'الصلاحية: $roleName',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+                  color: Theme.of(context).textTheme.bodySmall?.color ?? AdminColors.grey,
                 ),
               ),
             ],
@@ -41,8 +42,8 @@ class DashboardHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                child: const Icon(Icons.person, color: Color(0xFF2563EB)),
+                backgroundColor: AdminColors.brandPrimary.withValues(alpha: 0.1),
+                child: const Icon(Icons.person, color: AdminColors.brandPrimary),
               ),
             ],
           ),
