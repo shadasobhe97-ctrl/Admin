@@ -8,6 +8,8 @@ class AdminModel {
   final bool isActive;
   final String? avatarUrl;
   final String? createdAt;
+  final bool emailChangePending;
+  final String? pendingNewEmail;
 
   AdminModel({
     required this.id,
@@ -19,6 +21,8 @@ class AdminModel {
     required this.isActive,
     this.avatarUrl,
     this.createdAt,
+    this.emailChangePending = false,
+    this.pendingNewEmail,
   });
 
   factory AdminModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +41,13 @@ class AdminModel {
       parsedActive = json['is_active'] == true || json['is_active'] == 1 || json['is_active'].toString() == 'true';
     }
 
+    bool parsedEmailChangePending = false;
+    if (json['email_change_pending'] != null) {
+      parsedEmailChangePending = json['email_change_pending'] == true ||
+          json['email_change_pending'] == 1 ||
+          json['email_change_pending'].toString() == 'true';
+    }
+
     return AdminModel(
       id: parsedId,
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
@@ -47,6 +58,8 @@ class AdminModel {
       isActive: parsedActive,
       avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
       createdAt: json['created_at']?.toString(),
+      emailChangePending: parsedEmailChangePending,
+      pendingNewEmail: json['pending_new_email']?.toString(),
     );
   }
 
@@ -61,6 +74,8 @@ class AdminModel {
       'is_active': isActive,
       'avatar_url': avatarUrl,
       'created_at': createdAt,
+      'email_change_pending': emailChangePending,
+      'pending_new_email': pendingNewEmail,
     };
   }
 }

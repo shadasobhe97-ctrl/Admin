@@ -28,7 +28,8 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     ));
 
     try {
-      final adminsList = await _repository.getAdmins(search: search, page: page);
+      final adminsList =
+          await _repository.getAdmins(search: search, page: page);
       emit(state.copyWith(
         isLoading: false,
         admins: adminsList,
@@ -99,8 +100,9 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
   }
 
   /// 4. POST /api/admin/admins/{id} (Update)
-  Future<bool> updateAdmin(int id, UpdateAdminRequestModel request) async {
-    if (state.isUpdating) return false;
+  Future<Map<String, dynamic>> updateAdmin(
+      int id, UpdateAdminRequestModel request) async {
+    if (state.isUpdating) return {'success': false};
     emit(state.copyWith(
       isUpdating: true,
       clearError: true,
@@ -111,6 +113,7 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
       final result = await _repository.updateAdmin(id, request);
       final updatedAdmin = result['admin'] as AdminModel;
       final serverMsg = result['message'] as String;
+      final emailVerification = result['email_verification'];
 
       emit(state.copyWith(
         isUpdating: false,
@@ -120,13 +123,21 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
       ));
       // Re-fetch clean list directly from Backend REST API
       await fetchAdmins(search: state.searchQuery);
-      return true;
+      return {
+        'success': true,
+        'admin': updatedAdmin,
+        'message': serverMsg,
+        'email_verification': emailVerification,
+      };
     } catch (e) {
       emit(state.copyWith(
         isUpdating: false,
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
-      return false;
+      return {
+        'success': false,
+        'error': e.toString().replaceAll('Exception: ', '')
+      };
     }
   }
 
@@ -157,10 +168,61 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
 
   /// Toggle Admin Active / Inactive Status
   Future<bool> toggleAdminStatus(int id, bool currentStatus) async {
-    return await updateAdmin(
+    final res = await updateAdmin(
       id,
       UpdateAdminRequestModel(isActive: !currentStatus),
     );
+    return res['success'] == true;
+  }
+
+  /// Check Email Change Verification Status
+  Future<String> checkEmailChangeStatus(int id) async {
+    try {
+      return await _repository.checkEmailChangeStatus(id);
+    } catch (e) {
+      return 'expired';
+    }
+  }
+
+  /// Cancel Pending Email Change Request
+  Future<bool> cancelEmailChange(int id) async {
+    emit(state.copyWith(isLoading: true, clearError: true, clearSuccess: true));
+    try {
+      final msg = await _repository.cancelEmailChange(id);
+      emit(state.copyWith(
+        isLoading: false,
+        successMessage: msg,
+      ));
+      await fetchAdmins(search: state.searchQuery);
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  /// Resend Email Change Verification Link
+  Future<bool> resendEmailChange(int id) async {
+    emit(state.copyWith(isLoading: true, clearError: true, clearSuccess: true));
+    try {
+      final res = await _repository.resendEmailChange(id);
+      final msg =
+          res['message']?.toString() ?? 'تمت إعادة إرسال رابط التأكيد بنجاح.';
+      emit(state.copyWith(
+        isLoading: false,
+        successMessage: msg,
+      ));
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
   }
 
   /// Approve Email Change Token

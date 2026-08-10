@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/admin_model.dart';
+import '../../logic/admin_management_cubit.dart';
 import 'admin_avatar.dart';
 import 'admin_status_badge.dart';
+import 'email_verification_waiting_dialog.dart';
 
 class AdminsTable extends StatelessWidget {
   final List<AdminModel> admins;
@@ -189,12 +192,60 @@ class AdminsTable extends StatelessWidget {
                     ),
                   ),
                   DataCell(
-                    Text(
-                      admin.email,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          admin.email,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        if (admin.emailChangePending && admin.pendingNewEmail != null) ...[
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () {
+                              EmailVerificationWaitingDialog.show(
+                                context,
+                                adminId: admin.id,
+                                newEmail: admin.pendingNewEmail!,
+                                onRefresh: () {
+                                  context.read<AdminManagementCubit>().fetchAdmins();
+                                },
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.hourglass_top_rounded, size: 12, color: Colors.amber),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'بانتظار تأكيد: ${admin.pendingNewEmail}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   DataCell(

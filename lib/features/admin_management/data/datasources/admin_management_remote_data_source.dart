@@ -14,7 +14,7 @@ class AdminManagementRemoteDataSource {
 
   Exception _handleDioError(DioException e, String method, String endpoint) {
     final status = e.response?.statusCode ?? 0;
-    String message = 'حدث خطأ في الاتصال بالخادم ($status)';
+    String message = ' الاتصال بالخادم ($status)';
 
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
@@ -43,7 +43,8 @@ class AdminManagementRemoteDataSource {
   }
 
   /// GET /api/admin/admins (مع دعم الباراميترات per_page, page, search)
-  Future<List<AdminModel>> getAdmins({String? search, int page = 1, int perPage = 10}) async {
+  Future<List<AdminModel>> getAdmins(
+      {String? search, int page = 1, int perPage = 10}) async {
     try {
       final queryParams = <String, dynamic>{
         'page': page,
@@ -67,7 +68,8 @@ class AdminManagementRemoteDataSource {
           final list = innerData['data'];
           if (list is List) {
             return list
-                .map((item) => AdminModel.fromJson(item as Map<String, dynamic>))
+                .map(
+                    (item) => AdminModel.fromJson(item as Map<String, dynamic>))
                 .toList();
           }
         } else if (innerData is List) {
@@ -145,8 +147,8 @@ class AdminManagementRemoteDataSource {
             data['data'] is Map<String, dynamic> ? data['data'] : data;
         final adminModel =
             AdminModel.fromJson(adminData as Map<String, dynamic>);
-        final message = data['message']?.toString() ??
-            'تم تحديث بيانات المشرف بنجاح.';
+        final message =
+            data['message']?.toString() ?? 'تم تحديث بيانات المشرف بنجاح.';
         return {
           'admin': adminModel,
           'message': message,
@@ -172,6 +174,58 @@ class AdminManagementRemoteDataSource {
       return 'تم حذف المشرف نهائياً بنجاح.';
     } on DioException catch (e) {
       throw _handleDioError(e, 'DELETE', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GET /api/admin/admins/{id}/email-change/status
+  Future<String> checkEmailChangeStatus(int id) async {
+    final endpoint = ApiEndpoints.adminEmailChangeStatus(id);
+    try {
+      final response = await _apiClient.get(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data['data'];
+        if (data is Map<String, dynamic>) {
+          return data['status']?.toString() ?? 'pending';
+        }
+      }
+      return 'pending';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'GET', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// POST /api/admin/admins/{id}/email-change/cancel
+  Future<String> cancelEmailChange(int id) async {
+    final endpoint = ApiEndpoints.adminEmailChangeCancel(id);
+    try {
+      final response = await _apiClient.post(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return response.data['message']?.toString() ??
+            'تم إلغاء طلب تغيير البريد الإلكتروني.';
+      }
+      return 'تم إلغاء طلب تغيير البريد الإلكتروني.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// POST /api/admin/admins/{id}/email-change/resend
+  Future<Map<String, dynamic>> resendEmailChange(int id) async {
+    final endpoint = ApiEndpoints.adminEmailChangeResend(id);
+    try {
+      final response = await _apiClient.post(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('استجابة غير متوافقة من الخادم عند إعادة الإرسال');
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', endpoint);
     } catch (e) {
       rethrow;
     }

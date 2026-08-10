@@ -8,6 +8,7 @@ import '../../data/models/update_admin_request_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import '../../logic/admin_management_state.dart';
 import '../widgets/admin_form.dart';
+import '../widgets/email_verification_waiting_dialog.dart';
 
 class AdminFormScreen extends StatelessWidget {
   final AdminModel? initialAdmin;
@@ -15,7 +16,11 @@ class AdminFormScreen extends StatelessWidget {
   const AdminFormScreen({super.key, this.initialAdmin});
 
   static void show(BuildContext context, {AdminModel? initialAdmin, VoidCallback? onSuccess}) {
-    showDialog(
+    // Kept alive by the caller (admins list screen), unlike the form's own
+    // factory cubit which is closed as soon as this dialog pops.
+    final callerContext = context;
+
+    showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => BlocProvider(
         create: (context) => sl<AdminManagementCubit>(),
@@ -28,8 +33,19 @@ class AdminFormScreen extends StatelessWidget {
           ),
         ),
       ),
-    ).then((_) {
+    ).then((result) {
       if (onSuccess != null) onSuccess();
+
+      if (result != null && result['email_verification'] != null && callerContext.mounted) {
+        EmailVerificationWaitingDialog.show(
+          callerContext,
+          adminId: result['admin_id'] as int,
+          newEmail: result['email_verification']['new_email'].toString(),
+          onRefresh: () {
+            if (onSuccess != null) onSuccess();
+          },
+        );
+      }
     });
   }
 
@@ -91,9 +107,19 @@ class AdminFormScreen extends StatelessWidget {
                   },
                   onUpdate: (UpdateAdminRequestModel updateReq) async {
                     if (initialAdmin == null) return;
-                    final ok = await context.read<AdminManagementCubit>().updateAdmin(initialAdmin!.id, updateReq);
-                    if (ok && context.mounted) {
-                      Navigator.pop(context);
+                    final cubit = context.read<AdminManagementCubit>();
+                    final result = await cubit.updateAdmin(initialAdmin!.id, updateReq);
+                    if (result['success'] == true && context.mounted) {
+                      final emailVerification = result['email_verification'];
+                      final hasPendingEmail = emailVerification != null &&
+                          emailVerification['new_email'] != null;
+
+                      // The waiting dialog is opened by [show] after this route
+                      // pops, so it runs on a cubit that outlives this form.
+                      Navigator.pop(context, {
+                        'admin_id': initialAdmin!.id,
+                        'email_verification': hasPendingEmail ? emailVerification : null,
+                      });
                     }
                   },
                 ),

@@ -9,9 +9,11 @@ class AdminManagementRepository {
 
   AdminManagementRepository(this._remoteDataSource);
 
-  Future<List<AdminModel>> getAdmins({String? search, int page = 1, int perPage = 10}) async {
+  Future<List<AdminModel>> getAdmins(
+      {String? search, int page = 1, int perPage = 10}) async {
     try {
-      return await _remoteDataSource.getAdmins(search: search, page: page, perPage: perPage);
+      return await _remoteDataSource.getAdmins(
+          search: search, page: page, perPage: perPage);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
@@ -33,7 +35,8 @@ class AdminManagementRepository {
     }
   }
 
-  Future<Map<String, dynamic>> updateAdmin(int id, UpdateAdminRequestModel request) async {
+  Future<Map<String, dynamic>> updateAdmin(
+      int id, UpdateAdminRequestModel request) async {
     try {
       return await _remoteDataSource.updateAdmin(id, request);
     } catch (e) {
@@ -44,6 +47,30 @@ class AdminManagementRepository {
   Future<String> deleteAdmin(int id) async {
     try {
       return await _remoteDataSource.deleteAdmin(id);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<String> checkEmailChangeStatus(int id) async {
+    try {
+      return await _remoteDataSource.checkEmailChangeStatus(id);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<String> cancelEmailChange(int id) async {
+    try {
+      return await _remoteDataSource.cancelEmailChange(id);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<Map<String, dynamic>> resendEmailChange(int id) async {
+    try {
+      return await _remoteDataSource.resendEmailChange(id);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }

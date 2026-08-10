@@ -43,6 +43,12 @@ class ApiEndpoints {
   // ── 3. Admins ───────────────────────────────────────────────────────────────
   static const String admins = '/admin/admins';
   static String adminDetails(dynamic id) => '/admin/admins/$id';
+  static String adminEmailChangeStatus(dynamic id) =>
+      '/admin/admins/$id/email-change/status';
+  static String adminEmailChangeCancel(dynamic id) =>
+      '/admin/admins/$id/email-change/cancel';
+  static String adminEmailChangeResend(dynamic id) =>
+      '/admin/admins/$id/email-change/resend';
   static String adminEmailApprove(String token) =>
       '/admin/admin/email/approve/$token';
   static String adminEmailReject(String token) =>

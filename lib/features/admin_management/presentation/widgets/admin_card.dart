@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/admin_model.dart';
+import '../../logic/admin_management_cubit.dart';
 import 'admin_avatar.dart';
 import 'admin_status_badge.dart';
+import 'email_verification_waiting_dialog.dart';
 
 class AdminCard extends StatelessWidget {
   final AdminModel admin;
@@ -151,6 +154,48 @@ class AdminCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (admin.emailChangePending && admin.pendingNewEmail != null) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () {
+                  EmailVerificationWaitingDialog.show(
+                    context,
+                    adminId: admin.id,
+                    newEmail: admin.pendingNewEmail!,
+                    onRefresh: () {
+                      context.read<AdminManagementCubit>().fetchAdmins();
+                    },
+                  );
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.hourglass_top_rounded, size: 13, color: Colors.amber),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'بانتظار تأكيد: ${admin.pendingNewEmail}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -10,6 +10,7 @@ import '../../logic/admin_management_state.dart';
 import '../widgets/admin_avatar.dart';
 import '../widgets/admin_form.dart';
 import '../widgets/admin_status_badge.dart';
+import '../widgets/email_verification_waiting_dialog.dart';
 
 class AdminDetailsScreen extends StatelessWidget {
   final int adminId;
@@ -70,10 +71,24 @@ class AdminDetailsScreen extends StatelessWidget {
                         isLoading: state.isUpdating,
                         onCreate: (CreateAdminRequestModel createReq) {},
                         onUpdate: (UpdateAdminRequestModel updateReq) async {
-                          final ok = await ctx.read<AdminManagementCubit>().updateAdmin(admin.id, updateReq);
-                          if (ok && dialogCtx.mounted) {
+                          final result = await ctx.read<AdminManagementCubit>().updateAdmin(admin.id, updateReq);
+                          if (result['success'] == true && dialogCtx.mounted) {
                             Navigator.pop(dialogCtx);
                             ctx.read<AdminManagementCubit>().fetchAdminDetails(admin.id);
+
+                            final emailVerification = result['email_verification'];
+                            if (emailVerification != null &&
+                                emailVerification['new_email'] != null) {
+                              final newEmail = emailVerification['new_email'].toString();
+                              EmailVerificationWaitingDialog.show(
+                                ctx,
+                                adminId: admin.id,
+                                newEmail: newEmail,
+                                onRefresh: () {
+                                  ctx.read<AdminManagementCubit>().fetchAdminDetails(admin.id);
+                                },
+                              );
+                            }
                           }
                         },
                       ),
