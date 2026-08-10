@@ -81,8 +81,10 @@ extension AdminThemeContext on BuildContext {
       _pick(AdminColors.sidebarBorderLight, AdminColors.sidebarBorderDark);
   Color get sidebarItemText =>
       _pick(AdminColors.sidebarItemTextLight, AdminColors.sidebarItemTextDark);
-  Color get sidebarActiveBg => AdminColors.sidebarActiveBg;
-  Color get onSidebarActive => AdminColors.onSidebarActive;
+  Color get sidebarActiveBg =>
+      _pick(AdminColors.sidebarActiveBgLight, AdminColors.sidebarActiveBgDark);
+  Color get onSidebarActive =>
+      _pick(AdminColors.onSidebarActiveLight, AdminColors.onSidebarActiveDark);
   Color get sidebarHover =>
       _pick(AdminColors.sidebarHoverLight, AdminColors.sidebarHoverDark);
   Color get headerBg =>

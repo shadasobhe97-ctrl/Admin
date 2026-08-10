@@ -49,14 +49,6 @@ class AdminAvatar extends StatelessWidget {
         backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
         backgroundImage: NetworkImage(cleanUrl),
         onBackgroundImageError: (_, __) {},
-        child: Text(
-          _initials,
-          style: TextStyle(
-            fontSize: radius * 0.7,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF2563EB),
-          ),
-        ),
       );
     }
 

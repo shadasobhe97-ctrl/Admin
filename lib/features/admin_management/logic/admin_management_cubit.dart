@@ -73,8 +73,8 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
   }
 
   /// 3. POST /api/admin/admins (Create)
-  Future<bool> createAdmin(CreateAdminRequestModel request) async {
-    if (state.isCreating) return false;
+  Future<Map<String, dynamic>> createAdmin(CreateAdminRequestModel request) async {
+    if (state.isCreating) return {'success': false};
     emit(state.copyWith(
       isCreating: true,
       clearError: true,
@@ -89,13 +89,21 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
       ));
       // Re-fetch clean list directly from Backend REST API
       await fetchAdmins(search: state.searchQuery);
-      return true;
+      return {
+        'success': true,
+        'admin_id': createdAdmin.id,
+        'email_verification': createdAdmin.emailChangePending
+            ? {
+                'new_email': createdAdmin.pendingNewEmail ?? createdAdmin.email,
+              }
+            : null,
+      };
     } catch (e) {
       emit(state.copyWith(
         isCreating: false,
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
-      return false;
+      return {'success': false};
     }
   }
 

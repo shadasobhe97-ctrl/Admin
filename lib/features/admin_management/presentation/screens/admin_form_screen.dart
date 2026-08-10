@@ -100,9 +100,17 @@ class AdminFormScreen extends StatelessWidget {
                   currentUserId: currentUserId,
                   isLoading: state.isCreating || state.isUpdating,
                   onCreate: (CreateAdminRequestModel createReq) async {
-                    final ok = await context.read<AdminManagementCubit>().createAdmin(createReq);
-                    if (ok && context.mounted) {
-                      Navigator.pop(context);
+                    final cubit = context.read<AdminManagementCubit>();
+                    final result = await cubit.createAdmin(createReq);
+                    if (result['success'] == true && context.mounted) {
+                      final emailVerification = result['email_verification'];
+                      final hasPendingEmail = emailVerification != null &&
+                          emailVerification['new_email'] != null;
+
+                      Navigator.pop(context, {
+                        'admin_id': result['admin_id'],
+                        'email_verification': hasPendingEmail ? emailVerification : null,
+                      });
                     }
                   },
                   onUpdate: (UpdateAdminRequestModel updateReq) async {

@@ -69,30 +69,36 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                 // Brand Header
                 Container(
                   height: 65,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     border: Border(bottom: BorderSide(color: context.sidebarBorder)),
                   ),
                   child: Row(
                     children: [
+                      BlocBuilder<ThemeCubit, ThemeState>(
+                        builder: (context, themeState) {
+                          final isDark = themeState.isDarkMode;
+                          return Image.asset(
+                            isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
+                            height: 34,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.dashboard_rounded,
+                              color: context.primaryColor,
+                              size: 24,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
-                        child: BlocBuilder<ThemeCubit, ThemeState>(
-                          builder: (context, themeState) {
-                            final isDark = themeState.isDarkMode;
-                            return Image.asset(
-                              isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
-                              height: 38,
-                              alignment: Alignment.centerRight,
-                              errorBuilder: (_, __, ___) => Text(
-                                'دَربِي Derbi',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                            );
-                          },
+                        child: Text(
+                          'لوحة التحكم',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            color: context.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       BlocBuilder<ThemeCubit, ThemeState>(
@@ -105,7 +111,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                               icon: Icon(
                                 isDark ? Icons.wb_sunny_rounded : Icons.brightness_3_rounded,
                                 color: isDark ? context.warningColor : context.textTertiary,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
                           );

@@ -153,16 +153,18 @@ class AdminColors {
   static const Color infoBorderDark = Color(0xFF1E3A8A);
 
   // Sidebar / Top Header — لكل رمز نسخة Light ونسخة Dark
-  static const Color sidebarBgLight = Color(0xFF1E3A8A); // A rich deep blue for light theme
-  static const Color sidebarBgDark = Color(0xFF0F1E36);  // A deep midnight blue for dark theme
-  static const Color sidebarBorderLight = Color(0xFF1D3557);
-  static const Color sidebarBorderDark = Color(0xFF0D1B2A);
-  static const Color sidebarItemTextLight = Color(0xFF93C5FD); // Light blue-grey for readability
-  static const Color sidebarItemTextDark = Color(0xFF8A99AD);
-  static const Color sidebarActiveBg = Color(0xFF2563EB); // Vivid accent blue for selection
-  static const Color onSidebarActive = Color(0xFFFFFFFF);
-  static const Color sidebarHoverLight = Color(0xFF1E293B);
-  static const Color sidebarHoverDark = Color(0xFF1C2541);
+  static const Color sidebarBgLight = Color(0xFFFFFFFF); // White to match interface background
+  static const Color sidebarBgDark = Color(0xFF0F172A);  // Dark slate to match interface background
+  static const Color sidebarBorderLight = Color(0xFFE2E8F0); // Grey border
+  static const Color sidebarBorderDark = Color(0xFF334155);  // Grey border
+  static const Color sidebarItemTextLight = Color(0xFF64748B); // Slate/Grey text
+  static const Color sidebarItemTextDark = Color(0xFF94A3B8);  // Slate/Grey text
+  static const Color sidebarActiveBgLight = Color(0xFFEFF6FF); // Light blue selection box
+  static const Color sidebarActiveBgDark = Color(0x1A2563EB);  // Semi-transparent primary blue selection box
+  static const Color onSidebarActiveLight = Color(0xFF2563EB); // Primary blue for selected item
+  static const Color onSidebarActiveDark = Color(0xFF60A5FA);  // Light blue for selected item
+  static const Color sidebarHoverLight = Color(0xFFF1F5F9);
+  static const Color sidebarHoverDark = Color(0xFF1E293B);
   static const Color headerBgLight = Color(0xFFFFFFFF);
   static const Color headerBgDark = Color(0xFF0F172A);
   static const Color brandTaglineLight = Color(0xFF2563EB);
