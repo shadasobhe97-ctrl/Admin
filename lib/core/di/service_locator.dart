@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../network/api_client.dart';
+import '../services/file_export_service.dart';
 import '../theme/cubit/theme_cubit.dart';
 import '../../features/Auth/data/datasources/password_reset_remote_data_source.dart';
 import '../../features/Auth/data/repositories/admin_auth_repository.dart';
@@ -24,6 +25,12 @@ import '../../features/profile/logic/cubit/profile_cubit.dart';
 import '../../features/schools/data/datasources/schools_remote_datasource.dart';
 import '../../features/schools/data/repositories/schools_repository_impl.dart';
 import '../../features/schools/logic/cubit/schools_cubit.dart';
+import '../../features/financial/data/datasources/financial_remote_datasource.dart';
+import '../../features/financial/data/repositories/financial_repository_impl.dart';
+import '../../features/financial/logic/cubit/financial_cubit.dart';
+import '../../features/reports/data/datasources/reports_remote_datasource.dart';
+import '../../features/reports/data/repositories/reports_repository_impl.dart';
+import '../../features/reports/logic/cubit/reports_cubit.dart';
 import '../../features/zones/data/datasources/zones_remote_datasource.dart';
 import '../../features/zones/data/repositories/zones_repository_impl.dart';
 import '../../features/zones/logic/cubit/zones_cubit.dart';
@@ -131,5 +138,33 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory<ZonesCubit>(
     () => ZonesCubit(sl<ZonesRepository>()),
+  );
+
+  // ── Financial Management Feature ───────────────────────────────────────────
+  sl.registerLazySingleton<FinancialRemoteDataSource>(
+    () => FinancialRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<FinancialRepository>(
+    () => FinancialRepositoryImpl(sl<FinancialRemoteDataSource>()),
+  );
+  sl.registerFactory<FinancialCubit>(
+    () => FinancialCubit(sl<FinancialRepository>()),
+  );
+
+  // ── Reports & Analytics Feature ───────────────────────────────────────────
+  sl.registerLazySingleton<FileExportService>(
+    () => const FileSaverExportService(),
+  );
+  sl.registerLazySingleton<ReportsRemoteDataSource>(
+    () => ReportsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<ReportsRepository>(
+    () => ReportsRepositoryImpl(
+      sl<ReportsRemoteDataSource>(),
+      sl<FileExportService>(),
+    ),
+  );
+  sl.registerFactory<ReportsCubit>(
+    () => ReportsCubit(sl<ReportsRepository>()),
   );
 }

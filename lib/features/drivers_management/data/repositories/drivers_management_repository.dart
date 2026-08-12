@@ -31,13 +31,13 @@ class DriversManagementRepository {
 
   Future<String> reviewDriver({
     required int id,
-    required String action,
+    required String status,
     String? rejectionReason,
   }) async {
     try {
       return await _remoteDataSource.reviewDriver(
         id: id,
-        action: action,
+        status: status,
         rejectionReason: rejectionReason,
       );
     } catch (e) {
@@ -45,9 +45,9 @@ class DriversManagementRepository {
     }
   }
 
-  Future<List<DriverChangeRequestModel>> getPendingDriverChanges() async {
+  Future<List<DriverChangeRequestModel>> getPendingDriverChanges({int page = 1}) async {
     try {
-      return await _remoteDataSource.getPendingDriverChanges();
+      return await _remoteDataSource.getPendingDriverChanges(page: page);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }

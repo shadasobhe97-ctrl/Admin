@@ -1,63 +1,115 @@
+import '../../../../core/utils/json_parsers.dart';
+
+/// المنطقة الجغرافية كما تأتي مختصرة داخل كائن المدرسة.
+/// GET /api/admin/schools → data[].zone
+class SchoolZoneRef {
+  final int id;
+  final String name;
+
+  const SchoolZoneRef({required this.id, required this.name});
+
+  factory SchoolZoneRef.fromJson(Map<String, dynamic> json) {
+    return SchoolZoneRef(
+      id: JsonParsers.intValue(json['id']),
+      name: JsonParsers.stringValue(json['name']),
+    );
+  }
+
+  SchoolZoneRef copyWith({int? id, String? name}) {
+    return SchoolZoneRef(id: id ?? this.id, name: name ?? this.name);
+  }
+}
+
+/// حالات اعتماد المدرسة المسموح بها من الخادم (`in:approved,pending`).
+class SchoolStatus {
+  const SchoolStatus._();
+
+  static const String approved = 'approved';
+  static const String pending = 'pending';
+
+  static const List<String> all = [approved, pending];
+
+  static String label(String status) {
+    switch (status) {
+      case approved:
+        return 'معتمدة';
+      case pending:
+        return 'قيد الاعتماد';
+      default:
+        return status;
+    }
+  }
+}
+
+/// GET /api/admin/schools
+/// GET /api/admin/schools/{id}
+///
+/// الخادم يرسل الإحداثيات في `lat` / `lng`، والمنطقة ككائن متداخل `zone`.
 class SchoolModel {
   final int id;
   final String name;
   final String address;
-  final double? latitude;
-  final double? longitude;
-  final int? zoneId;
-  final String? zoneName;
+  final double? lat;
+  final double? lng;
+  final String status;
+  final SchoolZoneRef? zone;
 
   const SchoolModel({
     required this.id,
     required this.name,
     required this.address,
-    this.latitude,
-    this.longitude,
-    this.zoneId,
-    this.zoneName,
+    this.lat,
+    this.lng,
+    this.status = SchoolStatus.pending,
+    this.zone,
   });
 
   factory SchoolModel.fromJson(Map<String, dynamic> json) {
+    final zoneJson = JsonParsers.optionalMap(json['zone']);
+
     return SchoolModel(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      name: json['name']?.toString() ?? '',
-      address: json['address']?.toString() ?? '',
-      latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
-      longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
-      zoneId: json['zone_id'] != null ? int.tryParse(json['zone_id'].toString()) : null,
-      zoneName: json['zone_name']?.toString() ?? json['zone']?.toString(),
+      id: JsonParsers.intValue(json['id']),
+      name: JsonParsers.stringValue(json['name']),
+      address: JsonParsers.stringValue(json['address']),
+      lat: JsonParsers.optionalDouble(json['lat']),
+      lng: JsonParsers.optionalDouble(json['lng']),
+      status: JsonParsers.stringValue(
+        json['status'],
+        fallback: SchoolStatus.pending,
+      ),
+      zone: zoneJson == null ? null : SchoolZoneRef.fromJson(zoneJson),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'address': address,
-      if (latitude != null) 'latitude': latitude,
-      if (longitude != null) 'longitude': longitude,
-      if (zoneId != null) 'zone_id': zoneId,
-      if (zoneName != null) 'zone_name': zoneName,
-    };
-  }
+  int? get zoneId => zone?.id;
+  String? get zoneName => zone?.name;
+
+  bool get isApproved => status == SchoolStatus.approved;
+  bool get hasCoordinates => lat != null && lng != null;
+
+  String get statusLabel => SchoolStatus.label(status);
+
+  /// الإحداثيات جاهزة للعرض، أو `null` إن لم يرسلها الخادم.
+  String? get coordinatesLabel =>
+      hasCoordinates ? 'Lat: $lat  •  Lng: $lng' : null;
 
   SchoolModel copyWith({
     int? id,
     String? name,
     String? address,
-    double? latitude,
-    double? longitude,
-    int? zoneId,
-    String? zoneName,
+    double? lat,
+    double? lng,
+    String? status,
+    SchoolZoneRef? zone,
   }) {
     return SchoolModel(
       id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      zoneId: zoneId ?? this.zoneId,
-      zoneName: zoneName ?? this.zoneName,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      status: status ?? this.status,
+      zone: zone ?? this.zone,
     );
   }
 }

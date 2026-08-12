@@ -1,15 +1,49 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
-import '../../../schools/data/models/zone_model.dart';
+import '../../../../core/network/api_exception.dart';
+import '../models/geo_action_result.dart';
+import '../../../../core/utils/json_parsers.dart';
+import '../models/municipality_model.dart';
+import '../models/sub_municipality_model.dart';
+import '../models/zone_model.dart';
 
 abstract class ZonesRemoteDataSource {
+  // المستوى الأول: البلديات الكبرى
+  Future<List<MunicipalityModel>> getMunicipalities();
+  Future<GeoActionResult> addMunicipality({required String name});
+  Future<GeoActionResult> updateMunicipality(int id, {required String name});
+  Future<GeoActionResult> deleteMunicipality(int id);
+
+  // المستوى الثاني: البلديات الفرعية / المحلات
+  Future<List<SubMunicipalityModel>> getSubMunicipalities();
+  Future<GeoActionResult> addSubMunicipality({
+    required String name,
+    required int municipalityId,
+  });
+  Future<GeoActionResult> updateSubMunicipality(
+    int id, {
+    required String name,
+    required int municipalityId,
+  });
+  Future<GeoActionResult> deleteSubMunicipality(int id);
+
+  // المستوى الثالث: المناطق الدقيقة
   Future<List<ZoneModel>> getZones();
-  Future<List<ZoneModel>> getZonesTree();
-  Future<Map<String, dynamic>> addZone(Map<String, dynamic> data);
-  Future<Map<String, dynamic>> updateZone(int id, Map<String, dynamic> data);
-  Future<Map<String, dynamic>> deleteZone(int id);
+  Future<List<MunicipalityModel>> getZonesTree();
+  Future<ZoneModel> getZoneDetails(int id);
+  Future<GeoActionResult> addZone({
+    required String name,
+    int? subMunicipalityId,
+  });
+  Future<GeoActionResult> updateZone(
+    int id, {
+    required String name,
+    int? subMunicipalityId,
+  });
+  Future<GeoActionResult> deleteZone(int id);
 }
 
 class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
@@ -17,178 +51,246 @@ class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
 
   ZonesRemoteDataSourceImpl(this._apiClient);
 
-  void _logError(String tag, String method, String endpoint, dynamic error) {
+  // ── أدوات داخلية مشتركة ────────────────────────────────────────────────────
+
+  void _log(String method, String endpoint, Object error) {
     if (error is DioException) {
-      final statusCode = error.response?.statusCode ?? 'No Status';
-      final responseData = error.response?.data;
-      debugPrint('[$tag] Method: $method | Endpoint: $endpoint | Status: $statusCode | Data: $responseData');
+      debugPrint(
+        '[GEO API] $method $endpoint | '
+        'Status: ${error.response?.statusCode} | Data: ${error.response?.data}',
+      );
     } else {
-      debugPrint('[$tag] Method: $method | Endpoint: $endpoint | Error: $error');
+      debugPrint('[GEO API] $method $endpoint | Error: $error');
     }
   }
 
-  String _extractErrorMessage(dynamic error, String defaultMsg) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
-          final errorsMap = data['errors'] as Map;
-          final List<String> messages = [];
-          for (var entry in errorsMap.entries) {
-            if (entry.value is List && (entry.value as List).isNotEmpty) {
-              messages.add((entry.value as List).first.toString());
-            } else if (entry.value != null) {
-              messages.add(entry.value.toString());
-            }
-          }
-          if (messages.isNotEmpty) {
-            return messages.join('\n');
-          }
-        }
-        if (data['message'] != null && data['message'].toString().isNotEmpty) {
-          return data['message'].toString();
-        }
-      }
-      final statusCode = error.response?.statusCode;
-      if (statusCode == 401) {
-        return 'انتهت الجلسة (401 Unauthorized)، يرجى إعادة تسجيل الدخول.';
-      }
-      if (statusCode == 403) {
-        return 'غير مصرح لك بإجراء تغييرات على المناطق (403 Forbidden).';
-      }
-      if (statusCode == 404) {
-        return 'المنطقة المطلوبة غير موجودة (404 Not Found).';
-      }
-      if (statusCode == 422) {
-        return 'البيانات المدخلة غير صالحة (422 Unprocessable Entity).';
-      }
-      if (statusCode == 500) {
-        return 'حدث خطأ في الخادم (500 Internal Server Error).';
-      }
-      if (error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.receiveTimeout ||
-          error.type == DioExceptionType.sendTimeout) {
-        return 'انتهت مهلة الاتصال بالخادم، يرجى التأكد من اتصال الإنترنت.';
-      }
-      if (error.type == DioExceptionType.connectionError) {
-        return 'تعذر الاتصال بالخادم، يرجى التحقق من الشبكة.';
-      }
-    }
-    return error.toString().replaceAll('Exception: ', '');
+  Never _fail(String method, String endpoint, Object error, String fallback) {
+    _log(method, endpoint, error);
+    throw ApiErrorMapper.map(error, fallbackMessage: fallback);
   }
 
-  @override
-  Future<List<ZoneModel>> getZones() async {
+  Future<List<T>> _getList<T>(
+    String endpoint, {
+    required T Function(Map<String, dynamic> json) parser,
+    required String fallbackMessage,
+  }) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.zones);
+      final response = await _apiClient.get(endpoint);
+      return JsonParsers.extractList(response.data).map(parser).toList();
+    } catch (error) {
+      _fail('GET', endpoint, error, fallbackMessage);
+    }
+  }
+
+  Future<GeoActionResult> _write(
+    String endpoint, {
+    required String method,
+    Map<String, dynamic>? body,
+    required String fallbackMessage,
+    required String errorMessage,
+  }) async {
+    try {
+      final Response response;
+      switch (method) {
+        case 'POST':
+          response = await _apiClient.post(endpoint, data: body ?? const {});
+        case 'PUT':
+          response = await _apiClient.put(endpoint, data: body ?? const {});
+        default:
+          response = await _apiClient.delete(endpoint);
+      }
+
       final data = response.data;
-
-      if (data is Map<String, dynamic>) {
-        final rawList = data['data'] ?? data['zones'];
-        if (rawList is List) {
-          return rawList.map((item) => ZoneModel.fromJson(item as Map<String, dynamic>)).toList();
-        }
-      } else if (data is List) {
-        return data.map((item) => ZoneModel.fromJson(item as Map<String, dynamic>)).toList();
+      // الخادم يستعمل `status`؛ تُقبل `success` أيضاً لتوافق بقية المسارات.
+      if (data is Map && data['status'] == false && data['success'] != true) {
+        throw ApiException(
+          JsonParsers.extractMessage(data) ?? errorMessage,
+          statusCode: response.statusCode,
+        );
       }
-      return [];
-    } catch (e) {
-      _logError('ZONES API ERROR', 'GET', ApiEndpoints.zones, e);
-      throw Exception(_extractErrorMessage(e, 'فشل جلب قائمة المناطق'));
+
+      return GeoActionResult.fromResponse(data, fallbackMessage: fallbackMessage);
+    } catch (error) {
+      _fail(method, endpoint, error, errorMessage);
     }
   }
 
-  @override
-  Future<List<ZoneModel>> getZonesTree() async {
-    try {
-      final response = await _apiClient.get(ApiEndpoints.zonesTree);
-      final data = response.data;
+  // ── المستوى الأول: البلديات الكبرى ─────────────────────────────────────────
 
-      if (data is Map<String, dynamic>) {
-        final rawList = data['data'] ?? data['tree'] ?? data['zones'];
-        if (rawList is List) {
-          return rawList.map((item) => ZoneModel.fromJson(item as Map<String, dynamic>)).toList();
-        }
-      } else if (data is List) {
-        return data.map((item) => ZoneModel.fromJson(item as Map<String, dynamic>)).toList();
-      }
-      return [];
-    } catch (e) {
-      _logError('ZONES TREE API ERROR', 'GET', ApiEndpoints.zonesTree, e);
-      return [];
-    }
+  @override
+  Future<List<MunicipalityModel>> getMunicipalities() {
+    return _getList(
+      ApiEndpoints.municipalities,
+      parser: MunicipalityModel.fromJson,
+      fallbackMessage: 'تعذّر جلب قائمة البلديات الكبرى.',
+    );
   }
 
   @override
-  Future<Map<String, dynamic>> addZone(Map<String, dynamic> data) async {
-    try {
-      final response = await _apiClient.post(ApiEndpoints.zones, data: data);
-      final resData = response.data;
-
-      if (resData is Map<String, dynamic>) {
-        final isSuccess = resData['status'] == true || resData['success'] == true;
-        if (isSuccess || resData['data'] != null) {
-          return {
-            'success': true,
-            'message': resData['message']?.toString() ?? 'تم إضافة المنطقة بنجاح.',
-            'data': resData['data'],
-          };
-        }
-        throw Exception(resData['message'] ?? 'تعذر إضافة المنطقة');
-      }
-      throw Exception('استجابة غير متوقعة من الخادم عند إضافة المنطقة');
-    } catch (e) {
-      _logError('ADD ZONE API ERROR', 'POST', ApiEndpoints.zones, e);
-      throw Exception(_extractErrorMessage(e, 'تعذر إضافة المنطقة'));
-    }
+  Future<GeoActionResult> addMunicipality({required String name}) {
+    return _write(
+      ApiEndpoints.municipalities,
+      method: 'POST',
+      body: {'name': name.trim()},
+      fallbackMessage: 'تم إضافة البلدية الكبرى بنجاح.',
+      errorMessage: 'تعذّر إضافة البلدية الكبرى.',
+    );
   }
 
   @override
-  Future<Map<String, dynamic>> updateZone(int id, Map<String, dynamic> data) async {
+  Future<GeoActionResult> updateMunicipality(int id, {required String name}) {
+    return _write(
+      ApiEndpoints.municipalityDetails(id),
+      method: 'PUT',
+      body: {'name': name.trim()},
+      fallbackMessage: 'تم تحديث اسم البلدية بنجاح.',
+      errorMessage: 'تعذّر تحديث البلدية الكبرى.',
+    );
+  }
+
+  @override
+  Future<GeoActionResult> deleteMunicipality(int id) {
+    return _write(
+      ApiEndpoints.municipalityDetails(id),
+      method: 'DELETE',
+      fallbackMessage: 'تم حذف البلدية بنجاح.',
+      errorMessage: 'تعذّر حذف البلدية الكبرى.',
+    );
+  }
+
+  // ── المستوى الثاني: البلديات الفرعية / المحلات ─────────────────────────────
+
+  @override
+  Future<List<SubMunicipalityModel>> getSubMunicipalities() {
+    return _getList(
+      ApiEndpoints.subMunicipalities,
+      parser: SubMunicipalityModel.fromJson,
+      fallbackMessage: 'تعذّر جلب قائمة البلديات الفرعية.',
+    );
+  }
+
+  @override
+  Future<GeoActionResult> addSubMunicipality({
+    required String name,
+    required int municipalityId,
+  }) {
+    return _write(
+      ApiEndpoints.subMunicipalities,
+      method: 'POST',
+      body: {'name': name.trim(), 'municipality_id': municipalityId},
+      fallbackMessage: 'تم إضافة البلدية الفرعية بنجاح.',
+      errorMessage: 'تعذّر إضافة البلدية الفرعية.',
+    );
+  }
+
+  @override
+  Future<GeoActionResult> updateSubMunicipality(
+    int id, {
+    required String name,
+    required int municipalityId,
+  }) {
+    return _write(
+      ApiEndpoints.subMunicipalityDetails(id),
+      method: 'PUT',
+      body: {'name': name.trim(), 'municipality_id': municipalityId},
+      fallbackMessage: 'تم تحديث بيانات البلدية الفرعية بنجاح.',
+      errorMessage: 'تعذّر تحديث البلدية الفرعية.',
+    );
+  }
+
+  @override
+  Future<GeoActionResult> deleteSubMunicipality(int id) {
+    return _write(
+      ApiEndpoints.subMunicipalityDetails(id),
+      method: 'DELETE',
+      fallbackMessage: 'تم حذف البلدية الفرعية بنجاح.',
+      errorMessage: 'تعذّر حذف البلدية الفرعية.',
+    );
+  }
+
+  // ── المستوى الثالث: المناطق الدقيقة ────────────────────────────────────────
+
+  @override
+  Future<List<ZoneModel>> getZones() {
+    return _getList(
+      ApiEndpoints.zones,
+      parser: ZoneModel.fromJson,
+      fallbackMessage: 'تعذّر جلب قائمة المناطق.',
+    );
+  }
+
+  /// الشجرة تأتي جاهزة من الخادم بثلاثة مستويات ولا تُبنى في العميل.
+  @override
+  Future<List<MunicipalityModel>> getZonesTree() {
+    return _getList(
+      ApiEndpoints.zonesTree,
+      parser: MunicipalityModel.fromJson,
+      fallbackMessage: 'تعذّر جلب شجرة الجغرافيا.',
+    );
+  }
+
+  @override
+  Future<ZoneModel> getZoneDetails(int id) async {
     final endpoint = ApiEndpoints.zoneDetails(id);
     try {
-      // Must strictly use PUT as specified by Backend Contract
-      final response = await _apiClient.put(endpoint, data: data);
-      final resData = response.data;
-
-      if (resData is Map<String, dynamic>) {
-        final isSuccess = resData['status'] == true || resData['success'] == true;
-        if (isSuccess || resData['message'] != null) {
-          return {
-            'success': true,
-            'message': resData['message']?.toString() ?? 'تم تعديل اسم المنطقة الجغرافية بنجاح.',
-          };
-        }
-        throw Exception(resData['message'] ?? 'تعذر تعديل المنطقة');
+      final response = await _apiClient.get(endpoint);
+      final object = JsonParsers.extractObject(response.data);
+      if (object == null) {
+        throw ApiException(
+          JsonParsers.extractMessage(response.data) ??
+              'استجابة غير متوافقة من الخادم عند جلب تفاصيل المنطقة.',
+          statusCode: response.statusCode,
+        );
       }
-      throw Exception('استجابة غير متوقعة من الخادم عند تعديل المنطقة');
-    } catch (e) {
-      _logError('UPDATE ZONE API ERROR', 'PUT', endpoint, e);
-      throw Exception(_extractErrorMessage(e, 'تعذر تعديل المنطقة'));
+      return ZoneModel.fromJson(object);
+    } catch (error) {
+      _fail('GET', endpoint, error, 'تعذّر جلب تفاصيل المنطقة.');
     }
   }
 
   @override
-  Future<Map<String, dynamic>> deleteZone(int id) async {
-    final endpoint = ApiEndpoints.zoneDetails(id);
-    try {
-      final response = await _apiClient.delete(endpoint);
-      final resData = response.data;
+  Future<GeoActionResult> addZone({
+    required String name,
+    int? subMunicipalityId,
+  }) {
+    return _write(
+      ApiEndpoints.zones,
+      method: 'POST',
+      body: {
+        'name': name.trim(),
+        // `sub_municipality_id` اختياري في العقد، فلا يُرسل إن لم يُحدَّد.
+        if (subMunicipalityId != null) 'sub_municipality_id': subMunicipalityId,
+      },
+      fallbackMessage: 'تم إضافة المنطقة بنجاح.',
+      errorMessage: 'تعذّر إضافة المنطقة.',
+    );
+  }
 
-      if (resData is Map<String, dynamic>) {
-        final isSuccess = resData['status'] == true || resData['success'] == true;
-        if (isSuccess || resData['message'] != null) {
-          return {
-            'success': true,
-            'message': resData['message']?.toString() ?? 'تم حذف المنطقة الجغرافية بنجاح.',
-          };
-        }
-        throw Exception(resData['message'] ?? 'تعذر حذف المنطقة');
-      }
-      throw Exception('استجابة غير متوقعة من الخادم عند حذف المنطقة');
-    } catch (e) {
-      _logError('DELETE ZONE API ERROR', 'DELETE', endpoint, e);
-      throw Exception(_extractErrorMessage(e, 'تعذر حذف المنطقة'));
-    }
+  @override
+  Future<GeoActionResult> updateZone(
+    int id, {
+    required String name,
+    int? subMunicipalityId,
+  }) {
+    return _write(
+      ApiEndpoints.zoneDetails(id),
+      method: 'PUT',
+      body: {
+        'name': name.trim(),
+        if (subMunicipalityId != null) 'sub_municipality_id': subMunicipalityId,
+      },
+      fallbackMessage: 'تم تحديث بيانات المنطقة بنجاح.',
+      errorMessage: 'تعذّر تحديث المنطقة.',
+    );
+  }
+
+  @override
+  Future<GeoActionResult> deleteZone(int id) {
+    return _write(
+      ApiEndpoints.zoneDetails(id),
+      method: 'DELETE',
+      fallbackMessage: 'تم حذف المنطقة من النظام بنجاح.',
+      errorMessage: 'تعذّر حذف المنطقة.',
+    );
   }
 }

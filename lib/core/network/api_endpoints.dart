@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -58,10 +58,29 @@ class ApiEndpoints {
   static const String schools = '/admin/schools';
   static String schoolDetails(dynamic id) => '/admin/schools/$id';
 
-  // ── 5. Zones & Geography ────────────────────────────────────────────────────
+  // ── 5. Zones & Geography (3 مستويات) ────────────────────────────────────────
+  // المستوى الأول: البلديات الكبرى
+  static const String municipalities = '/admin/municipalities';
+  static String municipalityDetails(dynamic id) => '/admin/municipalities/$id';
+
+  // المستوى الثاني: البلديات الفرعية / المحلات
+  static const String subMunicipalities = '/admin/sub-municipalities';
+  static String subMunicipalityDetails(dynamic id) =>
+      '/admin/sub-municipalities/$id';
+
+  // المستوى الثالث: المناطق الدقيقة
   static const String zones = '/admin/zones';
   static const String zonesTree = '/admin/zones-tree';
   static String zoneDetails(dynamic id) => '/admin/zones/$id';
+
+  // ── 5.1 Reports & Analytics ─────────────────────────────────────────────────
+  static const String reportsKpiSummary = '/admin/reports/kpi-summary';
+  static const String reportsFinancial = '/admin/reports/financial';
+  static const String reportsTrips = '/admin/reports/trips';
+  static const String reportsSubscriptions = '/admin/reports/subscriptions';
+  static const String reportsDriversPerformance =
+      '/admin/reports/drivers-performance';
+  static const String reportsExport = '/admin/reports/export';
 
   // ── 6. Complaints ───────────────────────────────────────────────────────────
   static const String complaints = '/admin/complaints';
@@ -74,26 +93,46 @@ class ApiEndpoints {
   static String driverReviewDetails(dynamic id) => '/admin/driver-reviews/$id';
 
   // ── 8. Financial ────────────────────────────────────────────────────────────
+  static const String financialSummary = '/admin/financial/summary';
+  static const String financialAuditLogs = '/admin/financial/audit-logs';
+
   static const String invoices = '/admin/financial/invoices';
   static String invoiceDetails(dynamic id) => '/admin/financial/invoices/$id';
+
   static const String withdrawals = '/admin/financial/withdrawals';
+  static String withdrawalDetails(dynamic id) =>
+      '/admin/financial/withdrawals/$id';
   static String withdrawalProcess(dynamic id) =>
       '/admin/financial/withdrawals/$id/process';
+
   static const String recharges = '/admin/financial/recharges';
+  static String rechargeDetails(dynamic id) => '/admin/financial/recharges/$id';
   static String rechargeProcess(dynamic id) =>
       '/admin/financial/recharges/$id/process';
 
   // ── 9. Treasury, Ledger & Advanced Financial Engine ─────────────────────────
   static const String solvencyCheck = '/admin/financial/solvency-check';
   static const String ledger = '/admin/financial/ledger';
+  static const String escrows = '/admin/financial/escrows';
   static const String releaseEscrows = '/admin/financial/release-escrows';
 
+  static const String disputes = '/admin/financial/disputes';
+  static String disputeDetails(dynamic disputeId) =>
+      '/admin/financial/disputes/$disputeId';
   static String disputeResolve(dynamic disputeId) =>
       '/admin/financial/disputes/$disputeId/resolve';
+
+  static const String pendingSettlements =
+      '/admin/financial/contracts/pending-settlements';
   static String contractSettleMonthly(dynamic contractId) =>
       '/admin/financial/contracts/$contractId/settle-monthly';
+  static String contractTerminationPreview(dynamic contractId) =>
+      '/admin/financial/contracts/$contractId/termination-preview';
   static String contractTerminateMidMonth(dynamic contractId) =>
       '/admin/financial/contracts/$contractId/terminate-mid-month';
+
+  static String tripCancelPreview(dynamic tripId) =>
+      '/admin/financial/trips/$tripId/cancel-preview';
   static String tripCancelWithMatrix(dynamic tripId) =>
       '/admin/financial/trips/$tripId/cancel-with-matrix';
 

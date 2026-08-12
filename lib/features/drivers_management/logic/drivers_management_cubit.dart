@@ -96,7 +96,7 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
   /// 3. POST /api/admin/drivers/{id}/review
   Future<bool> reviewDriver({
     required int id,
-    required String action, // approve or reject
+    required String status, // Approved or Rejected
     String? rejectionReason,
   }) async {
     if (state.isSubmittingReview) return false;
@@ -109,7 +109,7 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
     try {
       final msg = await _repository.reviewDriver(
         id: id,
-        action: action,
+        status: status,
         rejectionReason: rejectionReason,
       );
 
@@ -118,7 +118,7 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         successMessage: msg,
       ));
 
-      // Refresh clean drivers list and details
+      // Auto refresh drivers list and details from Backend
       await fetchDrivers(page: state.meta.currentPage);
       await fetchDriverDetails(id);
       return true;

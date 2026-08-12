@@ -43,6 +43,19 @@ class ApiClient {
     return await dio.post(path, data: data, queryParameters: queryParameters);
   }
 
+  /// طلب GET يعيد المحتوى كبايتات خام، للملفات التي لا تكون JSON
+  /// (مثل تصدير التقارير بصيغة CSV).
+  Future<Response<List<int>>> download(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    return await dio.get<List<int>>(
+      path,
+      queryParameters: queryParameters,
+      options: Options(responseType: ResponseType.bytes),
+    );
+  }
+
   Future<Response> put(String path, {dynamic data}) async {
     return await dio.put(path, data: data);
   }

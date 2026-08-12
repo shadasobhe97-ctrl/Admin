@@ -1,13 +1,16 @@
+import '../../../zones/data/models/zone_model.dart';
 import '../datasources/schools_remote_datasource.dart';
 import '../models/school_model.dart';
-import '../models/zone_model.dart';
+import '../models/school_payload.dart';
 
+/// عقد طبقة البيانات كما تراه طبقة المنطق.
+/// الشاشات والـ Cubit لا تعرف شيئاً عن Dio أو مسارات الـ API.
 abstract class SchoolsRepository {
-  Future<List<SchoolModel>> getSchools({String? search});
+  Future<List<SchoolModel>> getSchools();
   Future<SchoolModel> getSchoolDetails(int id);
-  Future<Map<String, dynamic>> addSchool(Map<String, dynamic> data);
-  Future<Map<String, dynamic>> updateSchool(int id, Map<String, dynamic> data);
-  Future<Map<String, dynamic>> deleteSchool(int id);
+  Future<SchoolActionResult> addSchool(CreateSchoolPayload payload);
+  Future<SchoolActionResult> updateSchool(int id, UpdateSchoolPayload payload);
+  Future<SchoolActionResult> deleteSchool(int id);
   Future<List<ZoneModel>> getZones();
 }
 
@@ -17,32 +20,27 @@ class SchoolsRepositoryImpl implements SchoolsRepository {
   SchoolsRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<List<SchoolModel>> getSchools({String? search}) async {
-    return await _remoteDataSource.getSchools(search: search);
-  }
+  Future<List<SchoolModel>> getSchools() => _remoteDataSource.getSchools();
 
   @override
-  Future<SchoolModel> getSchoolDetails(int id) async {
-    return await _remoteDataSource.getSchoolDetails(id);
-  }
+  Future<SchoolModel> getSchoolDetails(int id) =>
+      _remoteDataSource.getSchoolDetails(id);
 
   @override
-  Future<Map<String, dynamic>> addSchool(Map<String, dynamic> data) async {
-    return await _remoteDataSource.addSchool(data);
-  }
+  Future<SchoolActionResult> addSchool(CreateSchoolPayload payload) =>
+      _remoteDataSource.addSchool(payload);
 
   @override
-  Future<Map<String, dynamic>> updateSchool(int id, Map<String, dynamic> data) async {
-    return await _remoteDataSource.updateSchool(id, data);
-  }
+  Future<SchoolActionResult> updateSchool(
+    int id,
+    UpdateSchoolPayload payload,
+  ) =>
+      _remoteDataSource.updateSchool(id, payload);
 
   @override
-  Future<Map<String, dynamic>> deleteSchool(int id) async {
-    return await _remoteDataSource.deleteSchool(id);
-  }
+  Future<SchoolActionResult> deleteSchool(int id) =>
+      _remoteDataSource.deleteSchool(id);
 
   @override
-  Future<List<ZoneModel>> getZones() async {
-    return await _remoteDataSource.getZones();
-  }
+  Future<List<ZoneModel>> getZones() => _remoteDataSource.getZones();
 }

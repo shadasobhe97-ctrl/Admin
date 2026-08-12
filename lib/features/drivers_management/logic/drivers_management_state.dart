@@ -3,7 +3,7 @@ import '../data/models/driver_change_request_model.dart';
 import '../data/models/driver_details_model.dart';
 import '../data/models/driver_model.dart';
 import '../data/models/driver_review_model.dart';
-import '../data/models/pagination_meta_model.dart';
+import '../../../../core/models/pagination_meta_model.dart';
 
 class DriversManagementState {
   final List<DriverModel> drivers;

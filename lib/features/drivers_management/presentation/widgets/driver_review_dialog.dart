@@ -97,7 +97,7 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: () {
-                          widget.onSubmit('approve', null);
+                          widget.onSubmit('Approved', null);
                           Navigator.pop(context);
                         },
                         icon: const Icon(Icons.check_circle_outline, size: 18),
@@ -117,7 +117,7 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
                         maxLines: 3,
                         style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 13),
                         decoration: const InputDecoration(
-                          labelText: 'سبب الرفض (مطلوب)',
+                          labelText: 'سبب الرفض (مطلوب عند الرفض)',
                           hintText: 'مثال: صورة رخصة القيادة غير واضحة، الكتيب منتهي الصلاحية...',
                         ),
                         validator: (val) {
@@ -145,7 +145,7 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
                             ),
                             onPressed: () {
                               if (_formKey.currentState?.validate() ?? false) {
-                                widget.onSubmit('reject', _reasonController.text.trim());
+                                widget.onSubmit('Rejected', _reasonController.text.trim());
                                 Navigator.pop(context);
                               }
                             },

@@ -7,7 +7,7 @@ import '../models/driver_change_request_model.dart';
 import '../models/driver_details_model.dart';
 import '../models/driver_model.dart';
 import '../models/driver_review_model.dart';
-import '../models/pagination_meta_model.dart';
+import '../../../../core/models/pagination_meta_model.dart';
 
 class DriversListResult {
   final List<DriverModel> drivers;
@@ -110,13 +110,13 @@ class DriversManagementRemoteDataSource {
   /// 3. POST /api/admin/drivers/{id}/review
   Future<String> reviewDriver({
     required int id,
-    required String action, // approve or reject
+    required String status, // Approved or Rejected
     String? rejectionReason,
   }) async {
     final endpoint = ApiEndpoints.driverReview(id);
     try {
-      final Map<String, dynamic> body = {'action': action};
-      if (action == 'reject' && rejectionReason != null && rejectionReason.trim().isNotEmpty) {
+      final Map<String, dynamic> body = {'status': status};
+      if (status == 'Rejected' && rejectionReason != null && rejectionReason.trim().isNotEmpty) {
         body['rejection_reason'] = rejectionReason.trim();
       }
 
@@ -133,9 +133,12 @@ class DriversManagementRemoteDataSource {
   }
 
   /// 4. GET /api/admin/drivers/pending-changes
-  Future<List<DriverChangeRequestModel>> getPendingDriverChanges() async {
+  Future<List<DriverChangeRequestModel>> getPendingDriverChanges({int page = 1}) async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.pendingChanges);
+      final response = await _apiClient.get(
+        ApiEndpoints.pendingChanges,
+        queryParameters: {'page': page},
+      );
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final listRaw = data['data'];

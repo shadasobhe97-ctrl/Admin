@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/admin_theme_context.dart';
+import '../../data/models/school_model.dart';
 import '../../logic/cubit/schools_cubit.dart';
 import '../../logic/state/schools_state.dart';
+import '../widget/school_map_view_dialog.dart';
 
 
 class SchoolDetailsScreen extends StatelessWidget {
@@ -28,7 +31,6 @@ class SchoolDetailsViewContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -94,7 +96,7 @@ class SchoolDetailsViewContent extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                        color: context.cardShadow,
                         blurRadius: 15,
                         offset: const Offset(0, 4),
                       ),
@@ -130,6 +132,8 @@ class SchoolDetailsViewContent extends StatelessWidget {
                                   'المعرف في النظام (ID): #${school.id}',
                                   style: theme.textTheme.bodySmall,
                                 ),
+                                const SizedBox(height: 6),
+                                _StatusBadge(school: school),
                               ],
                             ),
                           ),
@@ -152,13 +156,36 @@ class SchoolDetailsViewContent extends StatelessWidget {
                             ? school.zoneName!
                             : (school.zoneId != null ? 'منطقة #${school.zoneId}' : 'غير محددة'),
                       ),
+                      if (school.hasCoordinates)
+                        InkWell(
+                          onTap: () {
+                            SchoolMapViewDialog.show(
+                              context,
+                              lat: school.lat!,
+                              lng: school.lng!,
+                              schoolName: school.name,
+                            );
+                          },
+                          child: _detailItem(
+                            context,
+                            icon: Icons.my_location_rounded,
+                            label: 'الإحداثيات الجغرافية (GPS)',
+                            value: 'انقر لعرض الموقع على الخريطة\n${school.coordinatesLabel}',
+                            isClickable: true,
+                          ),
+                        )
+                      else
+                        _detailItem(
+                          context,
+                          icon: Icons.my_location_rounded,
+                          label: 'الإحداثيات الجغرافية (GPS)',
+                          value: 'غير متوفرة',
+                        ),
                       _detailItem(
                         context,
-                        icon: Icons.my_location_rounded,
-                        label: 'الإحداثيات الجغرافية (GPS)',
-                        value: (school.latitude != null && school.longitude != null)
-                            ? 'Lat: ${school.latitude}, Lng: ${school.longitude}'
-                            : 'غير متوفرة',
+                        icon: Icons.verified_outlined,
+                        label: 'حالة الاعتماد',
+                        value: school.statusLabel,
                       ),
                     ],
                   ),
@@ -178,10 +205,11 @@ class SchoolDetailsViewContent extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    bool isClickable = false,
   }) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -200,12 +228,48 @@ class SchoolDetailsViewContent extends StatelessWidget {
                   value,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: isClickable ? theme.colorScheme.primary : null,
+                    decoration: isClickable ? TextDecoration.underline : null,
                   ),
                 ),
               ],
             ),
           ),
+          if (isClickable)
+            Icon(Icons.open_in_new_rounded, size: 16, color: theme.colorScheme.primary),
         ],
+      ),
+    );
+  }
+}
+
+/// شارة حالة الاعتماد — ألوانها من الثيم لا من قيم ثابتة.
+class _StatusBadge extends StatelessWidget {
+  final SchoolModel school;
+
+  const _StatusBadge({required this.school});
+
+  @override
+  Widget build(BuildContext context) {
+    final isApproved = school.isApproved;
+    final foreground = isApproved ? context.successColor : context.warningColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isApproved ? context.successBg : context.warningBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isApproved ? context.successBorder : context.warningBorder,
+        ),
+      ),
+      child: Text(
+        school.statusLabel,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: foreground,
+        ),
       ),
     );
   }

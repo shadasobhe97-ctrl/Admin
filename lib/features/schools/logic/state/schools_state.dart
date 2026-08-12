@@ -1,5 +1,5 @@
+import '../../../zones/data/models/zone_model.dart';
 import '../../data/models/school_model.dart';
-import '../../data/models/zone_model.dart';
 
 abstract class SchoolsState {
   const SchoolsState();
@@ -14,24 +14,39 @@ class SchoolsLoading extends SchoolsState {
 }
 
 class SchoolsLoaded extends SchoolsState {
+  /// المدارس بعد تطبيق البحث والفلترة محلياً.
   final List<SchoolModel> schools;
   final List<ZoneModel> zones;
   final String? searchQuery;
 
+  /// فلتر الحالة المطبّق حالياً (`approved` / `pending`)، أو `null` للكل.
+  final String? statusFilter;
+
+  /// إجمالي المدارس قبل الفلترة، لعرضه في العدّاد.
+  final int totalCount;
+
   const SchoolsLoaded({
     required this.schools,
     required this.zones,
+    required this.totalCount,
     this.searchQuery,
+    this.statusFilter,
   });
 }
 
 class SchoolsEmpty extends SchoolsState {
-  final String? searchQuery;
   final List<ZoneModel> zones;
+  final String? searchQuery;
+  final String? statusFilter;
+
+  /// `true` إذا كانت القائمة فارغة بسبب البحث أو الفلترة لا لعدم وجود بيانات.
+  final bool isFiltered;
 
   const SchoolsEmpty({
-    this.searchQuery,
     this.zones = const [],
+    this.searchQuery,
+    this.statusFilter,
+    this.isFiltered = false,
   });
 }
 

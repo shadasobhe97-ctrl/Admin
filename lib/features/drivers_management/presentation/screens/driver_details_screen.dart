@@ -35,10 +35,10 @@ class DriverDetailsScreen extends StatelessWidget {
       context: context,
       builder: (_) => DriverReviewDialog(
         driverName: driverName,
-        onSubmit: (action, reason) {
+        onSubmit: (status, reason) {
           cubit.reviewDriver(
             id: driverId,
-            action: action,
+            status: status,
             rejectionReason: reason,
           );
         },
@@ -125,38 +125,82 @@ class DriverDetailsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: theme.dividerColor),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          DriverAvatar(
-                            avatarUrl: driver.avatarUrl,
-                            fullName: driver.fullName,
-                            radius: 36,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  driver.fullName,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  ),
+                          Row(
+                            children: [
+                              DriverAvatar(
+                                avatarUrl: driver.avatarUrl,
+                                fullName: driver.fullName,
+                                radius: 36,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      driver.fullName,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'رقم الهاتف: ${driver.phoneNumber} | معرّف (ID): #${driver.id}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'رقم الهاتف: ${driver.phoneNumber} | معرّف (ID): #${driver.id}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                              DriverStatusBadge(status: driver.status),
+                            ],
                           ),
-                          DriverStatusBadge(status: driver.status),
+                          const SizedBox(height: 14),
+                          Divider(height: 1, color: theme.dividerColor),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.badge_outlined, size: 18, color: Color(0xFF2563EB)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'الرقم الوطني: ${driver.nationalId ?? "غير متوفر"}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.card_membership_rounded, size: 18, color: Color(0xFF2563EB)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'رقم الرخصة: ${driver.licenseNumber ?? "غير متوفر"}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -208,7 +252,7 @@ class DriverDetailsScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'رقم اللوحة: ${vehicle.plateNumber} ${vehicle.year != null ? "| سنة: ${vehicle.year}" : ""}',
+                                    'رقم اللوحة: ${vehicle.plateNumber}${vehicle.year != null ? " | سنة: ${vehicle.year}" : ""}${vehicle.capacity != null ? " | السعة: ${vehicle.capacity} راكب" : ""}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -297,18 +341,20 @@ class DriverDetailsScreen extends StatelessWidget {
                       }),
                     const SizedBox(height: 20),
 
-                    // Driver Reviews Section
-                    Text(
-                      '⭐ تقييمات وتعليقات أولياء الأمور والركاب',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    // Driver Reviews Section (Only displayed if driver status is Approved and isActive)
+                    if ((driver.status.toLowerCase() == 'approved' || driver.approvalStatus?.toLowerCase() == 'approved') && driver.isActive) ...[
+                      Text(
+                        '⭐ تقييمات وتعليقات أولياء الأمور والركاب',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    DriverReviewsSection(driverId: driver.id),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 10),
+                      DriverReviewsSection(driverId: driver.id),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Actions Footer
                     Row(

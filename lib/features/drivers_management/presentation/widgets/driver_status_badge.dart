@@ -29,6 +29,24 @@ class DriverStatusBadge extends StatelessWidget {
         icon = Icons.cancel_rounded;
         label = 'مرفوض';
         break;
+      case 'suspended':
+        bgColor = isDark ? const Color(0xFF475569).withValues(alpha: 0.4) : const Color(0xFFF1F5F9);
+        textColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        icon = Icons.block_rounded;
+        label = 'موقوف';
+        break;
+      case 'offline':
+        bgColor = isDark ? const Color(0xFF334155).withValues(alpha: 0.4) : const Color(0xFFF8FAFC);
+        textColor = isDark ? const Color(0xFF64748B) : const Color(0xFF475569);
+        icon = Icons.wifi_off_rounded;
+        label = 'غير متصل';
+        break;
+      case 'on_trip':
+        bgColor = isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.4) : const Color(0xFFEFF6FF);
+        textColor = isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB);
+        icon = Icons.directions_bus_rounded;
+        label = 'في رحلة';
+        break;
       case 'pending':
       default:
         bgColor = isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFFFBEB);

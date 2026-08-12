@@ -15,9 +15,8 @@ import '../../../admin_management/presentation/screens/admins_screen.dart';
 import '../../../schools/presentation/screens/schools_management_screen.dart';
 import '../../../zones/presentation/screens/zones_management_screen.dart';
 import '../../../complaints/presentation/screens/complaints_support_screen.dart';
-import '../../../financial/presentation/screens/financial_cashout_screen.dart';
-import '../../../treasury/presentation/screens/treasury_ledger_screen.dart';
-import '../../../reports/presentation/screens/analytical_reports_screen.dart';
+import '../../../financial/presentation/screen/financial_dashboard_screen.dart';
+import '../../../reports/presentation/screen/reports_dashboard_screen.dart';
 import '../../../profile/presentation/screen/admin_profile_screen.dart';
 
 class DerbiMainDashboard extends StatefulWidget {
@@ -48,9 +47,8 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     NavigationItem('zones', 'المناطق والجغرافيا', Icons.map_rounded, badge: 0),
     NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
     NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
-    NavigationItem('financial', 'المالية والعمليات', Icons.account_balance_wallet_rounded, badge: 5),
-    NavigationItem('treasury', 'الخزينة ودفتر الحسابات', Icons.account_balance_rounded, badge: 0),
-    NavigationItem('reports', 'التقارير التحليلية', Icons.analytics_rounded, badge: 0),
+    NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0),
+    NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
     NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
   ];
 
@@ -338,12 +336,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       case 7:
         return const DriverReviewsScreen();
       case 8:
-        return const FinancialCashoutView();
+        return const FinancialDashboardScreen();
       case 9:
-        return const TreasuryLedgerView();
+        return const ReportsDashboardScreen();
       case 10:
-        return const AnalyticalReportsView();
-      case 11:
         return AdminProfileView(
           adminName: _adminName,
           onNameChanged: (newName) => setState(() => _adminName = newName),

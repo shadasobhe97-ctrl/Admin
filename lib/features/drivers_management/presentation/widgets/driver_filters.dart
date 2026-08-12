@@ -18,8 +18,11 @@ class DriverFiltersWidget extends StatelessWidget {
     final filters = [
       {'key': 'all', 'label': 'جميع السائقين'},
       {'key': 'pending', 'label': 'طلبات جديدة (Pending)'},
-      {'key': 'Approved', 'label': 'سائقون مفعّلون (Approved)'},
-      {'key': 'Rejected', 'label': 'طلبات مرفوضة (Rejected)'},
+      {'key': 'approved', 'label': 'سائقون مفعّلون (Approved)'},
+      {'key': 'suspended', 'label': 'حسابات موقوفة (Suspended)'},
+      {'key': 'rejected', 'label': 'طلبات مرفوضة (Rejected)'},
+      {'key': 'offline', 'label': 'غير متصل (Offline)'},
+      {'key': 'on_trip', 'label': 'في رحلة (ON_TRIP)'},
     ];
 
     return Wrap(
