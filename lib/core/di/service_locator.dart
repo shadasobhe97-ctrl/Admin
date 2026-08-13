@@ -34,6 +34,9 @@ import '../../features/reports/logic/cubit/reports_cubit.dart';
 import '../../features/zones/data/datasources/zones_remote_datasource.dart';
 import '../../features/zones/data/repositories/zones_repository_impl.dart';
 import '../../features/zones/logic/cubit/zones_cubit.dart';
+import '../../features/complaints/data/datasources/complaints_remote_datasource.dart';
+import '../../features/complaints/data/repositories/complaints_repository.dart';
+import '../../features/complaints/logic/cubit/complaints_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -166,5 +169,16 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory<ReportsCubit>(
     () => ReportsCubit(sl<ReportsRepository>()),
+  );
+
+  // ── Complaints Management Feature ──────────────────────────────────────────
+  sl.registerLazySingleton<ComplaintsRemoteDataSource>(
+    () => ComplaintsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<ComplaintsRepository>(
+    () => ComplaintsRepositoryImpl(sl<ComplaintsRemoteDataSource>()),
+  );
+  sl.registerFactory<ComplaintsCubit>(
+    () => ComplaintsCubit(sl<ComplaintsRepository>()),
   );
 }
