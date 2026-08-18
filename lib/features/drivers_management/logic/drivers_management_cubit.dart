@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../data/models/update_driver_payload.dart';
 import '../data/repositories/drivers_management_repository.dart';
 import 'drivers_management_state.dart';
 
@@ -125,6 +126,48 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
     } catch (e) {
       emit(state.copyWith(
         isSubmittingReview: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  /// 3.1 PUT /api/admin/drivers/{id}
+  ///
+  /// يحفظ تعديل بيانات السائق ثم يعيد جلب التفاصيل والقائمة من الخادم.
+  /// السجل يُكتب في الخادم تلقائياً ولا ترسله الواجهة.
+  Future<bool> updateDriver({
+    required int id,
+    required UpdateDriverPayload payload,
+  }) async {
+    if (state.isUpdatingDriver) return false;
+
+    // لا يُرسل طلب إن لم يتغيّر أي حقل.
+    if (payload.isEmpty) {
+      emit(state.copyWith(
+        clearError: true,
+        successMessage: 'لم يتم تعديل أي بيانات.',
+      ));
+      return true;
+    }
+
+    emit(state.copyWith(
+      isUpdatingDriver: true,
+      clearError: true,
+      clearSuccess: true,
+    ));
+
+    try {
+      final msg = await _repository.updateDriver(id: id, payload: payload);
+
+      emit(state.copyWith(isUpdatingDriver: false, successMessage: msg));
+
+      await fetchDriverDetails(id);
+      await fetchDrivers(page: state.meta.currentPage);
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isUpdatingDriver: false,
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
       return false;

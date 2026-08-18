@@ -7,6 +7,9 @@ class DriverModel {
   final String? approvalStatus;
   final String? nationalId;
   final String? licenseNumber;
+
+  /// تاريخ انتهاء الرخصة بصيغة YYYY-MM-DD كما يرسله الخادم.
+  final String? licenseExpiry;
   final String? avatarUrl;
   final String? createdAt;
   final bool isActive;
@@ -20,6 +23,7 @@ class DriverModel {
     this.approvalStatus,
     this.nationalId,
     this.licenseNumber,
+    this.licenseExpiry,
     this.avatarUrl,
     this.createdAt,
     this.isActive = true,
@@ -50,6 +54,7 @@ class DriverModel {
       approvalStatus: json['approval_status']?.toString() ?? json['status']?.toString(),
       nationalId: json['national_id']?.toString(),
       licenseNumber: json['license_number']?.toString(),
+      licenseExpiry: json['license_expiry']?.toString(),
       avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
       createdAt: json['created_at']?.toString(),
       isActive: parsedActive,
@@ -66,6 +71,7 @@ class DriverModel {
       'approval_status': approvalStatus,
       'national_id': nationalId,
       'license_number': licenseNumber,
+      'license_expiry': licenseExpiry,
       'avatar_url': avatarUrl,
       'created_at': createdAt,
       'is_active': isActive,

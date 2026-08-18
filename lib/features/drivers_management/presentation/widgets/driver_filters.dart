@@ -17,12 +17,12 @@ class DriverFiltersWidget extends StatelessWidget {
 
     final filters = [
       {'key': 'all', 'label': 'جميع السائقين'},
-      {'key': 'pending', 'label': 'طلبات جديدة (Pending)'},
-      {'key': 'approved', 'label': 'سائقون مفعّلون (Approved)'},
-      {'key': 'suspended', 'label': 'حسابات موقوفة (Suspended)'},
-      {'key': 'rejected', 'label': 'طلبات مرفوضة (Rejected)'},
-      {'key': 'offline', 'label': 'غير متصل (Offline)'},
-      {'key': 'on_trip', 'label': 'في رحلة (ON_TRIP)'},
+      {'key': 'Pending', 'label': 'طلبات جديدة (Pending)'},
+      {'key': 'Approved', 'label': 'سائقون مفعّلون (Approved)'},
+      {'key': 'Suspended', 'label': 'حسابات موقوفة (Suspended)'},
+      {'key': 'Rejected', 'label': 'طلبات مرفوضة (Rejected)'},
+      {'key': 'Offline', 'label': 'غير متصل (Offline)'},
+      {'key': 'ON_TRIP', 'label': 'في رحلة (ON_TRIP)'},
     ];
 
     return Wrap(
@@ -31,7 +31,8 @@ class DriverFiltersWidget extends StatelessWidget {
       children: filters.map((f) {
         final key = f['key']!;
         final label = f['label']!;
-        final isSelected = selectedStatus == key || (key == 'all' && (selectedStatus.isEmpty || selectedStatus == 'all'));
+        final isSelected = selectedStatus.toLowerCase() == key.toLowerCase() ||
+            (key == 'all' && (selectedStatus.isEmpty || selectedStatus.toLowerCase() == 'all'));
 
         return ChoiceChip(
           label: Text(label),

@@ -3,6 +3,7 @@ import '../models/driver_change_details_model.dart';
 import '../models/driver_change_request_model.dart';
 import '../models/driver_details_model.dart';
 import '../models/driver_review_model.dart';
+import '../models/update_driver_payload.dart';
 
 class DriversManagementRepository {
   final DriversManagementRemoteDataSource _remoteDataSource;
@@ -40,6 +41,18 @@ class DriversManagementRepository {
         status: status,
         rejectionReason: rejectionReason,
       );
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  /// تعديل مباشر لبيانات السائق — يُسجَّل تلقائياً في سجل إجراءات المشرفين.
+  Future<String> updateDriver({
+    required int id,
+    required UpdateDriverPayload payload,
+  }) async {
+    try {
+      return await _remoteDataSource.updateDriver(id: id, payload: payload);
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }

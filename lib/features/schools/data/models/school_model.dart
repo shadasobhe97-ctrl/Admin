@@ -20,21 +20,30 @@ class SchoolZoneRef {
   }
 }
 
-/// حالات اعتماد المدرسة المسموح بها من الخادم (`in:approved,pending`).
+/// حالات اعتماد المدرسة المسموح بها من الخادم (`in:approved,pending,active,inactive,rejected`).
 class SchoolStatus {
   const SchoolStatus._();
 
   static const String approved = 'approved';
+  static const String active = 'active';
   static const String pending = 'pending';
+  static const String inactive = 'inactive';
+  static const String rejected = 'rejected';
 
-  static const List<String> all = [approved, pending];
+  static const List<String> all = [approved, active, pending, inactive, rejected];
 
   static String label(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case approved:
         return 'معتمدة';
+      case active:
+        return 'نشطة';
       case pending:
         return 'قيد الاعتماد';
+      case inactive:
+        return 'غير نشطة';
+      case rejected:
+        return 'مرفوضة';
       default:
         return status;
     }
@@ -84,7 +93,9 @@ class SchoolModel {
   int? get zoneId => zone?.id;
   String? get zoneName => zone?.name;
 
-  bool get isApproved => status == SchoolStatus.approved;
+  bool get isApproved =>
+      status.toLowerCase() == SchoolStatus.approved ||
+      status.toLowerCase() == SchoolStatus.active;
   bool get hasCoordinates => lat != null && lng != null;
 
   String get statusLabel => SchoolStatus.label(status);

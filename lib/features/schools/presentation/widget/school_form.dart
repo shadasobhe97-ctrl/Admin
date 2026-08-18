@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../zones/data/models/zone_model.dart';
 import '../../data/models/school_model.dart';
 import '../../data/models/school_payload.dart';
+import '../../data/repositories/schools_repository_impl.dart';
 import 'school_location_picker_dialog.dart';
 
 /// نموذج إضافة وتعديل مدرسة.
@@ -39,8 +41,21 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
 
   int? _selectedZoneId;
   late String _selectedStatus;
+  late List<ZoneModel> _zones;
+  bool _isLoadingZones = false;
 
   bool get _isEditing => widget.school != null;
+
+  List<ZoneModel> get _availableZones {
+    final seen = <int>{};
+    final list = <ZoneModel>[];
+    for (final zone in _zones) {
+      if (seen.add(zone.id)) {
+        list.add(zone);
+      }
+    }
+    return list;
+  }
 
   @override
   void initState() {
@@ -55,8 +70,37 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
 
     _selectedStatus = school?.status ?? SchoolStatus.approved;
 
-    final zoneExists = widget.zones.any((zone) => zone.id == school?.zoneId);
+    _zones = List<ZoneModel>.from(widget.zones);
+    _initSelectedZone();
+
+    if (_zones.isEmpty) {
+      _fetchZones();
+    }
+  }
+
+  void _initSelectedZone() {
+    final school = widget.school;
+    final zoneExists = _zones.any((zone) => zone.id == school?.zoneId);
     _selectedZoneId = zoneExists ? school!.zoneId : null;
+  }
+
+  Future<void> _fetchZones() async {
+    if (_isLoadingZones) return;
+    setState(() => _isLoadingZones = true);
+    try {
+      final fetched = await sl<SchoolsRepository>().getZones();
+      if (mounted) {
+        setState(() {
+          _zones = fetched;
+          _isLoadingZones = false;
+          _initSelectedZone();
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingZones = false);
+      }
+    }
   }
 
   @override
@@ -178,14 +222,37 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
 
                   // المنطقة الجغرافية مطلوبة — `zone_id` إجباري في العقد.
                   DropdownButtonFormField<int>(
-                    initialValue: _selectedZoneId,
+                    initialValue: _availableZones.any((z) => z.id == _selectedZoneId)
+                        ? _selectedZoneId
+                        : null,
                     isExpanded: true,
                     dropdownColor: context.cardColor,
                     style: TextStyle(fontSize: 13, color: context.textPrimary),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'المنطقة الجغرافية المرتبطة',
+                      hintText: _isLoadingZones
+                          ? 'جاري تحميل المناطق...'
+                          : _availableZones.isEmpty
+                              ? 'لا توجد مناطق جغرافية متاحة'
+                              : 'اختر المنطقة الجغرافية',
+                      suffixIcon: _isLoadingZones
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : (_availableZones.isEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                                  tooltip: 'إعادة جلب المناطق',
+                                  onPressed: _fetchZones,
+                                )
+                              : null),
                     ),
-                    items: widget.zones
+                    items: _availableZones
                         .map(
                           (zone) => DropdownMenuItem<int>(
                             value: zone.id,
@@ -199,8 +266,10 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
                           ),
                         )
                         .toList(),
-                    onChanged: (value) =>
-                        setState(() => _selectedZoneId = value),
+                    onChanged: _availableZones.isEmpty
+                        ? null
+                        : (value) =>
+                            setState(() => _selectedZoneId = value),
                     validator: (value) =>
                         value == null ? 'يرجى اختيار المنطقة الجغرافية' : null,
                   ),
@@ -286,28 +355,43 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
                   // حالة الاعتماد يقبلها الخادم في التعديل فقط.
                   if (_isEditing) ...[
                     const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedStatus,
-                      isExpanded: true,
-                      dropdownColor: context.cardColor,
-                      style: TextStyle(fontSize: 13, color: context.textPrimary),
-                      decoration: const InputDecoration(
-                        labelText: 'حالة اعتماد المدرسة',
-                      ),
-                      items: SchoolStatus.all
-                          .map(
-                            (status) => DropdownMenuItem<String>(
-                              value: status,
-                              child: Text(
-                                SchoolStatus.label(status),
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => setState(
-                        () => _selectedStatus = value ?? _selectedStatus,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final availableStatuses = <String>{
+                          ...SchoolStatus.all,
+                          if (_selectedStatus.isNotEmpty) _selectedStatus,
+                        }.toList();
+
+                        final validValue = availableStatuses.contains(_selectedStatus)
+                            ? _selectedStatus
+                            : availableStatuses.first;
+
+                        return DropdownButtonFormField<String>(
+                          initialValue: validValue,
+                          isExpanded: true,
+                          dropdownColor: context.cardColor,
+                          style: TextStyle(fontSize: 13, color: context.textPrimary),
+                          decoration: const InputDecoration(
+                            labelText: 'حالة اعتماد المدرسة',
+                          ),
+                          items: availableStatuses
+                              .map(
+                                (status) => DropdownMenuItem<String>(
+                                  value: status,
+                                  child: Text(
+                                    SchoolStatus.label(status),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedStatus = value);
+                            }
+                          },
+                        );
+                      },
                     ),
                   ],
                 ],

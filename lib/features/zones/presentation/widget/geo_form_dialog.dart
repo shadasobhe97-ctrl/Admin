@@ -176,7 +176,9 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
                 if (_hasParentField) ...[
                   const SizedBox(height: 14),
                   DropdownButtonFormField<int?>(
-                    initialValue: _selectedParentId,
+                    initialValue: (widget.parentOptions.any((o) => o.id == _selectedParentId) || (!_isParentRequired && _selectedParentId == null))
+                        ? _selectedParentId
+                        : null,
                     isExpanded: true,
                     dropdownColor: context.cardColor,
                     style: TextStyle(fontSize: 13, color: context.textPrimary),

@@ -4,10 +4,15 @@ class DriverReviewDialog extends StatefulWidget {
   final String driverName;
   final Function(String action, String? rejectionReason) onSubmit;
 
+  /// يفتح نموذج تعديل بيانات السائق قبل الاعتماد.
+  /// `null` يخفي زر التعديل (السائق ليس تحت المراجعة).
+  final VoidCallback? onEditData;
+
   const DriverReviewDialog({
     super.key,
     required this.driverName,
     required this.onSubmit,
+    this.onEditData,
   });
 
   @override
@@ -71,6 +76,32 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
 
               if (!_isRejecting) ...[
                 const Text('هل تم فحص جميع الوثائق والمعلومات الرسمية والتأكد من صحتها؟'),
+
+                // تصحيح البيانات قبل الاعتماد — يُرسل كطلب تعديل مستقل.
+                if (widget.onEditData != null) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onEditData!();
+                      },
+                      icon: const Icon(Icons.edit_note_rounded, size: 18),
+                      label: const Text(
+                        'تعديل بيانات السائق قبل الاعتماد',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 24),
                 Row(
                   children: [

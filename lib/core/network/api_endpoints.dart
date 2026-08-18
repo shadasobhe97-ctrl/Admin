@@ -27,6 +27,10 @@ class ApiEndpoints {
   // ── 2. Drivers ──────────────────────────────────────────────────────────────
   static const String drivers = '/admin/drivers';
   static String driverDetails(dynamic id) => '/admin/drivers/$id';
+
+  /// PUT — تعديل بيانات السائق مباشرة (يُسجَّل في سجل إجراءات المشرفين).
+  static String driverUpdate(dynamic id) => '/admin/drivers/$id';
+
   static String driverReview(dynamic id) => '/admin/drivers/$id/review';
   static const String pendingChanges = '/admin/drivers/pending-changes';
   static String pendingChangeDetails(dynamic id) =>
@@ -53,6 +57,11 @@ class ApiEndpoints {
       '/admin/admin/email/approve/$token';
   static String adminEmailReject(String token) =>
       '/admin/admin/email/reject/$token';
+
+  // ── 3.1 سجل إجراءات المشرفين (الأدمن فقط) ───────────────────────────────────
+  static const String adminAuditLogs = '/admin/admin-audit-logs';
+  static String adminAuditLogDetails(dynamic id) =>
+      '/admin/admin-audit-logs/$id';
 
   // ── 4. Schools ──────────────────────────────────────────────────────────────
   static const String schools = '/admin/schools';

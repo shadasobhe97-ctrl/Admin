@@ -5,6 +5,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../models/driver_change_details_model.dart';
 import '../models/driver_change_request_model.dart';
 import '../models/driver_details_model.dart';
+import '../models/update_driver_payload.dart';
 import '../models/driver_model.dart';
 import '../models/driver_review_model.dart';
 import '../../../../core/models/pagination_meta_model.dart';
@@ -47,6 +48,26 @@ class DriversManagementRemoteDataSource {
     return Exception(message);
   }
 
+  String _normalizeDriverStatus(String status) {
+    final s = status.trim();
+    switch (s.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'approved':
+        return 'Approved';
+      case 'suspended':
+        return 'Suspended';
+      case 'rejected':
+        return 'Rejected';
+      case 'offline':
+        return 'Offline';
+      case 'on_trip':
+        return 'ON_TRIP';
+      default:
+        return s;
+    }
+  }
+
   /// 1. GET /api/admin/drivers
   Future<DriversListResult> getDrivers({
     String? status,
@@ -55,8 +76,8 @@ class DriversManagementRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{'page': page};
-      if (status != null && status.trim().isNotEmpty && status.trim() != 'all') {
-        queryParams['status'] = status.trim();
+      if (status != null && status.trim().isNotEmpty && status.trim().toLowerCase() != 'all') {
+        queryParams['status'] = _normalizeDriverStatus(status);
       }
       if (search != null && search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
@@ -127,6 +148,30 @@ class DriversManagementRemoteDataSource {
       return 'تمت مراجعة طلب السائق بنجاح.';
     } on DioException catch (e) {
       throw _handleDioError(e, 'POST', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 3.1 PUT /api/admin/drivers/{id}
+  ///
+  /// تعديل مباشر لبيانات السائق من المشرف أو الأدمن.
+  /// الخادم يحسب الفروقات ويكتبها في سجل إجراءات المشرفين ضمن نفس المعاملة،
+  /// لذلك لا ترسل الواجهة أي بيانات سجل بنفسها.
+  Future<String> updateDriver({
+    required int id,
+    required UpdateDriverPayload payload,
+  }) async {
+    final endpoint = ApiEndpoints.driverUpdate(id);
+    try {
+      final response = await _apiClient.put(endpoint, data: payload.toJson());
+      if (response.data is Map<String, dynamic>) {
+        return response.data['message']?.toString() ??
+            'تم تحديث بيانات السائق بنجاح.';
+      }
+      return 'تم تحديث بيانات السائق بنجاح.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'PUT', endpoint);
     } catch (e) {
       rethrow;
     }

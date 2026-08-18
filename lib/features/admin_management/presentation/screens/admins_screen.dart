@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../admin_audit_logs/presentation/screen/audit_logs_screen.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import '../../logic/admin_management_state.dart';
@@ -122,23 +123,55 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                             const SizedBox(height: 4),
                           ],
                         ),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // سجل الإجراءات للأدمن العام فقط؛ الحماية الفعلية
+                            // على الخادم (403) وهذا الإخفاء لتجربة المستخدم.
+                            if (canViewAuditLogs()) ...[
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const AuditLogsScreen(),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.history_rounded, size: 18),
+                                label: const Text(
+                                  'سجل إجراءات المشرفين',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 18, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => _openAddModal(context),
+                              icon: const Icon(Icons.person_add_rounded,
+                                  size: 18),
+                              label: const Text(
+                                'إضافة مشرف جديد',
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
-                          onPressed: () => _openAddModal(context),
-                          icon: const Icon(Icons.person_add_rounded, size: 18),
-                          label: const Text(
-                            'إضافة مشرف جديد',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
+                          ],
                         ),
                       ],
                     ),

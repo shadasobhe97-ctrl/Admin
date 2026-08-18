@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../data/models/driver_model.dart';
+import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_avatar.dart';
+import '../widgets/driver_edit_dialog.dart';
 import '../widgets/driver_review_dialog.dart';
 import '../widgets/driver_reviews_section.dart';
 import '../widgets/driver_status_badge.dart';
@@ -29,12 +32,12 @@ class DriverDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _openReviewDialog(BuildContext context, String driverName) {
+  void _openReviewDialog(BuildContext context, DriverModel driver) {
     final cubit = context.read<DriversManagementCubit>();
     showDialog(
       context: context,
       builder: (_) => DriverReviewDialog(
-        driverName: driverName,
+        driverName: driver.fullName,
         onSubmit: (status, reason) {
           cubit.reviewDriver(
             id: driverId,
@@ -42,8 +45,29 @@ class DriverDetailsScreen extends StatelessWidget {
             rejectionReason: reason,
           );
         },
+        // التعديل متاح أثناء المراجعة فقط.
+        onEditData: () => _openEditDialog(context, driver),
       ),
     );
+  }
+
+  /// يفتح نموذج التعديل، ثم يحفظ عبر `PUT /admin/drivers/{id}`
+  /// ويعيد فتح حوار المراجعة لإكمال قرار الاعتماد.
+  Future<void> _openEditDialog(BuildContext context, DriverModel driver) async {
+    final cubit = context.read<DriversManagementCubit>();
+
+    final payload = await showDialog<UpdateDriverPayload>(
+      context: context,
+      builder: (_) => DriverEditDialog(driver: driver, isReviewFlow: true),
+    );
+    if (payload == null) return;
+
+    final saved = await cubit.updateDriver(id: driverId, payload: payload);
+    if (!saved || !context.mounted) return;
+
+    // بعد الحفظ يعود المشرف إلى قرار الاعتماد بالبيانات المصحّحة.
+    final updated = cubit.state.selectedDriverDetails?.driver ?? driver;
+    if (context.mounted) _openReviewDialog(context, updated);
   }
 
   @override
@@ -370,25 +394,26 @@ class DriverDetailsScreen extends StatelessWidget {
                           icon: const Icon(Icons.arrow_back, size: 16),
                           label: const Text('إغلاق'),
                         ),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        if (driver.status.toLowerCase() == 'pending' || driver.approvalStatus?.toLowerCase() == 'pending')
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: state.isSubmittingReview || state.isUpdatingDriver
+                                ? null
+                                : () => _openReviewDialog(context, driver),
+                            icon: state.isSubmittingReview
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.rate_review_outlined, size: 16),
+                            label: const Text('اتخاذ قرار الاعتماد / الرفض', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                          onPressed: state.isSubmittingReview
-                              ? null
-                              : () => _openReviewDialog(context, driver.fullName),
-                          icon: state.isSubmittingReview
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Icon(Icons.rate_review_outlined, size: 16),
-                          label: const Text('اتخاذ قرار الاعتماد / الرفض', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
                       ],
                     ),
                   ],

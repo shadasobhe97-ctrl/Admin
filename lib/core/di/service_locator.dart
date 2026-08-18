@@ -28,6 +28,9 @@ import '../../features/schools/logic/cubit/schools_cubit.dart';
 import '../../features/financial/data/datasources/financial_remote_datasource.dart';
 import '../../features/financial/data/repositories/financial_repository_impl.dart';
 import '../../features/financial/logic/cubit/financial_cubit.dart';
+import '../../features/admin_audit_logs/data/datasources/audit_logs_remote_datasource.dart';
+import '../../features/admin_audit_logs/data/repositories/audit_logs_repository_impl.dart';
+import '../../features/admin_audit_logs/logic/cubit/audit_logs_cubit.dart';
 import '../../features/reports/data/datasources/reports_remote_datasource.dart';
 import '../../features/reports/data/repositories/reports_repository_impl.dart';
 import '../../features/reports/logic/cubit/reports_cubit.dart';
@@ -180,5 +183,16 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory<ComplaintsCubit>(
     () => ComplaintsCubit(sl<ComplaintsRepository>()),
+  );
+
+  // ── Admin Audit Logs Feature (سجل إجراءات المشرفين) ───────────────────────
+  sl.registerLazySingleton<AuditLogsRemoteDataSource>(
+    () => AuditLogsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AuditLogsRepository>(
+    () => AuditLogsRepositoryImpl(sl<AuditLogsRemoteDataSource>()),
+  );
+  sl.registerFactory<AuditLogsCubit>(
+    () => AuditLogsCubit(sl<AuditLogsRepository>()),
   );
 }
