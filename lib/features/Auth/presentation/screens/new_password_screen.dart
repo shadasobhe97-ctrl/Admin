@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/validators.dart';
 import '../../logic/admin_password_reset_cubit.dart';
 import '../../logic/admin_password_reset_state.dart';
 
@@ -190,15 +191,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                                       color: DerbiColors.primaryBlue, width: 2),
                                 ),
                               ),
-                              validator: (val) {
-                                if (val == null || val.isEmpty) {
-                                  return 'الرجاء إدخال كلمة المرور الجديدة';
-                                }
-                                if (val.length < 6) {
-                                  return 'كلمة المرور يجب أن لا تقل عن 6 أحرف';
-                                }
-                                return null;
-                              },
+                              validator: Validators.validatePassword,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/validators.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
 
@@ -50,8 +51,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // ── Step 1: Send OTP ─────────────────────────────────────────────────────────
   Future<void> _handleSendOtp() async {
     final email = _emailCtrl.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      _showError('الرجاء إدخال بريد إلكتروني صحيح');
+    final emailErr = Validators.validateEmail(email);
+    if (emailErr != null) {
+      _showError(emailErr);
       return;
     }
     final ok = await context.read<AdminAuthCubit>().sendOtp(email);
@@ -80,8 +82,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final pass    = _passCtrl.text;
     final confirm = _confirmCtrl.text;
 
-    if (pass.length < 8) {
-      _showError('كلمة المرور يجب أن تتكون من 8 أحرف على الأقل');
+    final passErr = Validators.validatePassword(pass);
+    if (passErr != null) {
+      _showError(passErr);
       return;
     }
     if (pass != confirm) {
@@ -291,7 +294,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const Align(
             alignment: Alignment.centerRight,
             child: Text(
-              '• الحد الأدنى 8 أحرف | • حروف وأرقام ورموز',
+              '• 8 أحرف على الأقل | • حرف إنجليزي | • رقم واحد',
               style: TextStyle(fontSize: 10, color: DerbiColors.textMuted),
             ),
           ),
