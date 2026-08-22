@@ -1,12 +1,12 @@
 class LoginRequestModel {
-  final String phoneNumber;
+  final String email;
   final String password;
   final String platform;
   final String? deviceName;
   final String? fcmToken;
 
   LoginRequestModel({
-    required this.phoneNumber,
+    required this.email,
     required this.password,
     this.platform = 'web',
     this.deviceName = 'admin_web_browser',
@@ -15,7 +15,7 @@ class LoginRequestModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'phone_number': phoneNumber,
+      'email': email,
       'password': password,
       'platform': platform,
       if (deviceName != null) 'device_name': deviceName,

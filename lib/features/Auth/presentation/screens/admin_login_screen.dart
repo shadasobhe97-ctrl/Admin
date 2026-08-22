@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/validators.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
 import 'reset_password_screen.dart';
@@ -14,22 +15,22 @@ class AdminLoginScreen extends StatefulWidget {
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
-      final phone = _phoneController.text.trim();
+      final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      context.read<AdminAuthCubit>().login(phone: phone, password: password);
+      context.read<AdminAuthCubit>().login(email: email, password: password);
     }
   }
 
@@ -147,25 +148,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               ),
                               const SizedBox(height: 32),
 
-                              // Phone Field
+                              // Email Field
                               TextFormField(
-                                controller: _phoneController,
+                                controller: _emailController,
                                 style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
-                                keyboardType: TextInputType.phone,
+                                keyboardType: TextInputType.emailAddress,
                                 decoration: const InputDecoration(
-                                  labelText: 'رقم الهاتف',
-                                  hintText: '0910000000',
-                                  prefixIcon: Icon(Icons.phone_android_rounded, color: Color(0xFF2563EB)),
+                                  labelText: 'البريد الإلكتروني',
+                                  hintText: 'admin@darby.ly',
+                                  prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
                                 ),
-                                validator: (val) {
-                                  if (val == null || val.trim().isEmpty) {
-                                    return 'الرجاء إدخال رقم الهاتف';
-                                  }
-                                  if (val.trim().length < 8) {
-                                    return 'رقم هاتف غير صحيح';
-                                  }
-                                  return null;
-                                },
+                                validator: Validators.validateEmail,
                               ),
                               const SizedBox(height: 20),
 
@@ -190,7 +183,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                     },
                                   ),
                                 ),
-                                validator: (val) => val == null || val.isEmpty ? 'الرجاء إدخال كلمة المرور' : null,
+                                validator: Validators.validatePassword,
                               ),
                               const SizedBox(height: 12),
 

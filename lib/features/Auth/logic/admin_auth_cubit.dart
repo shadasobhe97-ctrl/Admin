@@ -35,7 +35,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
 
   // ── Login ───────────────────────────────────────────────────────────────────
   Future<bool> login({
-    required String phone,
+    required String email,
     required String password,
     String? fcmToken,
   }) async {
@@ -43,7 +43,7 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
 
     try {
       final request = LoginRequestModel(
-        phoneNumber:  phone,
+        email:        email,
         password:     password,
         platform:     'web',
         deviceName:   'admin_web_browser',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/validators.dart';
 import '../../logic/admin_password_reset_cubit.dart';
 import '../../logic/admin_password_reset_state.dart';
 import 'otp_verification_screen.dart';
@@ -155,15 +156,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                 hintText: 'admin@darbi.com',
                                 prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
                               ),
-                              validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'الرجاء إدخال البريد الإلكتروني';
-                                }
-                                if (!val.contains('@')) {
-                                  return 'بريد إلكتروني غير صحيح';
-                                }
-                                return null;
-                              },
+                              validator: Validators.validateEmail,
                             ),
                             const SizedBox(height: 24),
                             BlocBuilder<AdminPasswordResetCubit, AdminPasswordResetState>(
