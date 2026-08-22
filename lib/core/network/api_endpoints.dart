@@ -76,11 +76,15 @@ class ApiEndpoints {
   static const String subMunicipalities = '/admin/sub-municipalities';
   static String subMunicipalityDetails(dynamic id) =>
       '/admin/sub-municipalities/$id';
+  static String adminSubMunicipalities(dynamic municipalityId) =>
+      '/admin/municipalities/$municipalityId/sub-municipalities';
 
   // المستوى الثالث: المناطق الدقيقة
   static const String zones = '/admin/zones';
   static const String zonesTree = '/admin/zones-tree';
   static String zoneDetails(dynamic id) => '/admin/zones/$id';
+  static String adminZones(dynamic subMunicipalityId) =>
+      '/admin/sub-municipalities/$subMunicipalityId/zones';
 
   // ── 5.1 Reports & Analytics ─────────────────────────────────────────────────
   static const String reportsKpiSummary = '/admin/reports/kpi-summary';

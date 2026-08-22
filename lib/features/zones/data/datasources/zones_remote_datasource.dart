@@ -175,11 +175,11 @@ class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
     required int municipalityId,
   }) {
     return _write(
-      ApiEndpoints.subMunicipalities,
+      ApiEndpoints.adminSubMunicipalities(municipalityId),
       method: 'POST',
-      body: {'name': name.trim(), 'municipality_id': municipalityId},
-      fallbackMessage: 'تم إضافة البلدية الفرعية بنجاح.',
-      errorMessage: 'تعذّر إضافة البلدية الفرعية.',
+      body: {'name': name.trim()},
+      fallbackMessage: 'تم إضافة المحلة بنجاح.',
+      errorMessage: 'تعذّر إضافة المحلة.',
     );
   }
 
@@ -253,14 +253,13 @@ class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
     required String name,
     int? subMunicipalityId,
   }) {
+    final endpoint = subMunicipalityId != null
+        ? ApiEndpoints.adminZones(subMunicipalityId)
+        : ApiEndpoints.zones;
     return _write(
-      ApiEndpoints.zones,
+      endpoint,
       method: 'POST',
-      body: {
-        'name': name.trim(),
-        // `sub_municipality_id` اختياري في العقد، فلا يُرسل إن لم يُحدَّد.
-        if (subMunicipalityId != null) 'sub_municipality_id': subMunicipalityId,
-      },
+      body: {'name': name.trim()},
       fallbackMessage: 'تم إضافة المنطقة بنجاح.',
       errorMessage: 'تعذّر إضافة المنطقة.',
     );

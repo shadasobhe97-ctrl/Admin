@@ -52,7 +52,9 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
 
   /// البلدية الفرعية تتطلب بلدية كبرى، بينما `sub_municipality_id` اختياري
   /// للمنطقة الدقيقة حسب العقد.
-  bool get _isParentRequired => widget.kind == GeoFormKind.subMunicipality;
+  bool get _isParentRequired =>
+      widget.kind == GeoFormKind.subMunicipality ||
+      (widget.kind == GeoFormKind.zone && widget.parentOptions.isNotEmpty);
 
   bool get _hasParentField => widget.kind != GeoFormKind.municipality;
 
@@ -63,7 +65,9 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
 
     final hasMatchingOption = widget.parentOptions
         .any((option) => option.id == widget.initialParentId);
-    _selectedParentId = hasMatchingOption ? widget.initialParentId : null;
+    _selectedParentId = hasMatchingOption
+        ? widget.initialParentId
+        : (widget.parentOptions.length == 1 ? widget.parentOptions.first.id : null);
   }
 
   @override
@@ -109,7 +113,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
 
   String get _parentLabel => widget.kind == GeoFormKind.subMunicipality
       ? 'البلدية الكبرى التابعة لها'
-      : 'البلدية الفرعية التابعة لها (اختياري)';
+      : 'البلدية الفرعية التابعة لها';
 
   String? _validateName(String? value) {
     final name = value?.trim() ?? '';
@@ -128,7 +132,11 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
     if (_isParentRequired && _selectedParentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('يرجى اختيار البلدية الكبرى التابعة لها'),
+          content: Text(
+            widget.kind == GeoFormKind.subMunicipality
+                ? 'يرجى اختيار البلدية الكبرى التابعة لها'
+                : 'يرجى اختيار البلدية الفرعية / المحلة التابعة لها',
+          ),
           backgroundColor: context.dangerColor,
           behavior: SnackBarBehavior.floating,
         ),
