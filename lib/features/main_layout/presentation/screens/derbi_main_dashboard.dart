@@ -245,59 +245,30 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                      Stack(
                         children: [
-                          Stack(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.notifications_outlined, color: context.textTertiary, size: 20),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text('تنبيهات النظام متصلة بالخادم الرئيسي'),
-                                      backgroundColor: context.primaryColor,
-                                    ),
-                                  );
-                                },
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(color: context.dangerColor, shape: BoxShape.circle),
+                          IconButton(
+                            icon: Icon(Icons.notifications_outlined, color: context.textTertiary, size: 20),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('تنبيهات النظام متصلة بالخادم الرئيسي'),
+                                  backgroundColor: context.primaryColor,
                                 ),
-                              )
-                            ],
+                              );
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: context.successBg,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: context.successBorder),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(radius: 3, backgroundColor: context.successColor),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'السيرفر متصل (Sanctum Auth)',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: context.successColor,
-                                  ),
-                                ),
-                              ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(color: context.dangerColor, shape: BoxShape.circle),
                             ),
                           )
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
