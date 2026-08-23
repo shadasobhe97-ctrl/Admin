@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/models/create_admin_request_model.dart';
 import '../../data/models/update_admin_request_model.dart';
@@ -93,6 +94,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (widget.isLoading) return;
 
+    final currentRoleId = StorageService.getRoleId();
+    final isCurrentMainAdmin = currentRoleId == 1;
+
     if (_isEditMode) {
       final updateReq = UpdateAdminRequestModel(
         fullName: _nameController.text.trim(),
@@ -101,7 +105,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         password: _passwordController.text.trim().isNotEmpty
             ? _passwordController.text.trim()
             : null,
-        isActive: _isActive,
+        isActive: isCurrentMainAdmin ? _isActive : null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
       );
@@ -125,6 +129,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final currentRoleId = StorageService.getRoleId();
+    final isCurrentMainAdmin = currentRoleId == 1;
 
     return Form(
       key: _formKey,
@@ -334,10 +340,17 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                       ),
                     ],
                   ),
-                  Switch(
-                    value: _isActive,
-                    onChanged: (val) => setState(() => _isActive = val),
-                    activeThumbColor: const Color(0xFF10B981),
+                  Tooltip(
+                    message: isCurrentMainAdmin
+                        ? 'تعديل حالة التفعيل'
+                        : 'تغيير حالة تفعيل حسابات المشرفين متاح للمدير الرئيسي فقط',
+                    child: Switch(
+                      value: _isActive,
+                      onChanged: isCurrentMainAdmin
+                          ? (val) => setState(() => _isActive = val)
+                          : null,
+                      activeThumbColor: const Color(0xFF10B981),
+                    ),
                   ),
                 ],
               ),

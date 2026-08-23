@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import 'admin_avatar.dart';
@@ -42,7 +43,7 @@ class AdminsTable extends StatelessWidget {
             ),
           ),
           content: Text(
-            'هل أنت محتار أو متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
+            'هل أنت متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
             style: TextStyle(
               fontSize: 13,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -76,6 +77,8 @@ class AdminsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final currentRoleId = StorageService.getRoleId();
+    final isCurrentMainAdmin = currentRoleId == 1;
 
     return Container(
       width: double.infinity,
@@ -166,7 +169,7 @@ class AdminsTable extends StatelessWidget {
               ),
             ],
             rows: admins.map((admin) {
-              final isMainAdmin = admin.roleId == 1;
+              final isTargetMainAdmin = admin.roleId == 1;
 
               return DataRow(
                 cells: [
@@ -280,10 +283,17 @@ class AdminsTable extends StatelessWidget {
                       children: [
                         AdminStatusBadge(isActive: admin.isActive),
                         const SizedBox(width: 8),
-                        Switch(
-                          value: admin.isActive,
-                          onChanged: (val) => onToggleStatus(admin, val),
-                          activeThumbColor: const Color(0xFF10B981),
+                        Tooltip(
+                          message: isCurrentMainAdmin
+                              ? (admin.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب')
+                              : 'تغيير حالة تفعيل حسابات المشرفين متاح للمدير الرئيسي فقط',
+                          child: Switch(
+                            value: admin.isActive,
+                            onChanged: isCurrentMainAdmin
+                                ? (val) => onToggleStatus(admin, val)
+                                : null,
+                            activeThumbColor: const Color(0xFF10B981),
+                          ),
                         ),
                       ],
                     ),
@@ -306,7 +316,7 @@ class AdminsTable extends StatelessWidget {
                             onPressed: () => onEdit(admin),
                           ),
                         ),
-                        if (!isMainAdmin)
+                        if (isCurrentMainAdmin && !isTargetMainAdmin)
                           Tooltip(
                             message: 'حذف المشرف نهائياً',
                             child: IconButton(

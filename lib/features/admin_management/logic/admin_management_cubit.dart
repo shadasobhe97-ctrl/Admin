@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/services/storage_service.dart';
 import '../data/models/admin_model.dart';
 import '../data/models/create_admin_request_model.dart';
 import '../data/models/update_admin_request_model.dart';
@@ -111,6 +112,16 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
   Future<Map<String, dynamic>> updateAdmin(
       int id, UpdateAdminRequestModel request) async {
     if (state.isUpdating) return {'success': false};
+
+    // حظر تغيير حالة التفعيل إلا إذا كان المستخدم آدمن رئيسي (roleId == 1)
+    final currentRoleId = StorageService.getRoleId();
+    if (request.isActive != null && currentRoleId != 1) {
+      emit(state.copyWith(
+        errorMessage: 'غير مصرح لك بتغيير حالة تفعيل حسابات المشرفين. هذه الصلاحية للمدير الرئيسي فقط.',
+      ));
+      return {'success': false, 'error': 'غير مصرح'};
+    }
+
     emit(state.copyWith(
       isUpdating: true,
       clearError: true,
@@ -151,6 +162,14 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
 
   /// 5. DELETE /api/admin/admins/{id} (Delete)
   Future<bool> deleteAdmin(int id) async {
+    final currentRoleId = StorageService.getRoleId();
+    if (currentRoleId != 1) {
+      emit(state.copyWith(
+        errorMessage: 'غير مصرح لك بحذف حسابات المشرفين. هذه الصلاحية للمدير الرئيسي فقط.',
+      ));
+      return false;
+    }
+
     emit(state.copyWith(
       isLoading: true,
       clearError: true,
@@ -176,6 +195,14 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
 
   /// Toggle Admin Active / Inactive Status
   Future<bool> toggleAdminStatus(int id, bool currentStatus) async {
+    final currentRoleId = StorageService.getRoleId();
+    if (currentRoleId != 1) {
+      emit(state.copyWith(
+        errorMessage: 'غير مصرح لك بتفعيل أو إلغاء تفعيل حسابات المشرفين. هذه الصلاحية للمدير الرئيسي فقط.',
+      ));
+      return false;
+    }
+
     final res = await updateAdmin(
       id,
       UpdateAdminRequestModel(isActive: !currentStatus),

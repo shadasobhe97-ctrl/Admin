@@ -15,8 +15,16 @@ class ProfileInfoCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final createdAtStr = profile.createdAt != null && profile.createdAt!.isNotEmpty
-        ? (profile.createdAt!.length > 10 ? profile.createdAt!.substring(0, 10) : profile.createdAt!)
+        ? profile.createdAt!
         : 'غير متوفر';
+
+    final lastLoginStr = profile.lastLoginAt != null && profile.lastLoginAt!.isNotEmpty
+        ? profile.lastLoginAt!
+        : 'غير متوفر / لم يسجل من قبل';
+
+    final creatorStr = profile.creatorName != null && profile.creatorName!.isNotEmpty
+        ? profile.creatorName!
+        : 'غير محدد';
 
     final isActive = profile.isActive ?? true;
 
@@ -43,13 +51,13 @@ class ProfileInfoCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.person_outline_rounded,
+                Icons.badge_outlined,
                 size: 18,
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 8),
               Text(
-                'المعلومات الشخصية والإدارية',
+                'المعلومات التفصيلية والإدارية',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -59,6 +67,12 @@ class ProfileInfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(color: theme.colorScheme.outlineVariant),
           const SizedBox(height: 8),
+          if (profile.userId != null)
+            _infoRow(
+              context,
+              label: 'معرّف المستخدم (User ID)',
+              value: '#${profile.userId}',
+            ),
           _infoRow(
             context,
             label: 'الاسم الكامل',
@@ -79,7 +93,12 @@ class ProfileInfoCard extends StatelessWidget {
             label: 'الصلاحية / الدور',
             value: (profile.roleName != null && profile.roleName!.isNotEmpty)
                 ? profile.roleName!
-                : 'مشرف النظام',
+                : 'مشرف',
+          ),
+          _infoRow(
+            context,
+            label: 'أنشئ بواسطة',
+            value: creatorStr,
           ),
           _infoRow(
             context,
@@ -88,8 +107,13 @@ class ProfileInfoCard extends StatelessWidget {
           ),
           _infoRow(
             context,
+            label: 'آخر تسجيل دخول',
+            value: lastLoginStr,
+          ),
+          _infoRow(
+            context,
             label: 'حالة الحساب',
-            value: isActive ? 'نشط ✓' : 'معطّل ✗',
+            value: isActive ? 'نشط ومفعّل ✓' : 'معطّل ✗',
             valueColor: isActive
                 ? theme.colorScheme.secondary
                 : theme.colorScheme.error,

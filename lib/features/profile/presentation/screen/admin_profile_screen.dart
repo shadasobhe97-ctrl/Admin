@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../data/models/admin_profile_model.dart';
+import '../../data/models/email_change_status_model.dart';
 import '../../logic/cubit/profile_cubit.dart';
 import '../../logic/state/profile_state.dart';
 import '../widget/profile_edit_form.dart';
+import '../widget/profile_email_change_card.dart';
 import '../widget/profile_header.dart';
 import '../widget/profile_info_card.dart';
 
@@ -29,7 +31,7 @@ class AdminProfileScreen extends StatelessWidget {
   }
 }
 
-/// backward-compatible widget wrapper for main layout
+/// Backward-compatible widget wrapper for main layout
 class AdminProfileView extends StatelessWidget {
   final String? adminName;
   final ValueChanged<String>? onNameChanged;
@@ -90,6 +92,11 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
           });
         } else if (state is ProfileUpdateError) {
           _showSnack(state.message, isError: true);
+        } else if (state is EmailActionSuccess) {
+          _showSnack(state.message, isError: false);
+          widget.onNameChanged?.call(state.profile.fullName);
+        } else if (state is EmailActionError) {
+          _showSnack(state.message, isError: true);
         }
       },
       builder: (context, state) {
@@ -149,16 +156,37 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
         }
 
         AdminProfileModel? currentProfile;
+        EmailVerificationInfo? emailVerification;
+        EmailChangeStatusModel? emailStatus;
+        Map<String, List<String>>? fieldErrors;
+
         bool isSaving = false;
+        bool isCheckingEmail = false;
+        bool isResendingEmail = false;
+        bool isCancellingEmail = false;
 
         if (state is ProfileLoaded) {
           currentProfile = state.profile;
+          emailVerification = state.emailVerification;
+          emailStatus = state.emailStatus;
+          fieldErrors = state.fieldErrors;
         } else if (state is ProfileUpdating) {
           currentProfile = state.currentProfile;
           isSaving = true;
         } else if (state is ProfileUpdateSuccess) {
           currentProfile = state.profile;
+          emailVerification = state.emailVerification;
         } else if (state is ProfileUpdateError) {
+          currentProfile = state.currentProfile;
+          fieldErrors = state.fieldErrors;
+        } else if (state is EmailActionLoading) {
+          currentProfile = state.currentProfile;
+          if (state.actionType == 'status') isCheckingEmail = true;
+          if (state.actionType == 'resend') isResendingEmail = true;
+          if (state.actionType == 'cancel') isCancellingEmail = true;
+        } else if (state is EmailActionSuccess) {
+          currentProfile = state.profile;
+        } else if (state is EmailActionError) {
           currentProfile = state.currentProfile;
         }
 
@@ -167,6 +195,9 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
         }
 
         final profile = currentProfile;
+        final hasPendingEmail = profile.emailChangePending == true ||
+            emailVerification != null ||
+            (emailStatus != null && emailStatus.pending);
 
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -183,15 +214,32 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
                 },
               ),
               const SizedBox(height: 20),
+
+              if (hasPendingEmail && !_isEditing)
+                ProfileEmailChangeCard(
+                  profile: profile,
+                  emailVerification: emailVerification,
+                  emailStatus: emailStatus,
+                  isChecking: isCheckingEmail,
+                  isResending: isResendingEmail,
+                  isCancelling: isCancellingEmail,
+                  onCheckStatus: () =>
+                      context.read<ProfileCubit>().checkEmailChangeStatus(profile),
+                  onResend: () =>
+                      context.read<ProfileCubit>().resendEmailVerification(profile),
+                  onCancel: () =>
+                      context.read<ProfileCubit>().cancelEmailChange(profile),
+                ),
+
               _isEditing
                   ? ProfileEditForm(
                       profile: profile,
                       isSaving: isSaving,
+                      fieldErrors: fieldErrors,
                       onCancel: () => setState(() => _isEditing = false),
-                      onSave: (changedFields) {
+                      onSave: (request) {
                         context.read<ProfileCubit>().updateProfile(
-                              adminId: profile.id,
-                              changedFields: changedFields,
+                              request: request,
                               currentProfile: profile,
                             );
                       },
@@ -271,7 +319,7 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
               ),
             ),
             subtitle: Text(
-              'جلسة نشطة • محمية برمز مصادقة آمن',
+              'جلسة نشطة • محمية برمز مصادقة آمن (Sanctum Token)',
               style: theme.textTheme.bodySmall,
             ),
             trailing: Container(

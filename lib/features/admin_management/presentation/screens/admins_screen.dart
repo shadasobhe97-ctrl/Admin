@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../../admin_audit_logs/presentation/screen/audit_logs_screen.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
@@ -17,6 +19,41 @@ class AdminsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (StorageService.getRoleId() != 1) {
+      return Scaffold(
+        backgroundColor: context.scaffoldBackgroundColor,
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.lock_person_rounded, size: 56, color: context.warningColor),
+                  const SizedBox(height: 16),
+                  Text(
+                    'صلاحية غير كافية',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'صفحة إدارة المشرفين مخصصة لمدير النظام (الأدمن) فقط.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: context.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return BlocProvider(
       create: (context) => sl<AdminManagementCubit>()..fetchAdmins(),
       child: const _AdminsScreenContent(),

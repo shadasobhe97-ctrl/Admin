@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
+  static const String baseUrl = 'https://angry-dingo-40.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -11,8 +11,13 @@ class ApiEndpoints {
   static const String passwordReset = '/auth/password/reset';
 
   // ── Profile ─────────────────────────────────────────────────────────────────
-  static const String profile = '/user/profile';
-  // update: POST /api/admin/admins/{id}  (handled in service)
+  static const String profile = '/admin/profile';
+  static const String profileEmailChangeStatus =
+      '/admin/profile/email-change/status';
+  static const String profileEmailChangeCancel =
+      '/admin/profile/email-change/cancel';
+  static const String profileEmailChangeResend =
+      '/admin/profile/email-change/resend';
 
   // Admin Password Reset Flow
   static const String adminSendOtp = '/admin/auth/password/send-otp';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import 'admin_avatar.dart';
@@ -42,7 +43,7 @@ class AdminCard extends StatelessWidget {
             ),
           ),
           content: Text(
-            'هل أنت محتار أو متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
+            'هل أنت متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
             style: TextStyle(
               fontSize: 13,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -76,7 +77,9 @@ class AdminCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isMainAdmin = admin.roleId == 1;
+    final isTargetMainAdmin = admin.roleId == 1;
+    final currentRoleId = StorageService.getRoleId();
+    final isCurrentMainAdmin = currentRoleId == 1;
 
     return Card(
       color: theme.cardColor,
@@ -210,10 +213,15 @@ class AdminCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Switch(
-                      value: admin.isActive,
-                      onChanged: onToggleStatus,
-                      activeThumbColor: const Color(0xFF10B981),
+                    Tooltip(
+                      message: isCurrentMainAdmin
+                          ? (admin.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب')
+                          : 'تغيير حالة تفعيل حسابات المشرفين متاح للمدير الرئيسي فقط',
+                      child: Switch(
+                        value: admin.isActive,
+                        onChanged: isCurrentMainAdmin ? onToggleStatus : null,
+                        activeThumbColor: const Color(0xFF10B981),
+                      ),
                     ),
                   ],
                 ),
@@ -241,7 +249,7 @@ class AdminCard extends StatelessWidget {
                       icon: const Icon(Icons.edit_outlined, size: 14),
                       label: const Text('تعديل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
-                    if (!isMainAdmin) ...[
+                    if (isCurrentMainAdmin && !isTargetMainAdmin) ...[
                       const SizedBox(width: 6),
                       IconButton(
                         tooltip: 'حذف المشرف نهائياً',

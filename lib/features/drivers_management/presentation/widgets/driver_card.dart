@@ -8,12 +8,20 @@ class DriverCard extends StatelessWidget {
   final VoidCallback onTapInspect;
   final Function(String action, String? reason)? onReviewAction;
 
+  /// تعديل سريع لبيانات السائق — يظهر للسائقين قيد الانتظار فقط.
+  final VoidCallback? onTapEdit;
+
   const DriverCard({
     super.key,
     required this.driver,
     required this.onTapInspect,
     this.onReviewAction,
+    this.onTapEdit,
   });
+
+  bool get _isPending =>
+      driver.status.toLowerCase() == 'pending' ||
+      driver.approvalStatus?.toLowerCase() == 'pending';
 
   @override
   Widget build(BuildContext context) {
@@ -79,16 +87,29 @@ class DriverCard extends StatelessWidget {
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: onTapInspect,
-                  icon: const Icon(Icons.badge_outlined, size: 16),
-                  label: const Text('فحص الوثائق والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onTapEdit != null && _isPending) ...[
+                      IconButton(
+                        onPressed: onTapEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
+                        tooltip: 'تعديل بيانات السائق',
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: onTapInspect,
+                      icon: const Icon(Icons.badge_outlined, size: 16),
+                      label: const Text('فحص الوثائق والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),

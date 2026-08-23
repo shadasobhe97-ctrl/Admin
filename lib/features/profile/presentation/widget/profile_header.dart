@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/media_url.dart';
 import '../../data/models/admin_profile_model.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -29,6 +30,8 @@ class ProfileHeader extends StatelessWidget {
 
     final isActive = profile.isActive ?? true;
 
+    final avatarResolvedUrl = MediaUrl.resolve(profile.avatarUrl);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -54,12 +57,10 @@ class ProfileHeader extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: primaryColor.withValues(alpha: 0.15),
-                backgroundImage: (profile.avatarUrl != null &&
-                        profile.avatarUrl!.startsWith('http'))
-                    ? NetworkImage(profile.avatarUrl!)
+                backgroundImage: avatarResolvedUrl != null
+                    ? NetworkImage(avatarResolvedUrl)
                     : null,
-                child: (profile.avatarUrl == null ||
-                        !profile.avatarUrl!.startsWith('http'))
+                child: avatarResolvedUrl == null
                     ? Text(
                         initial,
                         style: TextStyle(
@@ -141,7 +142,7 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
 
-          // Edit/View Button
+          // Edit/View Toggle Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: isEditing

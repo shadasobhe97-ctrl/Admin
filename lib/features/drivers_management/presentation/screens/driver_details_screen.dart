@@ -6,6 +6,7 @@ import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_avatar.dart';
+import '../widgets/driver_document_tile.dart';
 import '../widgets/driver_edit_dialog.dart';
 import '../widgets/driver_review_dialog.dart';
 import '../widgets/driver_reviews_section.dart';
@@ -45,25 +46,34 @@ class DriverDetailsScreen extends StatelessWidget {
             rejectionReason: reason,
           );
         },
-        // التعديل متاح أثناء المراجعة فقط.
-        onEditData: () => _openEditDialog(context, driver),
+        onEditData: () =>
+            _openEditDialog(context, driver, returnToReview: true),
       ),
     );
   }
 
-  /// يفتح نموذج التعديل، ثم يحفظ عبر `PUT /admin/drivers/{id}`
-  /// ويعيد فتح حوار المراجعة لإكمال قرار الاعتماد.
-  Future<void> _openEditDialog(BuildContext context, DriverModel driver) async {
+  /// يفتح نموذج التعديل ثم يحفظ عبر `PUT /admin/drivers/{id}`.
+  ///
+  /// [returnToReview] يعيد فتح حوار الاعتماد بعد الحفظ — يُستخدم عندما يأتي
+  /// التعديل من داخل تدفّق المراجعة، لا من زر التعديل المباشر.
+  Future<void> _openEditDialog(
+    BuildContext context,
+    DriverModel driver, {
+    bool returnToReview = false,
+  }) async {
     final cubit = context.read<DriversManagementCubit>();
 
     final payload = await showDialog<UpdateDriverPayload>(
       context: context,
-      builder: (_) => DriverEditDialog(driver: driver, isReviewFlow: true),
+      builder: (_) => DriverEditDialog(
+        driver: driver,
+        isReviewFlow: returnToReview,
+      ),
     );
     if (payload == null) return;
 
     final saved = await cubit.updateDriver(id: driverId, payload: payload);
-    if (!saved || !context.mounted) return;
+    if (!saved || !returnToReview || !context.mounted) return;
 
     // بعد الحفظ يعود المشرف إلى قرار الاعتماد بالبيانات المصحّحة.
     final updated = cubit.state.selectedDriverDetails?.driver ?? driver;
@@ -95,6 +105,11 @@ class DriverDetailsScreen extends StatelessWidget {
           final driver = details?.driver;
           final docs = details?.documents ?? [];
           final vehicle = details?.vehicle;
+
+          // التعديل الكامل متاح ما دام السائق لم يُعتمد بعد.
+          final isPending = driver != null &&
+              (driver.status.toLowerCase() == 'pending' ||
+                  driver.approvalStatus?.toLowerCase() == 'pending');
 
           return Container(
             padding: const EdgeInsets.all(24),
@@ -291,13 +306,29 @@ class DriverDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Documents Section
-                    Text(
-                      'الوثائق الرسمية المستندة',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'الوثائق الرسمية المستندة',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'اضغط على الوثيقة لعرض الصورة',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 10),
                     if (docs.isEmpty)
@@ -311,58 +342,13 @@ class DriverDetailsScreen extends StatelessWidget {
                         child: const Text('لا توجد وثائق رسمية مرفعوة حالياً.'),
                       )
                     else
-                      ...docs.map((doc) {
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: theme.dividerColor),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.description_outlined, size: 24, color: Color(0xFF2563EB)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      doc.translatedType,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    if (doc.expiryDate != null)
-                                      Text(
-                                        'تاريخ الانتهاء: ${doc.expiryDate}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              DriverStatusBadge(status: doc.status),
-                              if (doc.fileUrl.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Color(0xFF2563EB)),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('رابط الوثيقة: ${doc.fileUrl}')),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      }),
+                      // العرض متاح في كل حالات السائق — لا يرتبط بحالة الاعتماد.
+                      ...docs.map(
+                        (doc) => DriverDocumentTile(
+                          document: doc,
+                          driverName: driver.fullName,
+                        ),
+                      ),
                     const SizedBox(height: 20),
 
                     // Driver Reviews Section (Only displayed if driver status is Approved and isActive)
@@ -381,8 +367,11 @@ class DriverDetailsScreen extends StatelessWidget {
                     ],
 
                     // Actions Footer
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
@@ -394,7 +383,28 @@ class DriverDetailsScreen extends StatelessWidget {
                           icon: const Icon(Icons.arrow_back, size: 16),
                           label: const Text('إغلاق'),
                         ),
-                        if (driver.status.toLowerCase() == 'pending' || driver.approvalStatus?.toLowerCase() == 'pending')
+                        // تعديل مباشر لكامل بيانات السائق ما دام قيد الانتظار.
+                        if (isPending)
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF2563EB),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              side: const BorderSide(color: Color(0xFF2563EB)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: state.isUpdatingDriver || state.isSubmittingReview
+                                ? null
+                                : () => _openEditDialog(context, driver),
+                            icon: state.isUpdatingDriver
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.edit_outlined, size: 16),
+                            label: const Text('تعديل بيانات السائق', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        if (isPending)
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),

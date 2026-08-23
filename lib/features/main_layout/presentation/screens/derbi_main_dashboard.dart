@@ -30,27 +30,33 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   int _selectedTabIndex = 0;
   late String _adminName;
   late String _roleName;
+  late List<NavigationItem> _navItems;
 
   @override
   void initState() {
     super.initState();
     _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
-  }
 
-  final List<NavigationItem> _navItems = [
-    NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
-    NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0),
-    NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3),
-    NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0),
-    NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0),
-    NavigationItem('zones', 'المناطق والجغرافيا', Icons.map_rounded, badge: 0),
-    NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
-    NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
-    NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0),
-    NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
-    NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
-  ];
+    final roleId = StorageService.getRoleId();
+    final isAdmin = roleId == 1;
+
+    _navItems = [
+      NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
+      NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
+      NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0),
+      NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3),
+      if (isAdmin)
+        NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0),
+      NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0),
+      NavigationItem('zones', 'المناطق الجغرافية', Icons.map_rounded, badge: 0),
+      NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
+      NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
+      NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0),
+      NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
+    ];
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -318,28 +324,32 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   }
 
   Widget _buildCurrentTabScreen(int index) {
-    switch (index) {
-      case 0:
+    if (index < 0 || index >= _navItems.length) {
+      return const DashboardOverviewScreen();
+    }
+    final itemId = _navItems[index].id;
+    switch (itemId) {
+      case 'dashboard':
         return const DashboardOverviewScreen();
-      case 1:
+      case 'drivers':
         return const DriversScreen();
-      case 2:
+      case 'updates':
         return const DriverChangeRequestsScreen();
-      case 3:
+      case 'admins':
         return const AdminsScreen();
-      case 4:
+      case 'schools':
         return const SchoolsManagementScreen();
-      case 5:
+      case 'zones':
         return const ZonesManagementScreen();
-      case 6:
+      case 'complaints':
         return const ComplaintsSupportView();
-      case 7:
+      case 'reviews':
         return const DriverReviewsScreen();
-      case 8:
+      case 'financial':
         return const FinancialDashboardScreen();
-      case 9:
+      case 'reports':
         return const ReportsDashboardScreen();
-      case 10:
+      case 'profile':
         return AdminProfileView(
           adminName: _adminName,
           onNameChanged: (newName) => setState(() => _adminName = newName),

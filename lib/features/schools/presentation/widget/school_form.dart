@@ -294,10 +294,9 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
+                        color: context.surfaceVariant,
                         border: Border.all(
-                          color: _selectedLat == null
-                              ? context.dangerColor
-                              : context.theme.colorScheme.outlineVariant,
+                          color: context.borderStrong,
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -336,7 +335,7 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
                                     'انقر لاختيار الموقع من الخريطة',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: context.dangerColor,
+                                      color: context.textMuted,
                                     ),
                                   ),
                               ],
@@ -345,7 +344,7 @@ class _SchoolFormDialogState extends State<SchoolFormDialog> {
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 16,
-                            color: context.theme.colorScheme.onSurfaceVariant,
+                            color: context.textMuted,
                           ),
                         ],
                       ),

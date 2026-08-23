@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../data/models/driver_model.dart';
+import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_card.dart';
+import '../widgets/driver_edit_dialog.dart';
 import '../widgets/driver_empty_state.dart';
 import '../widgets/driver_filters.dart';
 import '../widgets/driver_search_field.dart';
@@ -40,6 +43,27 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
 
   void _openInspectModal(BuildContext context, int driverId) {
     DriverDetailsScreen.show(context, driverId);
+  }
+
+  /// تعديل سريع من القائمة مباشرة، دون المرور بشاشة التفاصيل.
+  /// متاح للأدمن والمشرف على السائقين قيد الانتظار.
+  Future<void> _openEditDialog(DriverModel driver) async {
+    final cubit = context.read<DriversManagementCubit>();
+
+    // قائمة السائقين قد تُرجع ملخّصاً بلا الرقم الوطني والرخصة، فتُجلب
+    // التفاصيل الكاملة أولاً حتى لا يفتح النموذج بحقول فارغة.
+    await cubit.fetchDriverDetails(driver.id);
+    if (!mounted) return;
+
+    final fullDriver = cubit.state.selectedDriverDetails?.driver ?? driver;
+
+    final payload = await showDialog<UpdateDriverPayload>(
+      context: context,
+      builder: (_) => DriverEditDialog(driver: fullDriver),
+    );
+    if (payload == null) return;
+
+    await cubit.updateDriver(id: driver.id, payload: payload);
   }
 
   @override
@@ -175,6 +199,7 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                               drivers: state.drivers,
                               onTapInspect: (driver) =>
                                   _openInspectModal(context, driver.id),
+                              onTapEdit: _openEditDialog,
                             );
                           }
 
@@ -188,6 +213,7 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                                 driver: driver,
                                 onTapInspect: () =>
                                     _openInspectModal(context, driver.id),
+                                onTapEdit: () => _openEditDialog(driver),
                               );
                             },
                           );

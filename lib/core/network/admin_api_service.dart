@@ -32,20 +32,21 @@ class AdminApiService {
     };
   }
 
-  /// POST /api/admins/{id}  (multipart – name, email, password optional)
+  /// POST /api/admin/profile
   Future<Map<String, dynamic>> updateProfile(
     dynamic adminId,
     Map<String, dynamic> data,
   ) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.adminDetails(adminId),
+        ApiEndpoints.profile,
         data: data,
       );
       if (response.data is Map<String, dynamic>) return response.data;
     } catch (_) {}
     return {'status': true, 'message': 'تم تحديث الملف الشخصي بنجاح.'};
   }
+
 
   // ---------------------------------------------------------------------------
   // 1. Dashboard

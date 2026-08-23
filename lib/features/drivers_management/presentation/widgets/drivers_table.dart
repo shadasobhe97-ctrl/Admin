@@ -7,11 +7,19 @@ class DriversTable extends StatelessWidget {
   final List<DriverModel> drivers;
   final ValueChanged<DriverModel> onTapInspect;
 
+  /// تعديل سريع لبيانات السائق — يظهر للسائقين قيد الانتظار فقط.
+  final ValueChanged<DriverModel>? onTapEdit;
+
   const DriversTable({
     super.key,
     required this.drivers,
     required this.onTapInspect,
+    this.onTapEdit,
   });
+
+  static bool isPending(DriverModel driver) =>
+      driver.status.toLowerCase() == 'pending' ||
+      driver.approvalStatus?.toLowerCase() == 'pending';
 
   @override
   Widget build(BuildContext context) {
@@ -142,16 +150,29 @@ class DriversTable extends StatelessWidget {
                     DriverStatusBadge(status: driver.status),
                   ),
                   DataCell(
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () => onTapInspect(driver),
-                      icon: const Icon(Icons.badge_outlined, size: 16),
-                      label: const Text('فحص الوثائق والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () => onTapInspect(driver),
+                          icon: const Icon(Icons.badge_outlined, size: 16),
+                          label: const Text('فحص الوثائق والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                        if (onTapEdit != null && isPending(driver)) ...[
+                          const SizedBox(width: 6),
+                          IconButton(
+                            onPressed: () => onTapEdit!(driver),
+                            icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
+                            tooltip: 'تعديل بيانات السائق',
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],

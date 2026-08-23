@@ -27,7 +27,8 @@ class ZonesScreen extends StatelessWidget {
 class ZonesViewContent extends StatelessWidget {
   const ZonesViewContent({super.key});
 
-  void _showSnack(BuildContext context, String message, {bool isError = false}) {
+  void _showSnack(BuildContext context, String message,
+      {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -39,7 +40,8 @@ class ZonesViewContent extends StatelessWidget {
 
   // ── نماذج الإضافة والتعديل ────────────────────────────────────────────────
 
-  void _openMunicipalityForm(BuildContext context, {MunicipalityModel? municipality}) {
+  void _openMunicipalityForm(BuildContext context,
+      {MunicipalityModel? municipality}) {
     final cubit = context.read<ZonesCubit>();
     showDialog(
       context: context,
@@ -136,7 +138,8 @@ class ZonesViewContent extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: dialogContext.cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             title,
             style: TextStyle(
@@ -282,7 +285,8 @@ class ZonesViewContent extends StatelessWidget {
         if (state.unassignedZones.isNotEmpty) ...[
           const SizedBox(height: 10),
           _SectionLabel(
-            label: 'مناطق غير مرتبطة بأي محلة (${state.unassignedZones.length})',
+            label:
+                'مناطق غير مرتبطة بأي محلة (${state.unassignedZones.length})',
           ),
           const SizedBox(height: 8),
           for (final zone in state.unassignedZones)
@@ -363,7 +367,7 @@ class ZonesViewContent extends StatelessWidget {
         color: context.textMuted,
         title: 'لا توجد مناطق في "${state.subMunicipality.name}"',
         body: 'أضف أول منطقة دقيقة داخل هذه المحلة.',
-        actionLabel: 'إضافة منطقة دقيقة',
+        actionLabel: 'إضافة منطقة',
         onAction: () => _openZoneForm(
           context,
           presetSubMunicipalityId: state.subMunicipality.id,
@@ -377,7 +381,8 @@ class ZonesViewContent extends StatelessWidget {
           GeoNodeCard(
             icon: Icons.place_rounded,
             title: zone.name,
-            subtitle: '${state.municipality.name} ← ${state.subMunicipality.name}',
+            subtitle:
+                '${state.municipality.name} ← ${state.subMunicipality.name}',
             onEdit: () => _openZoneForm(context, zone: zone),
             onDelete: () => _confirmDelete(
               context,
