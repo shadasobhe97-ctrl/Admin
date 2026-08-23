@@ -41,7 +41,7 @@ class AdminColors {
   // ============================================================
 
   // Main brand blue
-  static const Color primary = Color(0xFF1499D5);
+  static const Color primary = Color(0xFF20B4D8);
 
   // Lighter / brighter sky blue
   static const Color primaryLight = Color(0xFF20B4D8);
@@ -87,7 +87,7 @@ class AdminColors {
   static const Color green700 = Color(0xFF388E3C);
   static const Color orange = Color(0xFFFF9800);
   static const Color amber = Color(0xFFFFC107);
-  static const Color blue = Color(0xFF1499D5);
+  static const Color blue = Color(0xFF20B4D8);
   static const Color blueGrey = Color(0xFF607D8B);
 
   // ============================================================
@@ -96,7 +96,7 @@ class AdminColors {
 
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color primaryLightTheme = Color(0xFF1499D5);
+  static const Color primaryLightTheme = Color(0xFF20B4D8);
   static const Color errorLight = Color(0xFFEF4444);
 
   // ============================================================
@@ -161,7 +161,7 @@ class AdminColors {
   // ============================================================
 
   // Brand
-  static const Color brandPrimary = Color(0xFF1499D5);
+  static const Color brandPrimary = Color(0xFF20B4D8);
   static const Color brandPrimaryDeep = Color(0xFF0879B5);
   static const Color onBrand = Color(0xFFFFFFFF);
   static const Color onBrandMuted = Color(0xB3FFFFFF);
@@ -235,7 +235,7 @@ class AdminColors {
   static const Color sidebarItemTextDark = Color(0xFF64748B);
   static const Color sidebarActiveBgLight = Color(0xFFE0F7FA);
   static const Color sidebarActiveBgDark = Color(0xFF164E63);
-  static const Color onSidebarActiveLight = Color(0xFF0879B5);
+  static const Color onSidebarActiveLight = Color(0xFF20B4D8);
   static const Color onSidebarActiveDark = Color(0xFF20B4D8);
   static const Color sidebarHoverLight = Color(0xFFF5F5F5);
   static const Color sidebarHoverDark = Color(0xFF1E293B);
@@ -243,7 +243,7 @@ class AdminColors {
   // Header
   static const Color headerBgLight = Color(0xFFFFFFFF);
   static const Color headerBgDark = Color(0xFF111827);
-  static const Color brandTaglineLight = Color(0xFF1499D5);
+  static const Color brandTaglineLight = Color(0xFF20B4D8);
   static const Color brandTaglineDark = Color(0xFF20B4D8);
 
   // Overlays / Scrims & Shadows
@@ -275,13 +275,13 @@ class AdminColors {
   static const Color surfaceCard = Color(0xFF1E293B);
   static const Color sidebarBackground = Color(0xFF111827);
   static const Color borderSlate = Color(0xFF334155);
-  static const Color primaryBlue = Color(0xFF1499D5);
+  static const Color primaryBlue = Color(0xFF20B4D8);
   static const Color primaryBlueHover = Color(0xFF0879B5);
   static const Color successEmerald = Color(0xFF10B981);
   static const Color warningAmber = Color(0xFFF59E0B);
   static const Color dangerRose = Color(0xFFEF4444);
   static const Color infoCyan = Color(0xFF20B4D8);
-  static const Color sidebarActiveItem = Color(0xFF1499D5);
+  static const Color sidebarActiveItem = Color(0xFF20B4D8);
   static const Color sidebarInactiveText = Color(0xFF64748B);
   static const Color sidebarBorder = Color(0xFF334155);
   static const Color badgeBackground = Color(0xFFFEE2E2);
