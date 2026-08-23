@@ -28,33 +28,36 @@ void main() {
       expect(Validators.validatePassword(''), 'الرجاء إدخال كلمة المرور');
     });
 
-    test('returns error when password is less than 8 characters', () {
+    const combinedError = 'كلمة المرور يجب أن تتكون من 6 خانات على الأقل،\n'
+        'وتحتوي على حرف إنجليزي ورقم على الأقل';
+
+    test('returns error when password is less than 6 characters', () {
       expect(
-        Validators.validatePassword('A1b2c3'),
-        'كلمة المرور يجب أن تتكون من 8 أحرف على الأقل',
+        Validators.validatePassword('A1b2c'),
+        combinedError,
       );
     });
 
     test('returns error when password lacks an English letter', () {
       expect(
-        Validators.validatePassword('12345678'),
-        'كلمة المرور يجب أن تحتوي على حرف إنجليزي واحد على الأقل (كبير أو صغير)',
+        Validators.validatePassword('123456'),
+        combinedError,
       );
       expect(
-        Validators.validatePassword('١٢٣٤٥٦٧٨'),
-        'كلمة المرور يجب أن تحتوي على حرف إنجليزي واحد على الأقل (كبير أو صغير)',
+        Validators.validatePassword('١٢٣٤٥٦'),
+        combinedError,
       );
     });
 
     test('returns error when password lacks a digit', () {
       expect(
         Validators.validatePassword('Password'),
-        'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل',
+        combinedError,
       );
     });
 
     test('returns null when password satisfies all conditions', () {
-      expect(Validators.validatePassword('Password123'), isNull);
+      expect(Validators.validatePassword('Pass12'), isNull);
       expect(Validators.validatePassword('admin123'), isNull);
       expect(Validators.validatePassword('Pass1234!'), isNull);
     });

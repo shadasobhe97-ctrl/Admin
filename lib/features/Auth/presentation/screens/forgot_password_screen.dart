@@ -294,7 +294,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const Align(
             alignment: Alignment.centerRight,
             child: Text(
-              '• 8 أحرف على الأقل | • حرف إنجليزي | • رقم واحد',
+              '• 6 خانات على الأقل | • حرف إنجليزي | • رقم واحد',
               style: TextStyle(fontSize: 10, color: DerbiColors.textMuted),
             ),
           ),
