@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/services/image_loader_service.dart';
+import '../../../core/utils/media_url.dart';
 import '../data/models/update_driver_payload.dart';
 import '../data/repositories/drivers_management_repository.dart';
 import 'drivers_management_state.dart';
@@ -45,6 +47,13 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         drivers: result.drivers,
         meta: result.meta,
       ));
+
+      // تجهيز صور الرمز التعبيري بالسائقين في الخلفية بالتوازي
+      unawaited(
+        ImageLoaderService.instance.prefetchAll(
+          result.drivers.map((d) => d.avatarUrl).toList(),
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
@@ -86,6 +95,14 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         isLoadingDetails: false,
         selectedDriverDetails: details,
       ));
+
+      // التحميل والتجهيز المسبق لجميع وثائق وصور السائق في الخلفية فوراً
+      final urls = <String?>[
+        details.driver.avatarUrl,
+        details.vehicle?.imageUrl,
+        ...details.documents.map((d) => d.fileUrl),
+      ];
+      unawaited(ImageLoaderService.instance.prefetchAll(urls));
     } catch (e) {
       emit(state.copyWith(
         isLoadingDetails: false,
@@ -188,6 +205,34 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         isLoading: false,
         pendingChanges: changes,
       ));
+
+      // التجهيز المسبق لجميع الصور في طلبات التعديل المعلقة في الخلفية
+      final imageUrls = <String?>[];
+      for (final change in changes) {
+        void extractUrls(Map<String, dynamic> map) {
+          map.forEach((key, val) {
+            if (val == null) return;
+            final s = val.toString().trim();
+            final keyLower = key.toLowerCase();
+            if (keyLower.contains('image') ||
+                keyLower.contains('photo') ||
+                keyLower.contains('doc_') ||
+                keyLower.contains('path') ||
+                keyLower.contains('file') ||
+                MediaUrl.isImage(s)) {
+              if (s.contains('/') || s.contains('\\') || MediaUrl.isImage(s)) {
+                imageUrls.add(s);
+              }
+            }
+          });
+        }
+        extractUrls(change.oldValues);
+        extractUrls(change.newValues);
+      }
+
+      if (imageUrls.isNotEmpty) {
+        unawaited(ImageLoaderService.instance.prefetchAll(imageUrls));
+      }
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
@@ -210,6 +255,33 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         isLoadingDetails: false,
         selectedChangeDetails: details,
       ));
+
+      // التجهيز والتحميل المسبق لجميع صور طلب التعديل المحدد فوراً
+      final imageUrls = <String?>[];
+      void extractUrls(Map<String, dynamic> map) {
+        map.forEach((key, val) {
+          if (val == null) return;
+          final s = val.toString().trim();
+          final keyLower = key.toLowerCase();
+          if (keyLower.contains('image') ||
+              keyLower.contains('photo') ||
+              keyLower.contains('doc_') ||
+              keyLower.contains('path') ||
+              keyLower.contains('file') ||
+              MediaUrl.isImage(s)) {
+            if (s.contains('/') || s.contains('\\') || MediaUrl.isImage(s)) {
+              imageUrls.add(s);
+            }
+          }
+        });
+      }
+
+      extractUrls(details.currentData);
+      extractUrls(details.proposedData);
+
+      if (imageUrls.isNotEmpty) {
+        unawaited(ImageLoaderService.instance.prefetchAll(imageUrls));
+      }
     } catch (e) {
       emit(state.copyWith(
         isLoadingDetails: false,

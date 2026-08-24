@@ -114,6 +114,37 @@ class _DriverEditDialogState extends State<DriverEditDialog> {
     _hasAc = vehicle?.hasAc;
   }
 
+  /// البحث عن رابط الملف الحالي للوثيقة المطابقة لنوع الحقل من الوثائق المحملة للسائق.
+  String? _findDocumentUrl(String field) {
+    final docs = widget.details?.documents ?? const [];
+    final target = field.toLowerCase().replaceAll('doc_', '');
+
+    for (final doc in docs) {
+      if (doc.fileUrl.isEmpty) continue;
+      final docType = doc.docType.toLowerCase().replaceAll('doc_', '');
+
+      if (docType == target) return doc.fileUrl;
+
+      if (target == 'license' && docType == 'license') return doc.fileUrl;
+      if (target == 'logbook' &&
+          (docType == 'logbook' ||
+              docType == 'vehicle_logbook' ||
+              docType == 'vehicle_registration')) {
+        return doc.fileUrl;
+      }
+      if (target == 'insurance' && docType == 'insurance') return doc.fileUrl;
+      if (target == 'booklet_page' &&
+          (docType == 'booklet_page' || docType == 'booklet_personal_page')) {
+        return doc.fileUrl;
+      }
+      if (target == 'stamp' && docType == 'stamp') return doc.fileUrl;
+      if (target == 'technical_inspection' && docType == 'technical_inspection') {
+        return doc.fileUrl;
+      }
+    }
+    return null;
+  }
+
   /// الخادم يرسل «غير محدد» بدل القيمة الفارغة، فلا تُعرض كنص قابل للحفظ.
   String _cleanValue(String? value) {
     final text = value?.trim() ?? '';
@@ -466,7 +497,7 @@ class _DriverEditDialogState extends State<DriverEditDialog> {
                   for (final field in DriverDocumentField.all) ...[
                     DriverFileField(
                       label: DriverDocumentField.labels[field] ?? field,
-                      currentUrl: null,
+                      currentUrl: _findDocumentUrl(field),
                       picked: _documents[field],
                       onPick: () async {
                         final upload = await _pickImage();

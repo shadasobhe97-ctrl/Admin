@@ -208,12 +208,21 @@ class DriversManagementRemoteDataSource {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
-        final listRaw = data['data'];
+        final listRaw = data['data'] ??
+            data['pending_changes'] ??
+            data['changes'] ??
+            data['requests'];
         if (listRaw is List) {
-          return listRaw.map((item) => DriverChangeRequestModel.fromJson(item as Map<String, dynamic>)).toList();
+          return listRaw
+              .whereType<Map<String, dynamic>>()
+              .map(DriverChangeRequestModel.fromJson)
+              .toList();
         }
       } else if (data is List) {
-        return data.map((item) => DriverChangeRequestModel.fromJson(item as Map<String, dynamic>)).toList();
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map(DriverChangeRequestModel.fromJson)
+            .toList();
       }
       return [];
     } on DioException catch (e) {

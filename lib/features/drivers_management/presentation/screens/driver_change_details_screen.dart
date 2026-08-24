@@ -133,21 +133,32 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'طلب تعديل رقم: #${details.id}',
+                                  'طلب تعديل رقم: #${details.id} | السائق: ${details.driverName ?? "سائق #${details.driverId}"}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: context.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 4),
                                 Text(
-                                  'النوع: ${details.changeType ?? "تعديل بيانات"} | السائق ID: #${details.driverId ?? "-"}',
+                                  'الهاتف: ${details.driverPhone != null && details.driverPhone!.isNotEmpty ? details.driverPhone : "غير محدد"} | نوع التعديل: ${details.translatedType} | السائق ID: #${details.driverId ?? "-"}',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: context.textTertiary,
                                   ),
                                 ),
+                                if (details.rejectionReason != null && details.rejectionReason!.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'سبب الرفض السابق: ${details.rejectionReason}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

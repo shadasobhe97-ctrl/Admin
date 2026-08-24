@@ -51,6 +51,24 @@ class ImageLoaderService {
     return _imageCache[url];
   }
 
+  /// التجهيز والتحميل المسبق لمجموعة صور بالتوازي في الخلفية (Background Parallel Prefetching)
+  Future<void> prefetchAll(List<String?> rawUrls) async {
+    final validUrls = rawUrls
+        .map((r) => MediaUrl.resolve(r))
+        .where((u) => u != null && u.isNotEmpty && !_imageCache.containsKey(u))
+        .cast<String>()
+        .toSet();
+
+    if (validUrls.isEmpty) return;
+
+    try {
+      await Future.wait(
+        validUrls.map((url) => fetchImageBytes(url)),
+        eagerError: false,
+      );
+    } catch (_) {}
+  }
+
   /// جلب بايتات الصورة مع الكاش والـ Deduplication وإعادة المحاولة عند البطء.
   Future<Uint8List?> fetchImageBytes(String? rawUrl) async {
     final url = MediaUrl.resolve(rawUrl);

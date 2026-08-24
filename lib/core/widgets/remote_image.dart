@@ -130,6 +130,10 @@ class _RemoteImageState extends State<RemoteImage> {
       return widget.fallback;
     }
 
+    if (_isLoading) {
+      return _loadingWidget;
+    }
+
     return _loadingWidget;
   }
 }

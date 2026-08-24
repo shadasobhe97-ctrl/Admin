@@ -56,7 +56,10 @@ class AdminModel {
       roleId: parsedRoleId,
       roleName: json['role_name']?.toString() ?? (parsedRoleId == 1 ? 'أدمن' : 'مشرف'),
       isActive: parsedActive,
-      avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
+      avatarUrl: json['avatar_url']?.toString() ??
+          json['avatar']?.toString() ??
+          json['profile_photo_url']?.toString() ??
+          json['photo_url']?.toString(),
       createdAt: json['created_at']?.toString(),
       emailChangePending: parsedEmailChangePending,
       pendingNewEmail: json['pending_new_email']?.toString(),

@@ -1,16 +1,24 @@
 class DriverChangeDetailsModel {
   final int id;
   final int? driverId;
+  final String? driverName;
+  final String? driverPhone;
   final String? changeType;
   final String? status;
+  final String? rejectionReason;
+  final String? createdAt;
   final Map<String, dynamic> currentData;
   final Map<String, dynamic> proposedData;
 
   DriverChangeDetailsModel({
     required this.id,
     this.driverId,
+    this.driverName,
+    this.driverPhone,
     this.changeType,
     this.status,
+    this.rejectionReason,
+    this.createdAt,
     required this.currentData,
     required this.proposedData,
   });
@@ -18,31 +26,103 @@ class DriverChangeDetailsModel {
   factory DriverChangeDetailsModel.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic> dataObj = json;
     if (json['data'] is Map<String, dynamic>) {
-      dataObj = json['data'];
+      dataObj = json['data'] as Map<String, dynamic>;
+    } else if (json['change'] is Map<String, dynamic>) {
+      dataObj = json['change'] as Map<String, dynamic>;
+    } else if (json['request'] is Map<String, dynamic>) {
+      dataObj = json['request'] as Map<String, dynamic>;
     }
 
-    int parsedId = 0;
-    if (dataObj['id'] != null) {
-      parsedId = dataObj['id'] is int ? dataObj['id'] : (int.tryParse(dataObj['id'].toString()) ?? 0);
+    int parseId(dynamic val) {
+      if (val == null) return 0;
+      if (val is int) return val;
+      return int.tryParse(val.toString().trim()) ?? 0;
     }
+
+    dynamic pick(List<String> keys) {
+      for (final key in keys) {
+        if (dataObj[key] != null) return dataObj[key];
+        if (json[key] != null) return json[key];
+      }
+      return null;
+    }
+
+    final rawId = parseId(pick([
+      'request_id',
+      'id',
+      'change_id',
+      'pending_change_id',
+      'change_request_id',
+      'id_change',
+    ]));
+
+    final rawDriverId = parseId(pick([
+      'driver_id',
+      'id_driver',
+      'user_id',
+      'driverId',
+    ]));
+
+    final finalId = rawId != 0 ? rawId : rawDriverId;
+    final finalDriverId = rawDriverId != 0 ? rawDriverId : rawId;
 
     Map<String, dynamic> currentMap = {};
-    if (dataObj['current_data'] is Map<String, dynamic>) {
-      currentMap = dataObj['current_data'];
+    final currentRaw = pick(['old_values', 'current_data', 'current', 'old_data', 'original', 'driver']);
+    if (currentRaw is Map<String, dynamic>) {
+      currentMap = currentRaw;
     }
 
     Map<String, dynamic> proposedMap = {};
-    if (dataObj['proposed_data'] is Map<String, dynamic>) {
-      proposedMap = dataObj['proposed_data'];
+    final proposedRaw = pick(['new_values', 'proposed_data', 'proposed', 'new_data', 'changes', 'pending_changes']);
+    if (proposedRaw is Map<String, dynamic>) {
+      proposedMap = proposedRaw;
     }
 
+    final name = pick(['driver_name', 'full_name', 'name', 'driverName'])?.toString() ??
+        (json['driver'] is Map ? json['driver']['full_name']?.toString() ?? json['driver']['name']?.toString() : null) ??
+        (dataObj['driver'] is Map ? dataObj['driver']['full_name']?.toString() ?? dataObj['driver']['name']?.toString() : null) ??
+        (currentMap['full_name']?.toString() ?? currentMap['driver_name']?.toString()) ??
+        (proposedMap['full_name']?.toString() ?? proposedMap['driver_name']?.toString());
+
+    final phone = pick(['driver_phone', 'phone_number', 'phone', 'mobile', 'driverPhone'])?.toString() ??
+        (json['driver'] is Map ? json['driver']['phone_number']?.toString() ?? json['driver']['phone']?.toString() : null) ??
+        (dataObj['driver'] is Map ? dataObj['driver']['phone_number']?.toString() ?? dataObj['driver']['phone']?.toString() : null) ??
+        (currentMap['phone_number']?.toString() ?? currentMap['phone']?.toString()) ??
+        (proposedMap['phone_number']?.toString() ?? proposedMap['phone']?.toString());
+
     return DriverChangeDetailsModel(
-      id: parsedId,
-      driverId: dataObj['driver_id'] is int ? dataObj['driver_id'] : int.tryParse(dataObj['driver_id']?.toString() ?? ''),
-      changeType: dataObj['change_type']?.toString(),
-      status: dataObj['status']?.toString(),
+      id: finalId,
+      driverId: finalDriverId,
+      driverName: name,
+      driverPhone: phone,
+      changeType: pick(['change_type', 'type', 'request_type'])?.toString(),
+      status: pick(['status', 'approval_status'])?.toString() ?? 'Pending',
+      rejectionReason: pick(['rejection_reason', 'reason'])?.toString(),
+      createdAt: pick(['created_at', 'date', 'updated_at'])?.toString(),
       currentData: currentMap,
       proposedData: proposedMap,
     );
+  }
+
+  String get translatedType {
+    if (changeType != null && changeType!.isNotEmpty) {
+      final ct = changeType!.toLowerCase();
+      if (ct.contains('vehicle') || ct == 'vehicle_update') return 'تعديل بيانات المركبة';
+      if (ct.contains('document') || ct == 'document_update' || ct.contains('doc')) return 'تحديث الوثائق الرسمية';
+      if (ct.contains('profile') || ct == 'profile_update' || ct.contains('user')) return 'تعديل بيانات الملف الشخصي';
+    }
+
+    final keys = proposedData.keys.map((k) => k.toLowerCase()).toList();
+    if (keys.any((k) => k.contains('doc_') || k.contains('license') || k.contains('expiry') || k.contains('insurance') || k.contains('stamp'))) {
+      return 'تحديث الوثائق الرسمية';
+    }
+    if (keys.any((k) => k.contains('plate') || k.contains('vehicle') || k.contains('color') || k.contains('year') || k.contains('brand') || k.contains('model'))) {
+      return 'تعديل بيانات المركبة';
+    }
+    if (keys.any((k) => k.contains('name') || k.contains('phone') || k.contains('national_id') || k.contains('avatar'))) {
+      return 'تعديل بيانات الملف الشخصي';
+    }
+
+    return changeType ?? 'تعديل بيانات المركبة';
   }
 }

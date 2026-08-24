@@ -245,7 +245,7 @@ class _DriverChangeRequestsContentState
                                 ),
                               ),
                               subtitle: Text(
-                                'السائق: ${change.driverName ?? "#${change.driverId}"} | طلب رقم: #${change.id}',
+                                'السائق: ${change.driverName ?? "#${change.driverId}"}${change.driverPhone != null && change.driverPhone!.isNotEmpty ? " (${change.driverPhone})" : ""} | طلب رقم: #${change.id}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: context.textTertiary,

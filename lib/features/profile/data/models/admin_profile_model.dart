@@ -58,7 +58,10 @@ class AdminProfileModel {
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       phoneNumber: json['phone_number']?.toString() ?? json['phone']?.toString() ?? '',
-      avatarUrl: json['avatar_url']?.toString() ?? json['avatar']?.toString(),
+      avatarUrl: json['avatar_url']?.toString() ??
+          json['avatar']?.toString() ??
+          json['profile_photo_url']?.toString() ??
+          json['photo_url']?.toString(),
       isActive: parseBool(json['is_active']),
       roleId: parseNullableId(json['role_id']),
       roleName: json['role_name']?.toString() ?? json['role']?.toString(),
