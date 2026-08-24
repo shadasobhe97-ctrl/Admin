@@ -245,104 +245,10 @@ class _AdminProfileViewContentState extends State<AdminProfileViewContent> {
                       },
                     )
                   : ProfileInfoCard(profile: profile),
-              const SizedBox(height: 20),
-              if (!_isEditing) _buildSessionCard(context),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSessionCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.security_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'الجلسة الحالية والأمان',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Divider(color: theme.colorScheme.outlineVariant),
-          const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.laptop_mac_rounded,
-                color: theme.colorScheme.primary,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              'لوحة التحكم الإدارية – جلسة الويب',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              'جلسة نشطة • محمية برمز مصادقة آمن (Sanctum Token)',
-              style: theme.textTheme.bodySmall,
-            ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Text(
-                'متصل',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.secondary,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

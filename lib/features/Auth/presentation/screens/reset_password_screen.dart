@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/utils/validators.dart';
 import '../../logic/admin_password_reset_cubit.dart';
 import '../../logic/admin_password_reset_state.dart';
@@ -78,7 +79,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                  color: context.primaryColor.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -90,7 +91,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  color: context.primaryColor.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -116,13 +117,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                                color: context.primaryColor.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.lock_reset_rounded,
                                 size: 40,
-                                color: Color(0xFF2563EB),
+                                color: context.primaryColor,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -131,7 +132,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -139,7 +140,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               'أدخل البريد الإلكتروني المسجل في النظام لإرسال رمز التحقق',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: context.textTertiary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -147,14 +148,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             TextFormField(
                               controller: _emailController,
                               style: TextStyle(
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                                 fontSize: 14,
                               ),
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'البريد الإلكتروني',
-                                hintText: 'admin@darbi.com',
-                                prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
+                                hintText: 'admin@darby.com',
+                                prefixIcon: Icon(Icons.email_outlined, color: context.primaryColor),
                               ),
                               validator: Validators.validateEmail,
                             ),
@@ -166,18 +167,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                   height: 50,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2563EB),
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: context.primaryColor,
+                                      foregroundColor: context.onPrimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
                                     onPressed: state.isLoading ? null : _handleSendOtp,
                                     child: state.isLoading
-                                        ? const SizedBox(
+                                        ? SizedBox(
                                             width: 24,
                                             height: 24,
-                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                            child: CircularProgressIndicator(color: context.onPrimary, strokeWidth: 2),
                                           )
                                         : const Text(
                                             'إرسال رمز التحقق (OTP)',
@@ -193,7 +194,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               child: Text(
                                 'العودة لتسجيل الدخول',
                                 style: TextStyle(
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  color: context.textTertiary,
                                   fontSize: 13,
                                 ),
                               ),

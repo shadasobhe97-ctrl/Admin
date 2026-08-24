@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverSearchField extends StatelessWidget {
   final ValueChanged<String> onChanged;
@@ -15,7 +16,6 @@ class DriverSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 420),
@@ -23,17 +23,17 @@ class DriverSearchField extends StatelessWidget {
         onChanged: onChanged,
         style: TextStyle(
           fontSize: 14,
-          color: isDark ? Colors.white : const Color(0xFF0F172A),
+          color: context.textPrimary,
         ),
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(
             fontSize: 13,
-            color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+            color: context.textTertiary,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: Color(0xFF2563EB),
+            color: context.primaryColor,
           ),
           suffixIcon: onClear != null
               ? IconButton(
@@ -54,7 +54,7 @@ class DriverSearchField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+            borderSide: BorderSide(color: context.primaryColor, width: 1.5),
           ),
         ),
       ),

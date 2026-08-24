@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/admin_profile_model.dart';
 import '../../data/models/email_change_status_model.dart';
 import '../../data/models/profile_update_request.dart';
@@ -24,6 +25,9 @@ class ProfileCubit extends Cubit<ProfileState> {
           // If status fetch fails, keep profile data as primary
         }
       }
+
+      // تُخزَّن الصورة في الجلسة ليعرضها الشريط الجانبي بلا طلب إضافي.
+      await StorageService.saveAvatarUrl(profile.avatarUrl);
 
       emit(ProfileLoaded(
         profile: profile,
@@ -51,18 +55,38 @@ class ProfileCubit extends Cubit<ProfileState> {
       final EmailVerificationInfo? verificationInfo =
           result['email_verification'] as EmailVerificationInfo?;
 
+      final bool uploadedAvatar =
+          request.avatarBytes != null && request.avatarBytes!.isNotEmpty;
+
       AdminProfileModel updatedProfile = currentProfile;
       if (result['profile'] is AdminProfileModel) {
         updatedProfile = result['profile'] as AdminProfileModel;
       } else {
-        updatedProfile = currentProfile.copyWith(
-          fullName: request.fullName ?? currentProfile.fullName,
-          email: request.email ?? currentProfile.email,
-          phoneNumber: request.phoneNumber ?? currentProfile.phoneNumber,
-          emailChangePending: verificationInfo != null ? true : currentProfile.emailChangePending,
-          pendingNewEmail: verificationInfo != null ? request.email : currentProfile.pendingNewEmail,
+        // الاستجابة بلا بيانات ملف؛ و`copyWith` تحتفظ بالصورة القديمة، فلو
+        // كان الرفع يخصّ صورة جديدة وجب جلب الملف من الخادم لمعرفة رابطها.
+        if (uploadedAvatar) {
+          try {
+            updatedProfile = await _repository.getProfile();
+          } catch (_) {
+            updatedProfile = currentProfile;
+          }
+        }
+
+        updatedProfile = updatedProfile.copyWith(
+          fullName: request.fullName ?? updatedProfile.fullName,
+          email: request.email ?? updatedProfile.email,
+          phoneNumber: request.phoneNumber ?? updatedProfile.phoneNumber,
+          emailChangePending: verificationInfo != null ? true : updatedProfile.emailChangePending,
+          pendingNewEmail: verificationInfo != null ? request.email : updatedProfile.pendingNewEmail,
         );
       }
+
+      // تحديث الصورة المشتركة ليعكسها الشريط الجانبي والترويسة فوراً.
+      // بصمة الوقت تلزم عند رفع صورة جديدة لأن الخادم قد يعيد المسار نفسه.
+      await StorageService.saveAvatarUrl(
+        updatedProfile.avatarUrl,
+        bustCache: uploadedAvatar,
+      );
 
       emit(ProfileUpdateSuccess(
         profile: updatedProfile,

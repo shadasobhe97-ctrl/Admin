@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverReviewDialog extends StatefulWidget {
   final String driverName;
@@ -54,7 +55,7 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: context.textPrimary,
                     ),
                   ),
                   IconButton(
@@ -66,10 +67,10 @@ class _DriverReviewDialogState extends State<DriverReviewDialog> {
               const SizedBox(height: 12),
               Text(
                 'السائق: ${widget.driverName}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: context.primaryColor,
                 ),
               ),
               const SizedBox(height: 16),

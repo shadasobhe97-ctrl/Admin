@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import 'admin_avatar.dart';
@@ -25,7 +26,6 @@ class AdminCard extends StatelessWidget {
 
   void _showDeleteDialog(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     showDialog(
       context: context,
@@ -39,14 +39,14 @@ class AdminCard extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: context.textPrimary,
             ),
           ),
           content: Text(
             'هل أنت متأكد من رغبتك في حذف المشرف (${admin.fullName}) نهائياً من المنصة والسيرفر؟\n\nتنويه: الحذف نهائي وغير قابل للتراجع وتُلغى كل جلسات الدخول فوراً.',
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              color: context.textTertiary,
             ),
           ),
           actions: [
@@ -56,7 +56,7 @@ class AdminCard extends StatelessWidget {
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE11D48),
+                backgroundColor: context.dangerColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -110,15 +110,15 @@ class AdminCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         admin.roleName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF2563EB),
+                          color: context.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -133,32 +133,32 @@ class AdminCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.email_outlined, size: 15, color: Color(0xFF94A3B8)),
+                Icon(Icons.email_outlined, size: 15, color: context.textTertiary),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     admin.email,
                     style: TextStyle(
                       fontSize: 13,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: context.textTertiary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF94A3B8)),
+                Icon(Icons.phone_outlined, size: 15, color: context.textTertiary),
                 const SizedBox(width: 6),
                 Text(
                   admin.phoneNumber,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: context.textTertiary,
                   ),
                 ),
               ],
             ),
             if (admin.emailChangePending && admin.pendingNewEmail != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               InkWell(
                 onTap: () {
                   EmailVerificationWaitingDialog.show(
@@ -209,7 +209,7 @@ class AdminCard extends StatelessWidget {
                       'الحالة الحالية:',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: context.textTertiary,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -220,7 +220,7 @@ class AdminCard extends StatelessWidget {
                       child: Switch(
                         value: admin.isActive,
                         onChanged: isCurrentMainAdmin ? onToggleStatus : null,
-                        activeThumbColor: const Color(0xFF10B981),
+                        activeThumbColor: context.successColor,
                       ),
                     ),
                   ],
@@ -240,8 +240,8 @@ class AdminCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
+                        backgroundColor: context.primaryColor,
+                        foregroundColor: context.onPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -253,7 +253,7 @@ class AdminCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       IconButton(
                         tooltip: 'حذف المشرف نهائياً',
-                        icon: const Icon(Icons.delete_forever_outlined, color: Color(0xFFE11D48), size: 20),
+                        icon: Icon(Icons.delete_forever_outlined, color: context.dangerColor, size: 20),
                         onPressed: () => _showDeleteDialog(context),
                       ),
                     ],

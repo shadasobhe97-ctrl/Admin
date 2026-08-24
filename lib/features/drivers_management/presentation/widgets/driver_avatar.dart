@@ -1,59 +1,45 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/remote_circle_avatar.dart';
+
+/// صورة السائق الشخصية.
+///
+/// التحميل مفوَّض إلى [RemoteCircleAvatar] الذي يجرّب جلب البايتات ثم وسم
+/// `img`، فتظهر الصورة في الويب أيضاً بدل الأحرف الأولى الدائمة.
 class DriverAvatar extends StatelessWidget {
   final String? avatarUrl;
   final String fullName;
   final double radius;
+
+  /// يفتح الصورة بالحجم الكامل عند الضغط.
+  final VoidCallback? onTap;
 
   const DriverAvatar({
     super.key,
     this.avatarUrl,
     required this.fullName,
     this.radius = 20,
+    this.onTap,
   });
 
   String get _initials {
-    if (fullName.trim().isEmpty) return 'س';
-    final parts = fullName.trim().split(' ');
-    if (parts.length > 1) {
+    final name = fullName.trim();
+    if (name.isEmpty) return 'س';
+
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length > 1 && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}';
     }
-    return fullName.trim()[0];
+    return name[0];
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    if (avatarUrl != null && avatarUrl!.trim().isNotEmpty && avatarUrl!.startsWith('http')) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-        backgroundImage: NetworkImage(avatarUrl!),
-        onBackgroundImageError: (_, __) {},
-        child: Text(
-          _initials,
-          style: TextStyle(
-            fontSize: radius * 0.7,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF2563EB),
-          ),
-        ),
-      );
-    }
-
-    return CircleAvatar(
+    return RemoteCircleAvatar(
+      rawUrl: avatarUrl,
       radius: radius,
-      backgroundColor: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.2 : 0.1),
-      child: Text(
-        _initials,
-        style: TextStyle(
-          fontSize: radius * 0.75,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF2563EB),
-        ),
-      ),
+      initials: _initials,
+      onTap: onTap,
     );
   }
 }

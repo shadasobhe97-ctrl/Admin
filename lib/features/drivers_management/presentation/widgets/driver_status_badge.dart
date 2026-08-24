@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverStatusBadge extends StatelessWidget {
   final String status;
@@ -42,10 +43,17 @@ class DriverStatusBadge extends StatelessWidget {
         label = 'غير متصل';
         break;
       case 'on_trip':
-        bgColor = isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.4) : const Color(0xFFEFF6FF);
-        textColor = isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB);
+        bgColor = context.primaryColor.withValues(alpha: 0.12);
+        textColor = context.primaryColor;
         icon = Icons.directions_bus_rounded;
         label = 'في رحلة';
+        break;
+      case 'not_uploaded':
+      case 'missing':
+        bgColor = isDark ? const Color(0xFF475569).withValues(alpha: 0.4) : const Color(0xFFF1F5F9);
+        textColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        icon = Icons.info_outline_rounded;
+        label = 'غير مرفوعة';
         break;
       case 'pending':
       default:

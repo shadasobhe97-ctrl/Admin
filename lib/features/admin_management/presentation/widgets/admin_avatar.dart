@@ -1,68 +1,43 @@
 import 'package:flutter/material.dart';
-import '../../../../core/network/api_endpoints.dart';
 
+import '../../../../core/widgets/remote_circle_avatar.dart';
+
+/// صورة المشرف الشخصية.
+///
+/// معالجة الرابط النسبي وتحميل الصورة مفوَّضان إلى [RemoteCircleAvatar]
+/// حتى تسلك الصور مساراً واحداً يعمل في الويب وسطح المكتب.
 class AdminAvatar extends StatelessWidget {
   final String? avatarUrl;
   final String fullName;
   final double radius;
+  final VoidCallback? onTap;
 
   const AdminAvatar({
     super.key,
     this.avatarUrl,
     required this.fullName,
     this.radius = 20,
+    this.onTap,
   });
 
   String get _initials {
-    if (fullName.trim().isEmpty) return 'أ';
-    final parts = fullName.trim().split(' ');
-    if (parts.length > 1) {
+    final name = fullName.trim();
+    if (name.isEmpty) return 'أ';
+
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length > 1 && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}';
     }
-    return fullName.trim()[0];
-  }
-
-  String? _getCleanUrl() {
-    if (avatarUrl == null || avatarUrl!.trim().isEmpty) return null;
-    
-    String url = avatarUrl!.trim();
-    
-    // If it's a relative path, prefix it dynamically using ApiEndpoints.baseUrl (without /api)
-    if (!url.startsWith('http')) {
-      final base = ApiEndpoints.baseUrl.replaceAll('/api', '');
-      final path = url.startsWith('/') ? url : '/$url';
-      return '$base$path';
-    }
-    
-    return url;
+    return name[0];
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cleanUrl = _getCleanUrl();
-
-    if (cleanUrl != null) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
-        backgroundImage: NetworkImage(cleanUrl),
-        onBackgroundImageError: (_, __) {},
-      );
-    }
-
-    return CircleAvatar(
+    return RemoteCircleAvatar(
+      rawUrl: avatarUrl,
       radius: radius,
-      backgroundColor: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.2 : 0.1),
-      child: Text(
-        _initials,
-        style: TextStyle(
-          fontSize: radius * 0.75,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF2563EB),
-        ),
-      ),
+      initials: _initials,
+      onTap: onTap,
     );
   }
 }

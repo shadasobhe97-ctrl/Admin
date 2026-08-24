@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/widgets/image_viewer_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/storage_service.dart';
@@ -106,7 +109,6 @@ class AdminDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -145,7 +147,7 @@ class AdminDetailsScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                     IconButton(
@@ -157,10 +159,10 @@ class AdminDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 if (state.isLoading)
-                  const SizedBox(
+                  SizedBox(
                     height: 250,
                     child: Center(
-                      child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                      child: CircularProgressIndicator(color: context.primaryColor),
                     ),
                   )
                 else if (admin == null)
@@ -177,7 +179,7 @@ class AdminDetailsScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: context.surfaceVariant,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: theme.dividerColor),
                         ),
@@ -187,6 +189,12 @@ class AdminDetailsScreen extends StatelessWidget {
                               avatarUrl: admin.avatarUrl,
                               fullName: admin.fullName,
                               radius: 36,
+                              onTap: () => ImageViewerDialog.show(
+                                context,
+                                title: 'الصورة الشخصية',
+                                subtitle: admin.fullName,
+                                rawUrl: admin.avatarUrl,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -198,7 +206,7 @@ class AdminDetailsScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -206,7 +214,7 @@ class AdminDetailsScreen extends StatelessWidget {
                                     'معرّف المشرف (ID): #${admin.id}',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                      color: context.textTertiary,
                                     ),
                                   ),
                                 ],
@@ -249,8 +257,8 @@ class AdminDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
+                              backgroundColor: context.primaryColor,
+                              foregroundColor: context.onPrimary,
                               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -272,25 +280,24 @@ class AdminDetailsScreen extends StatelessWidget {
 
   Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFF2563EB)),
+          Icon(icon, size: 20, color: context.primaryColor),
           const SizedBox(width: 12),
           Text(
             '$label:',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              color: context.textTertiary,
             ),
           ),
           const SizedBox(width: 8),
@@ -300,7 +307,7 @@ class AdminDetailsScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
               ),
               overflow: TextOverflow.ellipsis,
             ),

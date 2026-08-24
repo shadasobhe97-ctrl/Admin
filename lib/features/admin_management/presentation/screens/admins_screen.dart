@@ -101,7 +101,6 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -152,9 +151,7 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -191,8 +188,8 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                             ],
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
+                                backgroundColor: context.primaryColor,
+                                foregroundColor: context.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 18, vertical: 14),
                                 shape: RoundedRectangleBorder(
@@ -232,8 +229,8 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                         IconButton.filledTonal(
                           onPressed: () => cubit.fetchAdmins(
                               search: _searchController.text.trim()),
-                          icon: const Icon(Icons.refresh_rounded,
-                              color: Color(0xFF2563EB)),
+                          icon: Icon(Icons.refresh_rounded,
+                              color: context.primaryColor),
                           tooltip: 'تحديث بيانات القائمة من Backend',
                         ),
                       ],
@@ -242,11 +239,11 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
 
                     // Loading Indicator State
                     if (state.isLoading)
-                      const SizedBox(
+                      SizedBox(
                         height: 300,
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF2563EB)),
+                              color: context.primaryColor),
                         ),
                       )
                     // Empty State

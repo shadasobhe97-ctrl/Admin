@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/driver_model.dart';
 import 'driver_avatar.dart';
 import 'driver_status_badge.dart';
@@ -57,7 +58,7 @@ class DriverCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -65,7 +66,7 @@ class DriverCard extends StatelessWidget {
                         'الهاتف: ${driver.phoneNumber}',
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: context.textTertiary,
                         ),
                       ),
                     ],
@@ -84,7 +85,7 @@ class DriverCard extends StatelessWidget {
                   'معرّف السائق: #${driver.id}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: context.textTertiary,
                   ),
                 ),
                 Row(
@@ -93,15 +94,15 @@ class DriverCard extends StatelessWidget {
                     if (onTapEdit != null && _isPending) ...[
                       IconButton(
                         onPressed: onTapEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
+                        icon: Icon(Icons.edit_outlined, size: 18, color: context.primaryColor),
                         tooltip: 'تعديل بيانات السائق',
                       ),
                       const SizedBox(width: 4),
                     ],
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
+                        backgroundColor: context.primaryColor,
+                        foregroundColor: context.onPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/admin_auth_cubit.dart';
 
 class AdminSplashScreen extends StatefulWidget {
@@ -52,7 +53,6 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -67,14 +67,14 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                    color: context.primaryColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3), width: 2),
+                    border: Border.all(color: context.primaryColor.withValues(alpha: 0.3), width: 2),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.admin_panel_settings_rounded,
                     size: 80,
-                    color: Color(0xFF2563EB),
+                    color: context.primaryColor,
                   ),
                 ),
               ),
@@ -84,7 +84,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: context.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -93,7 +93,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 'منظومة الربط والنقل الذكي طرابلس',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: context.textTertiary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -103,7 +103,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 child: LinearProgressIndicator(
                   borderRadius: BorderRadius.circular(10),
                   backgroundColor: theme.cardColor,
-                  color: const Color(0xFF2563EB),
+                  color: context.primaryColor,
                 ),
               ),
             ],

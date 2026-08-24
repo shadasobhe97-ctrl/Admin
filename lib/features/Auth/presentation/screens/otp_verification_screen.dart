@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/admin_password_reset_cubit.dart';
 import '../../logic/admin_password_reset_state.dart';
 import 'new_password_screen.dart';
@@ -103,7 +104,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                  color: context.primaryColor.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -115,7 +116,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  color: context.primaryColor.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -141,13 +142,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                color: context.successColor.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.verified_outlined,
                                 size: 40,
-                                color: Color(0xFF10B981),
+                                color: context.successColor,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -156,7 +157,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -164,7 +165,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               'تم إرسال رمز التحقق (OTP) إلى ${widget.email}. أدخل الرمز للمتابعة.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: context.textTertiary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -172,17 +173,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             TextFormField(
                               controller: _otpController,
                               style: TextStyle(
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                                 fontSize: 14,
                                 letterSpacing: 4,
                               ),
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
                               maxLength: 6,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'رمز التحقق (OTP)',
                                 hintText: '1234',
-                                prefixIcon: Icon(Icons.pin_outlined, color: Color(0xFF10B981)),
+                                prefixIcon: Icon(Icons.pin_outlined, color: context.successColor),
                               ),
                               validator: (val) {
                                 final value = val?.trim() ?? '';

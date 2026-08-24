@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/utils/validators.dart';
 import '../../logic/admin_auth_cubit.dart';
 import '../../logic/admin_auth_state.dart';
@@ -115,17 +116,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
-            backgroundColor: DerbiColors.background,
+            backgroundColor: context.scaffoldBackgroundColor,
             body: Stack(
               children: [
                 // ── decorative blobs ─────────────────────────────────────────
                 Positioned(
                   top: -100, right: -100,
-                  child: _blob(300, DerbiColors.primaryBlue.withValues(alpha: 0.12)),
+                  child: _blob(300, context.primaryColor.withValues(alpha: 0.12)),
                 ),
                 Positioned(
                   bottom: -120, left: -120,
-                  child: _blob(350, DerbiColors.primaryBlue.withValues(alpha: 0.08)),
+                  child: _blob(350, context.primaryColor.withValues(alpha: 0.08)),
                 ),
 
                 // ── content ──────────────────────────────────────────────────
@@ -149,11 +150,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // ── Card ─────────────────────────────────────────────────────────────────────
   Widget _buildCard(AdminAuthState state) {
     return Card(
-      color:     DerbiColors.surfaceCard,
-      elevation: 16,
+      color:     context.cardColor,
+      elevation: context.isDarkMode ? 0 : 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: DerbiColors.borderSlate),
+        side: BorderSide(color: context.borderSoft),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 40),
@@ -165,15 +166,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const SizedBox(height: 20),
             Text(
               _stepTitle(),
-              style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white,
+              style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.bold, color: context.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               _stepSubtitle(),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: DerbiColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: context.textTertiary),
             ),
             const SizedBox(height: 12),
 
@@ -192,10 +193,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const SizedBox(height: 20),
             TextButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_rounded, size: 16, color: DerbiColors.textMuted),
-              label: const Text(
+              icon: Icon(Icons.arrow_back_rounded, size: 16, color: context.textTertiary),
+              label: Text(
                 'العودة لتسجيل الدخول',
-                style: TextStyle(color: DerbiColors.textMuted, fontSize: 13),
+                style: TextStyle(color: context.textTertiary, fontSize: 13),
               ),
             ),
           ],
@@ -223,7 +224,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             icon:      Icons.send_rounded,
             isLoading: state.isLoading,
             onTap:     _handleSendOtp,
-            color:     DerbiColors.primaryBlue,
+            color:     context.primaryColor,
           ),
         ]);
 
@@ -234,15 +235,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: DerbiColors.background,
+              color: context.surfaceVariant,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: DerbiColors.borderSlate),
+              border: Border.all(color: context.borderSoft),
             ),
             child: Row(children: [
-              const Icon(Icons.email_outlined, size: 16, color: DerbiColors.primaryBlue),
+              Icon(Icons.email_outlined, size: 16, color: context.primaryColor),
               const SizedBox(width: 8),
               Text(_emailCtrl.text,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  style: TextStyle(color: context.textPrimary, fontSize: 13)),
             ]),
           ),
           const SizedBox(height: 16),
@@ -262,14 +263,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             icon:      Icons.check_circle_outline_rounded,
             isLoading: state.isLoading,
             onTap:     _handleVerifyOtp,
-            color:     DerbiColors.primaryBlue,
+            color:     context.primaryColor,
           ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: state.isLoading ? null : _handleSendOtp,
-            child: const Text(
+            child: Text(
               'إعادة إرسال الرمز',
-              style: TextStyle(color: DerbiColors.textMuted, fontSize: 12),
+              style: TextStyle(color: context.textTertiary, fontSize: 12),
             ),
           ),
         ]);
@@ -291,11 +292,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             onToggle:   () => setState(() => _confirmVisible = !_confirmVisible),
           ),
           const SizedBox(height: 6),
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
             child: Text(
               '• 6 خانات على الأقل | • حرف إنجليزي | • رقم واحد',
-              style: TextStyle(fontSize: 10, color: DerbiColors.textMuted),
+              style: TextStyle(fontSize: 10, color: context.textTertiary),
             ),
           ),
           const SizedBox(height: 24),
@@ -304,7 +305,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             icon:      Icons.lock_reset_rounded,
             isLoading: state.isLoading,
             onTap:     _handleResetPassword,
-            color:     DerbiColors.successEmerald,
+            color:     context.successColor,
           ),
         ]);
     }
@@ -319,7 +320,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Widget _stepIcon() {
     final icons  = [Icons.email_outlined, Icons.verified_user_outlined, Icons.lock_reset_rounded];
-    final colors = [DerbiColors.primaryBlue, DerbiColors.warningAmber, DerbiColors.successEmerald];
+    final colors = [context.primaryColor, Colors.amber, context.successColor];
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -354,7 +355,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width:  current ? 28 : 10,
           height: 10,
           decoration: BoxDecoration(
-            color: active ? DerbiColors.primaryBlue : DerbiColors.borderSlate,
+            color: active ? context.primaryColor : context.borderSoft,
             borderRadius: BorderRadius.circular(6),
           ),
         );
@@ -378,29 +379,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       maxLength:    maxLength,
       textAlign:    textAlign,
       style: TextStyle(
-        color:         Colors.white,
+        color:         context.textPrimary,
         fontSize:      14,
         letterSpacing: letterSpacing,
       ),
       decoration: InputDecoration(
         labelText:   label,
         hintText:    hint,
-        prefixIcon:  Icon(icon, color: DerbiColors.primaryBlue, size: 18),
-        filled:      true,
-        fillColor:   DerbiColors.background,
+        prefixIcon:  Icon(icon, color: context.primaryColor, size: 18),
         counterText: '',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.borderSlate),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.borderSlate),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.primaryBlue, width: 1.5),
-        ),
       ),
     );
   }
@@ -414,31 +401,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return TextField(
       controller:  controller,
       obscureText: !visible,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: TextStyle(color: context.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         labelText:  label,
-        prefixIcon: const Icon(Icons.lock_outline_rounded, color: DerbiColors.primaryBlue, size: 18),
+        prefixIcon: Icon(Icons.lock_outline_rounded, color: context.primaryColor, size: 18),
         suffixIcon: IconButton(
           icon: Icon(
             visible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            color: DerbiColors.textMuted,
+            color: context.textTertiary,
             size: 18,
           ),
           onPressed: onToggle,
-        ),
-        filled:     true,
-        fillColor:  DerbiColors.background,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.borderSlate),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.borderSlate),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: DerbiColors.primaryBlue, width: 1.5),
         ),
       ),
     );
@@ -457,6 +430,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 4,
         ),

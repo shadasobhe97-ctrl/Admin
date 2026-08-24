@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/utils/media_url.dart';
+import '../../../../core/widgets/image_viewer_dialog.dart';
+import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/driver_document_model.dart';
-import 'document_viewer_dialog.dart';
 import 'driver_status_badge.dart';
 
 /// صف وثيقة واحدة داخل تفاصيل السائق.
 ///
-/// الضغط عليه يفتح [DocumentViewerDialog] مهما كانت حالة السائق أو الوثيقة،
+/// الضغط عليه يفتح الصورة بالحجم الكامل مهما كانت حالة السائق أو الوثيقة،
 /// لأن الاطلاع على المستند مطلوب في المراجعة والتدقيق اللاحق على حدّ سواء.
 class DriverDocumentTile extends StatelessWidget {
   final DriverDocumentModel document;
@@ -24,6 +25,7 @@ class DriverDocumentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = MediaUrl.resolve(document.fileUrl);
     final hasFile = url != null;
+    final expiry = document.expiryDate;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -37,10 +39,17 @@ class DriverDocumentTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: hasFile
-              ? () => DocumentViewerDialog.show(
+              ? () => ImageViewerDialog.show(
                     context,
-                    document: document,
-                    driverName: driverName,
+                    title: document.translatedType,
+                    rawUrl: document.fileUrl,
+                    subtitle: expiry == null || expiry.isEmpty
+                        ? driverName
+                        : '$driverName • تنتهي في $expiry',
+                    badge: DriverStatusBadge(status: document.status),
+                    note: document.notes == null
+                        ? null
+                        : 'ملاحظات المراجع: ${document.notes}',
                   )
               : null,
           child: Padding(
@@ -63,12 +72,11 @@ class DriverDocumentTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        hasFile
-                            ? (document.expiryDate == null ||
-                                    document.expiryDate!.isEmpty
+                        !hasFile
+                            ? 'لا يوجد ملف مرفوع'
+                            : (expiry == null || expiry.isEmpty
                                 ? 'اضغط لعرض الوثيقة'
-                                : 'تاريخ الانتهاء: ${document.expiryDate}')
-                            : 'لا يوجد ملف مرفوع',
+                                : 'تاريخ الانتهاء: $expiry'),
                         style: TextStyle(
                           fontSize: 12,
                           color: context.textTertiary,
@@ -104,7 +112,6 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final link = url;
-    final showImage = link != null && MediaUrl.isImage(link);
 
     return Container(
       width: 46,
@@ -114,15 +121,10 @@ class _Thumbnail extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
       ),
       clipBehavior: Clip.antiAlias,
-      child: showImage
-          ? Image.network(
-              link,
-              fit: BoxFit.cover,
-              headers: MediaUrl.authHeaders,
-              errorBuilder: (context, error, stackTrace) =>
-                  _FallbackIcon(url: link),
-            )
-          : _FallbackIcon(url: link),
+      child: RemoteImage(
+        rawUrl: link,
+        fallback: _FallbackIcon(url: link),
+      ),
     );
   }
 }

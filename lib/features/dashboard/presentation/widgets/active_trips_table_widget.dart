@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../../../core/theme/admin_colors.dart';
 import '../../../../core/utils/admin_theme_context.dart';
@@ -34,9 +36,12 @@ class ActiveDriverCard extends StatelessWidget {
               // ترويسة السائق
               Row(
                 children: [
-                  CircleAvatar(
+                  RemoteCircleAvatar(
+                    rawUrl: trip.driverAvatar,
                     radius: 20,
-                    backgroundImage: NetworkImage(trip.driverAvatar),
+                    initials: trip.driverName.trim().isEmpty
+                        ? null
+                        : trip.driverName.trim()[0],
                   ),
                   const SizedBox(width: 12),
                   Expanded(

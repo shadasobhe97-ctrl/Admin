@@ -1,7 +1,10 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/models/create_admin_request_model.dart';
 import '../../data/models/update_admin_request_model.dart';
@@ -128,7 +131,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final currentRoleId = StorageService.getRoleId();
     final isCurrentMainAdmin = currentRoleId == 1;
 
@@ -142,24 +144,11 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           Center(
             child: Stack(
               children: [
-                CircleAvatar(
+                RemoteCircleAvatar(
+                  rawUrl: widget.initialAdmin?.avatarUrl,
                   radius: 44,
-                  backgroundColor:
-                      const Color(0xFF2563EB).withValues(alpha: 0.1),
-                  backgroundImage: _avatarBytes != null
-                      ? MemoryImage(_avatarBytes!)
-                      : (widget.initialAdmin?.avatarUrl != null &&
-                              widget.initialAdmin!.avatarUrl!.startsWith('http')
-                          ? NetworkImage(widget.initialAdmin!.avatarUrl!)
-                              as ImageProvider
-                          : null),
-                  child: (_avatarBytes == null &&
-                          (widget.initialAdmin?.avatarUrl == null ||
-                              !widget.initialAdmin!.avatarUrl!
-                                  .startsWith('http')))
-                      ? const Icon(Icons.person,
-                          size: 48, color: Color(0xFF2563EB))
-                      : null,
+                  bytes: _avatarBytes,
+                  fallbackIcon: Icons.person,
                 ),
                 Positioned(
                   bottom: 0,
@@ -168,8 +157,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     message: 'رفع/تعديل الصورة الشخصية',
                     child: IconButton.filledTonal(
                       onPressed: _pickAvatar,
-                      icon: const Icon(Icons.camera_alt_rounded,
-                          size: 18, color: Color(0xFF2563EB)),
+                      icon: Icon(Icons.camera_alt_rounded,
+                          size: 18, color: context.primaryColor),
                     ),
                   ),
                 ),
@@ -182,13 +171,13 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           TextFormField(
             controller: _nameController,
             style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
                 fontSize: 14),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'الاسم الثلاثي الكامل',
               hintText: 'مثال: سارة توفيق العجيلي',
               prefixIcon:
-                  Icon(Icons.person_outline_rounded, color: Color(0xFF2563EB)),
+                  Icon(Icons.person_outline_rounded, color: context.primaryColor),
             ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
@@ -207,14 +196,14 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           TextFormField(
             controller: _emailController,
             style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
                 fontSize: 14),
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'البريد الإلكتروني',
               hintText: 'sara.supervisor@derbi.ly',
               prefixIcon:
-                  Icon(Icons.email_outlined, color: Color(0xFF2563EB)),
+                  Icon(Icons.email_outlined, color: context.primaryColor),
             ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
@@ -232,14 +221,14 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           TextFormField(
             controller: _phoneController,
             style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
                 fontSize: 14),
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'رقم الهاتف (10 أرقام تبدأ بـ 09)',
               hintText: '0928669900',
               prefixIcon:
-                  Icon(Icons.phone_android_rounded, color: Color(0xFF2563EB)),
+                  Icon(Icons.phone_android_rounded, color: context.primaryColor),
             ),
             validator: (val) {
               final trimmed = val?.trim() ?? '';
@@ -265,7 +254,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
             style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: context.textPrimary,
                 fontSize: 14),
             decoration: InputDecoration(
               labelText: _isEditMode
@@ -273,7 +262,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   : 'كلمة المرور (اختياري - يولدها النظام تلقائياً إن تركت فارغة)',
               hintText: '••••••••',
               prefixIcon:
-                  const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB)),
+                  Icon(Icons.lock_outline_rounded, color: context.primaryColor),
               suffixIcon: IconButton(
                 icon: Icon(_isPasswordVisible
                     ? Icons.visibility_rounded
@@ -298,9 +287,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFF8FAFC),
+                color: context.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: theme.dividerColor),
               ),
@@ -314,8 +301,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                             ? Icons.check_circle_rounded
                             : Icons.pause_circle_rounded,
                         color: _isActive
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF64748B),
+                            ? context.successColor
+                            : context.textTertiary,
                       ),
                       const SizedBox(width: 10),
                       Text(
@@ -323,8 +310,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color:
-                              isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -334,8 +320,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: _isActive
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFF64748B),
+                              ? context.successColor
+                              : context.textTertiary,
                         ),
                       ),
                     ],
@@ -349,7 +335,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                       onChanged: isCurrentMainAdmin
                           ? (val) => setState(() => _isActive = val)
                           : null,
-                      activeThumbColor: const Color(0xFF10B981),
+                      activeThumbColor: context.successColor,
                     ),
                   ),
                 ],
@@ -364,8 +350,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
             height: 50,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
+                backgroundColor: context.primaryColor,
+                foregroundColor: context.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

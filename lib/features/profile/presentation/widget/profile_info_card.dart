@@ -26,8 +26,6 @@ class ProfileInfoCard extends StatelessWidget {
         ? profile.creatorName!
         : 'غير محدد';
 
-    final isActive = profile.isActive ?? true;
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -109,14 +107,6 @@ class ProfileInfoCard extends StatelessWidget {
             context,
             label: 'آخر تسجيل دخول',
             value: lastLoginStr,
-          ),
-          _infoRow(
-            context,
-            label: 'حالة الحساب',
-            value: isActive ? 'نشط ومفعّل ✓' : 'معطّل ✗',
-            valueColor: isActive
-                ? theme.colorScheme.secondary
-                : theme.colorScheme.error,
           ),
         ],
       ),

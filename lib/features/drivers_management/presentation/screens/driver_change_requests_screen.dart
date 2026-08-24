@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_empty_state.dart';
@@ -110,9 +111,7 @@ class _DriverChangeRequestsContentState
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -120,17 +119,15 @@ class _DriverChangeRequestsContentState
                               'مراجعة الطلبات المقدمة من السائقين لتحديث بيانات المركبة، الكتيب والرخصة مع مقارنة التغييرات',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
                         ),
                         IconButton.filledTonal(
                           onPressed: () => cubit.fetchPendingDriverChanges(),
-                          icon: const Icon(Icons.refresh_rounded,
-                              color: Color(0xFF2563EB)),
+                          icon: Icon(Icons.refresh_rounded,
+                              color: context.primaryColor),
                           tooltip: 'تحديث طلبات التعديل من Backend',
                         ),
                       ],
@@ -158,11 +155,11 @@ class _DriverChangeRequestsContentState
 
                     // 3. Content List / Loading / Empty
                     if (state.isLoading)
-                      const SizedBox(
+                      SizedBox(
                         height: 300,
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF2563EB)),
+                              color: context.primaryColor),
                         ),
                       )
                     else if (state.isPendingChangesEmpty)
@@ -183,17 +180,15 @@ class _DriverChangeRequestsContentState
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.search_off_rounded,
-                                size: 48, color: Color(0xFF94A3B8)),
+                            Icon(Icons.search_off_rounded,
+                                size: 48, color: context.textTertiary),
                             const SizedBox(height: 12),
                             Text(
                               'لا توجد طلبات تعديل تطابق نتيجة البحث',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF334155),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -201,9 +196,7 @@ class _DriverChangeRequestsContentState
                               'جرب البحث باسم سائق آخر أو نوع تعديل مختلف.',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -237,29 +230,25 @@ class _DriverChangeRequestsContentState
                               leading: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2563EB)
+                                  color: context.primaryColor
                                       .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.sync_rounded,
-                                    color: Color(0xFF2563EB)),
+                                child: Icon(Icons.sync_rounded,
+                                    color: context.primaryColor),
                               ),
                               title: Text(
                                 'طلب تعديل: ${change.translatedType}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                  color: context.textPrimary,
                                 ),
                               ),
                               subtitle: Text(
                                 'السائق: ${change.driverName ?? "#${change.driverId}"} | طلب رقم: #${change.id}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark
-                                      ? const Color(0xFF94A3B8)
-                                      : const Color(0xFF64748B),
+                                  color: context.textTertiary,
                                 ),
                               ),
                               trailing: Row(
@@ -269,8 +258,8 @@ class _DriverChangeRequestsContentState
                                   const SizedBox(width: 12),
                                   ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2563EB),
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: context.primaryColor,
+                                      foregroundColor: context.onPrimary,
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 14, vertical: 8),
                                       shape: RoundedRectangleBorder(

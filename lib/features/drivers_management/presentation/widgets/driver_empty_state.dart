@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverEmptyState extends StatelessWidget {
   final VoidCallback onRefresh;
@@ -15,7 +16,6 @@ class DriverEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -31,13 +31,13 @@ class DriverEmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+              color: context.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.no_accounts_outlined,
               size: 56,
-              color: Color(0xFF2563EB),
+              color: context.primaryColor,
             ),
           ),
           const SizedBox(height: 20),
@@ -46,7 +46,7 @@ class DriverEmptyState extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -54,15 +54,15 @@ class DriverEmptyState extends StatelessWidget {
             description,
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              color: context.textTertiary,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
+              backgroundColor: context.primaryColor,
+              foregroundColor: context.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

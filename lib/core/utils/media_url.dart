@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import '../network/api_endpoints.dart';
 import '../services/storage_service.dart';
 
@@ -36,13 +38,32 @@ class MediaUrl {
     return '$_host$path';
   }
 
-  /// ترويسة المصادقة — تلزم عندما تكون الوثائق محميّة خلف الـ token.
-  /// (تتجاهلها منصّة الويب لأن الصور تُحمَّل عبر وسم `img`.)
-  static Map<String, String> get authHeaders {
+  /// ترويسات طلب الصورة.
+  ///
+  /// `bypass-tunnel-reminder` ضرورية عند تشغيل الخادم خلف localtunnel:
+  /// النفق يعترض أي طلب يحمل User-Agent متصفّح ويردّ بصفحة تنبيه HTML
+  /// (‏511) بدل الملف، فتفشل الصورة. الـ token يلزم للملفات المحميّة.
+  ///
+  /// تنبيه: على الويب أي ترويسة مخصّصة تفرض طلب preflight، ويجب أن يسمح
+  /// الخادم بـ CORS على مسار `storage/*` وإلا رفض المتصفح الطلب — لذلك
+  /// يُجرَّب هذا المسار أولاً ثم يُستبدل بوسم `img` عند فشله
+  /// (انظر `RemoteImage`).
+  static Map<String, String> get imageHeaders {
+    final headers = <String, String>{
+      'bypass-tunnel-reminder': 'true',
+      'Bypass-Tunnel-Reminder': 'true',
+    };
+
     final token = StorageService.getToken();
-    if (token == null || token.isEmpty) return const {};
-    return {'Authorization': 'Bearer $token'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
   }
+
+  /// `true` عندما يكون تحميل البايتات مع الترويسات ممكناً بلا قيود CORS،
+  /// أي على المنصّات غير الويب. على الويب يبقى محاولة أولى قابلة للفشل.
+  static bool get canUseHeadersSafely => !kIsWeb;
 
   static const List<String> _imageExtensions = [
     '.jpg',

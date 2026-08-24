@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://angry-dingo-40.loca.lt/api';
+  static const String baseUrl = 'https://nasty-seahorse-19.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';

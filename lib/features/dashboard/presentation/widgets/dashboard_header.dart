@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/theme/admin_colors.dart';
+import '../../../../core/widgets/remote_circle_avatar.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -40,10 +42,16 @@ class DashboardHeader extends StatelessWidget {
           ),
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AdminColors.brandPrimary.withValues(alpha: 0.1),
-                child: const Icon(Icons.person, color: AdminColors.brandPrimary),
+              ValueListenableBuilder<String?>(
+                valueListenable: StorageService.avatarUrlListenable,
+                builder: (context, avatarUrl, _) => RemoteCircleAvatar(
+                  rawUrl: avatarUrl,
+                  radius: 20,
+                  initials: userName.trim().isEmpty ? null : userName.trim()[0],
+                  foregroundColor: AdminColors.brandPrimary,
+                  backgroundColor:
+                      AdminColors.brandPrimary.withValues(alpha: 0.1),
+                ),
               ),
             ],
           ),

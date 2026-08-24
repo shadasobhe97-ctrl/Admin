@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../../../core/utils/media_url.dart';
 import '../../data/models/admin_profile_model.dart';
 import '../../data/models/profile_update_request.dart';
@@ -262,17 +264,13 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                 children: [
                   Stack(
                     children: [
-                      CircleAvatar(
+                      RemoteCircleAvatar(
+                        rawUrl: avatarResolvedUrl,
                         radius: 46,
+                        bytes: _avatarBytes,
+                        fallbackIcon: Icons.person_rounded,
+                        foregroundColor: primaryColor,
                         backgroundColor: primaryColor.withValues(alpha: 0.15),
-                        backgroundImage: _avatarBytes != null
-                            ? MemoryImage(_avatarBytes!)
-                            : (avatarResolvedUrl != null
-                                ? NetworkImage(avatarResolvedUrl) as ImageProvider
-                                : null),
-                        child: (_avatarBytes == null && avatarResolvedUrl == null)
-                            ? Icon(Icons.person_rounded, size: 48, color: primaryColor)
-                            : null,
                       ),
                       Positioned(
                         bottom: 0,

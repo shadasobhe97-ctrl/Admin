@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverFiltersWidget extends StatelessWidget {
   final String selectedStatus;
@@ -13,7 +14,6 @@ class DriverFiltersWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final filters = [
       {'key': 'all', 'label': 'جميع السائقين'},
@@ -38,17 +38,17 @@ class DriverFiltersWidget extends StatelessWidget {
           label: Text(label),
           selected: isSelected,
           onSelected: (_) => onStatusSelected(key),
-          selectedColor: const Color(0xFF2563EB),
+          selectedColor: context.primaryColor,
           backgroundColor: theme.cardColor,
           labelStyle: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected
-                ? Colors.white
-                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                ? context.onPrimary
+                : context.textTertiary,
           ),
           side: BorderSide(
-            color: isSelected ? const Color(0xFF2563EB) : theme.dividerColor,
+            color: isSelected ? context.primaryColor : context.dividerLine,
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         );

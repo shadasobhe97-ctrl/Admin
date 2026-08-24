@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/admin_management_cubit.dart';
 
 class EmailVerificationWaitingDialog extends StatefulWidget {
@@ -145,7 +146,6 @@ class _EmailVerificationWaitingDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -175,26 +175,21 @@ class _EmailVerificationWaitingDialogState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'بانتظار تأكيد البريد الإلكتروني',
-                  textAlign: TextAlign.center,
+                  'تأكيد تغيير البريد الإلكتروني',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : const Color(0xFFF1F5F9),
+                    color: context.surfaceVariant,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : const Color(0xFFE2E8F0),
+                      color: context.borderSoft,
                     ),
                   ),
                   child: Column(
@@ -204,9 +199,7 @@ class _EmailVerificationWaitingDialogState
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF64748B),
+                          color: context.textTertiary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -216,9 +209,7 @@ class _EmailVerificationWaitingDialogState
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? const Color(0xFF38BDF8)
-                              : const Color(0xFF0284C7),
+                          color: context.primaryColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -227,9 +218,7 @@ class _EmailVerificationWaitingDialogState
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark
-                              ? const Color(0xFF64748B)
-                              : const Color(0xFF94A3B8),
+                          color: context.textTertiary,
                         ),
                       ),
                     ],
@@ -242,7 +231,7 @@ class _EmailVerificationWaitingDialogState
                   child: ElevatedButton.icon(
                     onPressed: _isChecking ? null : _handleCheckStatus,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: context.successColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

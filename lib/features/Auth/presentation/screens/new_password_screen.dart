@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/derbi_colors.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/utils/validators.dart';
 import '../../logic/admin_password_reset_cubit.dart';
 import '../../logic/admin_password_reset_state.dart';
+import 'admin_login_screen.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   final String email;
   final String otp;
 
-  const NewPasswordScreen({super.key, required this.email, required this.otp});
+  const NewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
 
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -33,6 +39,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
     final cubit = context.read<AdminPasswordResetCubit>();
     final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
 
     final success = await cubit.resetPassword(
       email: widget.email,
@@ -47,11 +54,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(cubit.state.successMessage ??
-              'تم إعادة تعيين كلمة المرور بنجاح!'),
+              'تم تغيير كلمة المرور بنجاح. يمكنك الدخول الآن.'),
           backgroundColor: DerbiColors.successEmerald,
         ),
       );
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+        (route) => false,
+      );
     } else {
       final error = cubit.state.errorMessage;
       if (error != null) {
@@ -66,7 +77,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -82,7 +92,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                  color: context.primaryColor.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -94,7 +104,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 height: 350,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  color: context.primaryColor.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -105,10 +115,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Card(
                     color: theme.cardColor,
-                    elevation: isDark ? 0 : 4,
+                    elevation: context.isDarkMode ? 0 : 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
-                      side: BorderSide(color: theme.dividerColor),
+                      side: BorderSide(color: context.borderSoft),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(36.0),
@@ -120,13 +130,13 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                                color: context.primaryColor.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.password_rounded,
                                 size: 40,
-                                color: Color(0xFF2563EB),
+                                color: context.primaryColor,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -135,60 +145,38 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'أدخل كلمة المرور الجديدة وتأكيدها لتغيير كلمة المرور الخاصة بك',
                               style: TextStyle(
                                   fontSize: 13,
-                                  color: DerbiColors.textSecondary),
+                                  color: context.textTertiary),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 32),
                             TextFormField(
                               controller: _newPasswordController,
                               obscureText: !_isPasswordVisible,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
+                              style: TextStyle(
+                                  color: context.textPrimary, fontSize: 14),
                               decoration: InputDecoration(
                                 labelText: 'كلمة المرور الجديدة',
                                 hintText: '••••••••',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                     Icons.lock_outline_rounded,
-                                    color: DerbiColors.primaryBlue),
+                                    color: context.primaryColor),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
                                         ? Icons.visibility_rounded
                                         : Icons.visibility_off_rounded,
-                                    color: DerbiColors.textMuted,
+                                    color: context.textTertiary,
                                   ),
                                   onPressed: () => setState(() =>
                                       _isPasswordVisible = !_isPasswordVisible),
-                                ),
-                                labelStyle: const TextStyle(
-                                    color: DerbiColors.textSecondary,
-                                    fontSize: 13),
-                                hintStyle: const TextStyle(
-                                    color: DerbiColors.textMuted, fontSize: 13),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.primaryBlue, width: 2),
                                 ),
                               ),
                               validator: Validators.validatePassword,
@@ -197,36 +185,14 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: !_isPasswordVisible,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
+                              style: TextStyle(
+                                  color: context.textPrimary, fontSize: 14),
                               decoration: InputDecoration(
                                 labelText: 'تأكيد كلمة المرور الجديدة',
                                 hintText: '••••••••',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                     Icons.lock_outline_rounded,
-                                    color: DerbiColors.primaryBlue),
-                                labelStyle: const TextStyle(
-                                    color: DerbiColors.textSecondary,
-                                    fontSize: 13),
-                                hintStyle: const TextStyle(
-                                    color: DerbiColors.textMuted, fontSize: 13),
-                                filled: true,
-                                fillColor: DerbiColors.background,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.borderSlate),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                      color: DerbiColors.primaryBlue, width: 2),
-                                ),
+                                    color: context.primaryColor),
                               ),
                               validator: (val) {
                                 if (val == null || val.isEmpty) {
@@ -247,8 +213,8 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                                   height: 50,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          DerbiColors.successEmerald,
+                                      backgroundColor: context.successColor,
+                                      foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(14)),
@@ -277,11 +243,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                             const SizedBox(height: 20),
                             TextButton.icon(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back,
-                                  size: 16, color: DerbiColors.textMuted),
-                              label: const Text('العودة لتسجيل الدخول',
+                              icon: Icon(Icons.arrow_back,
+                                  size: 16, color: context.textTertiary),
+                              label: Text('العودة لتسجيل الدخول',
                                   style: TextStyle(
-                                      color: DerbiColors.textMuted,
+                                      color: context.textTertiary,
                                       fontSize: 13)),
                             ),
                           ],

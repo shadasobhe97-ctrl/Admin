@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/driver_model.dart';
 import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
@@ -55,11 +56,12 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
     await cubit.fetchDriverDetails(driver.id);
     if (!mounted) return;
 
-    final fullDriver = cubit.state.selectedDriverDetails?.driver ?? driver;
+    final details = cubit.state.selectedDriverDetails;
+    final fullDriver = details?.driver ?? driver;
 
     final payload = await showDialog<UpdateDriverPayload>(
       context: context,
-      builder: (_) => DriverEditDialog(driver: fullDriver),
+      builder: (_) => DriverEditDialog(driver: fullDriver, details: details),
     );
     if (payload == null) return;
 
@@ -69,7 +71,6 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -120,9 +121,7 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -130,9 +129,7 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                               'اعتماد حسابات السائقين، فحص بيانات الكتيب والرخصة، والتواصل المباشر مع الحافلات',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -140,8 +137,8 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                         IconButton.filledTonal(
                           onPressed: () =>
                               cubit.fetchDrivers(page: state.meta.currentPage),
-                          icon: const Icon(Icons.refresh_rounded,
-                              color: Color(0xFF2563EB)),
+                          icon: Icon(Icons.refresh_rounded,
+                              color: context.primaryColor),
                           tooltip: 'تحديث قائمة السائقين من Backend',
                         ),
                       ],
@@ -178,11 +175,11 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
 
                     // 3. Drivers Data Table or Empty / Loading States
                     if (state.isLoading)
-                      const SizedBox(
+                      SizedBox(
                         height: 300,
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF2563EB)),
+                              color: context.primaryColor),
                         ),
                       )
                     else if (state.isEmpty)
@@ -238,9 +235,7 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                                 'إجمالي السائقين: ${state.meta.total} | الصفحة ${state.meta.currentPage} من ${state.meta.lastPage}',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isDark
-                                      ? const Color(0xFF94A3B8)
-                                      : const Color(0xFF64748B),
+                                  color: context.textTertiary,
                                 ),
                               ),
                               Row(

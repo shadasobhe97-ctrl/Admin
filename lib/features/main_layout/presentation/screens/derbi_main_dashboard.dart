@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/widgets/remote_circle_avatar.dart';
+import '../../../profile/data/repositories/admin_profile_repository.dart';
 import '../../../../core/theme/admin_colors.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/theme/cubit/theme_cubit.dart';
@@ -37,6 +40,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     super.initState();
     _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
+    _ensureAvatarLoaded();
 
     final roleId = StorageService.getRoleId();
     final isAdmin = roleId == 1;
@@ -56,6 +60,26 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
     ];
 
+  }
+
+  /// استجابة تسجيل الدخول لا تحمل صورة الحساب، فتُجلب مرة واحدة من
+  /// `/admin/profile` عند أول دخول وتُخزَّن في الجلسة. بعدها يحدّثها
+  /// [ProfileCubit] عند كل تعديل، فلا يتكرّر الطلب.
+  Future<void> _ensureAvatarLoaded() async {
+    if (StorageService.getAvatarUrl() != null) return;
+
+    try {
+      final profile = await sl<AdminProfileRepository>().getProfile();
+      await StorageService.saveAvatarUrl(profile.avatarUrl);
+    } catch (_) {
+      // تعذّر الجلب لا يمنع عرض اللوحة — تبقى الأحرف الأولى بديلاً.
+    }
+  }
+
+  /// الضغط على صورة الحساب ينقل إلى تبويب الملف الشخصي.
+  void _openProfileTab() {
+    final index = _navItems.indexWhere((item) => item.id == 'profile');
+    if (index >= 0) setState(() => _selectedTabIndex = index);
   }
 
   @override
@@ -79,16 +103,14 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: context.primaryColor.withValues(alpha: 0.1),
-                        child: Text(
-                          _adminName.isNotEmpty ? _adminName[0] : 'أ',
-                          style: TextStyle(
-                            color: context.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+                      ValueListenableBuilder<String?>(
+                        valueListenable: StorageService.avatarUrlListenable,
+                        builder: (context, avatarUrl, _) => RemoteCircleAvatar(
+                          rawUrl: avatarUrl,
+                          radius: 16,
+                          initials: _adminName.isNotEmpty ? _adminName[0] : 'أ',
+                          foregroundColor: context.primaryColor,
+                          onTap: _openProfileTab,
                         ),
                       ),
                       const SizedBox(width: 8),

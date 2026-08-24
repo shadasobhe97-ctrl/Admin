@@ -28,7 +28,7 @@ void main() {
         isActive: original.isActive,
       );
 
-      final json = payload.toJson();
+      final json = payload.toFields();
       expect(json['phone_number'], '0912233445');
       expect(json.containsKey('full_name'), isFalse);
       expect(json.containsKey('national_id'), isFalse);
@@ -67,11 +67,11 @@ void main() {
         isActive: false,
       );
 
-      final json = payload.toJson();
+      final json = payload.toFields();
       expect(json['full_name'], 'مفتاح علي الزنتاني');
       expect(json['license_number'], 'LY-4428');
       expect(json['license_expiry'], '2028-01-15');
-      expect(json['is_active'], false);
+      expect(json['is_active'], '0');
       expect(json.containsKey('phone_number'), isFalse);
 
       expect(payload.changedFieldLabels, hasLength(4));

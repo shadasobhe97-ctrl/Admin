@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_change_comparison.dart';
@@ -102,10 +103,10 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   if (state.isLoadingDetails)
-                    const SizedBox(
+                    SizedBox(
                       height: 250,
                       child: Center(
-                        child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                        child: CircularProgressIndicator(color: context.primaryColor),
                       ),
                     )
                   else if (details == null)
@@ -119,13 +120,13 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                        color: context.surfaceVariant,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: theme.dividerColor),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.sync_alt_rounded, size: 28, color: Color(0xFF2563EB)),
+                          Icon(Icons.sync_alt_rounded, size: 28, color: context.primaryColor),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -136,7 +137,7 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: context.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -144,7 +145,7 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                                   'النوع: ${details.changeType ?? "تعديل بيانات"} | السائق ID: #${details.driverId ?? "-"}',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    color: context.textTertiary,
                                   ),
                                 ),
                               ],
@@ -176,8 +177,8 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                         ),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
+                            backgroundColor: context.primaryColor,
+                            foregroundColor: context.onPrimary,
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),

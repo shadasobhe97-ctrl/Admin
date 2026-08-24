@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/media_url.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../data/models/admin_profile_model.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -54,22 +56,18 @@ class ProfileHeader extends StatelessWidget {
           // Avatar Section
           Stack(
             children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: primaryColor.withValues(alpha: 0.15),
-                backgroundImage: avatarResolvedUrl != null
-                    ? NetworkImage(avatarResolvedUrl)
-                    : null,
-                child: avatarResolvedUrl == null
-                    ? Text(
-                        initial,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: primaryColor,
-                        ),
-                      )
-                    : null,
+              // تُقرأ الصورة من جلسة الحساب لا من نموذج الملف وحده، حتى
+              // تكون هي نفسها المعروضة في الشريط الجانبي والترويسة،
+              // وتحمل بصمة الوقت بعد الرفع فتظهر الصورة الجديدة فوراً.
+              ValueListenableBuilder<String?>(
+                valueListenable: StorageService.avatarUrlListenable,
+                builder: (context, sessionAvatar, _) => RemoteCircleAvatar(
+                  rawUrl: sessionAvatar ?? avatarResolvedUrl,
+                  radius: 40,
+                  initials: initial,
+                  foregroundColor: primaryColor,
+                  backgroundColor: primaryColor.withValues(alpha: 0.15),
+                ),
               ),
               Positioned(
                 bottom: 2,

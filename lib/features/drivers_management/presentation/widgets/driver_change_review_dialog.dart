@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverChangeReviewDialog extends StatefulWidget {
   final int changeId;
@@ -63,10 +64,10 @@ class _DriverChangeReviewDialogState extends State<DriverChangeReviewDialog> {
               const SizedBox(height: 12),
               Text(
                 'طلب رقم: #${widget.changeId} | النوع: ${widget.changeType}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: context.primaryColor,
                 ),
               ),
               const SizedBox(height: 16),

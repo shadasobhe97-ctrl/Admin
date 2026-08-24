@@ -18,6 +18,10 @@ class DriversListResult {
 }
 
 class DriversManagementRemoteDataSource {
+  /// حدود `GET /admin/drivers` كما ينص عليها عقد الخادم.
+  static const int defaultPerPage = 15;
+  static const int searchMaxLength = 100;
+
   final ApiClient _apiClient;
 
   DriversManagementRemoteDataSource(this._apiClient);
@@ -73,14 +77,24 @@ class DriversManagementRemoteDataSource {
     String? status,
     String? search,
     int page = 1,
+    int perPage = defaultPerPage,
   }) async {
     try {
-      final queryParams = <String, dynamic>{'page': page};
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
       if (status != null && status.trim().isNotEmpty && status.trim().toLowerCase() != 'all') {
         queryParams['status'] = _normalizeDriverStatus(status);
       }
       if (search != null && search.trim().isNotEmpty) {
-        queryParams['search'] = search.trim();
+        // الخادم يقبل حتى 100 حرف في البحث ويرفض الأطول بـ 422.
+        queryParams['search'] = search.trim().substring(
+              0,
+              search.trim().length > searchMaxLength
+                  ? searchMaxLength
+                  : search.trim().length,
+            );
       }
 
       final response = await _apiClient.get(
@@ -158,20 +172,28 @@ class DriversManagementRemoteDataSource {
   /// تعديل مباشر لبيانات السائق من المشرف أو الأدمن.
   /// الخادم يحسب الفروقات ويكتبها في سجل إجراءات المشرفين ضمن نفس المعاملة،
   /// لذلك لا ترسل الواجهة أي بيانات سجل بنفسها.
+  ///
+  /// يُرسل الطلب بـ POST مع `_method=PUT` رغم أن العقد يسمّيه PUT: الحمولة
+  /// multipart، وPHP لا يملأ `$_POST`/`$_FILES` في طلبات PUT الحقيقية فتصل
+  /// فارغة إلى الخادم. تزوير الطريقة هو الأسلوب المعتمد في Laravel لرفع
+  /// الملفات، ويوجّه الطلب إلى نفس مسار PUT.
   Future<String> updateDriver({
     required int id,
     required UpdateDriverPayload payload,
   }) async {
     final endpoint = ApiEndpoints.driverUpdate(id);
     try {
-      final response = await _apiClient.put(endpoint, data: payload.toJson());
+      final formData = payload.toFormData()
+        ..fields.add(const MapEntry('_method', 'PUT'));
+
+      final response = await _apiClient.post(endpoint, data: formData);
       if (response.data is Map<String, dynamic>) {
         return response.data['message']?.toString() ??
             'تم تحديث بيانات السائق بنجاح.';
       }
       return 'تم تحديث بيانات السائق بنجاح.';
     } on DioException catch (e) {
-      throw _handleDioError(e, 'PUT', endpoint);
+      throw _handleDioError(e, 'POST (_method=PUT)', endpoint);
     } catch (e) {
       rethrow;
     }

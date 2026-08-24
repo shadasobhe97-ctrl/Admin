@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import '../widgets/driver_empty_state.dart';
@@ -122,8 +123,8 @@ class _DriverReviewsContentState extends State<_DriverReviewsContent> {
                         ),
                         IconButton.filledTonal(
                           onPressed: () => cubit.fetchAllDriverReviews(),
-                          icon: const Icon(Icons.refresh_rounded,
-                              color: Color(0xFF2563EB)),
+                          icon: Icon(Icons.refresh_rounded,
+                              color: context.primaryColor),
                           tooltip: 'تحديث التقييمات من Backend',
                         ),
                       ],
@@ -152,11 +153,11 @@ class _DriverReviewsContentState extends State<_DriverReviewsContent> {
 
                     // 3. Content List / Loading / Empty
                     if (state.isLoadingReviews)
-                      const SizedBox(
+                      SizedBox(
                         height: 300,
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF2563EB)),
+                              color: context.primaryColor),
                         ),
                       )
                     else if (state.isReviewsEmpty)

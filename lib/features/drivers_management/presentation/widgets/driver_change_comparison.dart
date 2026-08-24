@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverChangeComparisonWidget extends StatelessWidget {
   final Map<String, dynamic> currentData;
@@ -33,7 +34,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  color: context.surfaceVariant,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -42,7 +43,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                      color: context.textTertiary,
                     ),
                   ),
                 ),
@@ -53,16 +54,16 @@ class DriverChangeComparisonWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  color: context.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'البيانات المقترحة (Proposed Data)',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: Color(0xFF2563EB),
+                      color: context.primaryColor,
                     ),
                   ),
                 ),
@@ -96,7 +97,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: context.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -107,19 +108,19 @@ class DriverChangeComparisonWidget extends StatelessWidget {
                         currVal,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: context.textSecondary,
                           decoration: isChanged ? TextDecoration.lineThrough : null,
                         ),
                       ),
                     ),
-                    const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFF2563EB)),
+                    Icon(Icons.arrow_back_rounded, size: 16, color: context.primaryColor),
                     Expanded(
                       child: Text(
                         propVal,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isChanged ? const Color(0xFFD97706) : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                          color: isChanged ? const Color(0xFFD97706) : context.textPrimary,
                         ),
                         textAlign: TextAlign.left,
                       ),

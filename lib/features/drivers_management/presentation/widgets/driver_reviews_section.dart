@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
 import 'driver_review_card.dart';
@@ -23,17 +24,16 @@ class _DriverReviewsSectionState extends State<DriverReviewsSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return BlocBuilder<DriversManagementCubit, DriversManagementState>(
       builder: (context, state) {
         final cubit = context.read<DriversManagementCubit>();
 
         if (state.isLoadingReviews) {
-          return const SizedBox(
+          return SizedBox(
             height: 140,
             child: Center(
-              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+              child: CircularProgressIndicator(color: context.primaryColor),
             ),
           );
         }
@@ -43,19 +43,19 @@ class _DriverReviewsSectionState extends State<DriverReviewsSection> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: context.surfaceVariant,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: theme.dividerColor),
             ),
             child: Column(
               children: [
-                const Icon(Icons.rate_review_outlined, size: 36, color: Color(0xFF94A3B8)),
+                Icon(Icons.rate_review_outlined, size: 36, color: context.textTertiary),
                 const SizedBox(height: 8),
                 Text(
                   'لا توجد تقييمات منشورة لهذا السائق حالياً',
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: context.textTertiary,
                   ),
                 ),
               ],

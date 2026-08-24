@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/driver_model.dart';
 import 'driver_avatar.dart';
 import 'driver_status_badge.dart';
@@ -50,7 +51,7 @@ class DriversTable extends StatelessWidget {
             headingRowHeight: 52,
             dataRowMaxHeight: 68,
             headingRowColor: WidgetStateProperty.resolveWith(
-              (states) => isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              (states) => context.surfaceVariant,
             ),
             columns: [
               DataColumn(
@@ -59,7 +60,7 @@ class DriversTable extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -69,7 +70,7 @@ class DriversTable extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -79,7 +80,7 @@ class DriversTable extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -89,7 +90,7 @@ class DriversTable extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -99,7 +100,7 @@ class DriversTable extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -122,7 +123,7 @@ class DriversTable extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: context.textPrimary,
                           ),
                         ),
                       ],
@@ -133,7 +134,7 @@ class DriversTable extends StatelessWidget {
                       driver.phoneNumber,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: context.textTertiary,
                       ),
                     ),
                   ),
@@ -142,7 +143,7 @@ class DriversTable extends StatelessWidget {
                       '#${driver.id}',
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: context.textTertiary,
                       ),
                     ),
                   ),
@@ -155,8 +156,8 @@ class DriversTable extends StatelessWidget {
                       children: [
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
+                            backgroundColor: context.primaryColor,
+                            foregroundColor: context.onPrimary,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -168,7 +169,7 @@ class DriversTable extends StatelessWidget {
                           const SizedBox(width: 6),
                           IconButton(
                             onPressed: () => onTapEdit!(driver),
-                            icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF2563EB)),
+                            icon: Icon(Icons.edit_outlined, size: 18, color: context.primaryColor),
                             tooltip: 'تعديل بيانات السائق',
                           ),
                         ],
