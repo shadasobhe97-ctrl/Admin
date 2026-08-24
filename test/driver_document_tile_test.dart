@@ -35,6 +35,7 @@ void main() {
           driverName: 'محمد الطرابلسي',
         )),
       );
+      await tester.pump();
 
       expect(find.text('رخصة القيادة'), findsOneWidget);
       expect(find.text('تاريخ الانتهاء: 2027-08-01'), findsOneWidget);
@@ -49,7 +50,8 @@ void main() {
       );
 
       await tester.tap(find.byType(InkWell).first);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(ImageViewerDialog), findsOneWidget);
     });
@@ -63,7 +65,8 @@ void main() {
       );
 
       await tester.tap(find.byType(InkWell).first);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // العرض لا يرتبط بحالة الوثيقة أو السائق إطلاقاً.
       expect(find.byType(ImageViewerDialog), findsOneWidget);
@@ -80,7 +83,8 @@ void main() {
       expect(find.text('لا يوجد ملف مرفوع'), findsOneWidget);
 
       await tester.tap(find.byType(InkWell).first);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(ImageViewerDialog), findsNothing);
     });
@@ -159,7 +163,8 @@ void main() {
       await tester.pumpWidget(_wrap(DriverVehicleCard(vehicle: vehicle)));
 
       await tester.tap(find.byType(InkWell).first);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(ImageViewerDialog), findsOneWidget);
     });

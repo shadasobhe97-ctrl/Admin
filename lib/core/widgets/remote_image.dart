@@ -1,27 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
+import '../services/image_loader_service.dart';
 import '../utils/media_url.dart';
 
-/// صورة قادمة من الخادم، مضبوطة لتعمل على الويب وسطح المكتب معاً.
-///
-/// للمتصفّح مساران لتحميل الصورة، ولكل منهما عائق مختلف:
-///
-/// * **جلب البايتات مع الترويسات** — يتخطّى صفحة تنبيه localtunnel، لكنه
-///   يخضع لـ CORS، فيفشل إن لم يسمح الخادم بـ `storage/*`.
-/// * **وسم `img` بلا ترويسات** — لا يخضع لـ CORS إطلاقاً، لكنه يتلقّى صفحة
-///   تنبيه النفق حين يكون الخادم خلف localtunnel.
-///
-/// لذلك يُجرَّب المساران بالترتيب: البايتات أولاً، ثم `img` عند الفشل.
-/// هكذا تظهر الصورة في أي بيئة لا يعطّلها العائقان معاً.
+/// صورة قادمة من الخادم، تضمن العرض اللحظي عبر الكاش المباشر في الرام (RAM Cache)
+/// وجلب بايتات الصور عبر Dio لتخطي حظر النفق (Localtunnel 511) وتجاوز قيود الـ CORS.
 class RemoteImage extends StatefulWidget {
-  /// الرابط كما ورد من الخادم — يُحوَّل إلى مطلق داخلياً.
   final String? rawUrl;
-
   final double? width;
   final double? height;
   final BoxFit fit;
 
-  /// البديل عند غياب الرابط أو فشل المسارين.
+  /// البديل عند غياب الرابط أو فشل التحميل.
   final Widget fallback;
 
   /// المعروض أثناء التحميل — يعود إلى [fallback] عند عدم تمريره.
@@ -42,55 +34,102 @@ class RemoteImage extends StatefulWidget {
 }
 
 class _RemoteImageState extends State<RemoteImage> {
-  /// `true` بعد فشل محاولة جلب البايتات، فيُنتقل إلى وسم `img`.
-  bool _useHtmlElement = false;
+  Uint8List? _bytes;
+  bool _isLoading = false;
+  bool _hasError = false;
+  String? _currentUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
 
   @override
   void didUpdateWidget(RemoteImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // رابط جديد يستحق محاولة كاملة من أول مسار.
-    if (oldWidget.rawUrl != widget.rawUrl) _useHtmlElement = false;
+    if (oldWidget.rawUrl != widget.rawUrl) {
+      _loadImage();
+    }
   }
 
-  Widget get _loading => widget.placeholder ?? widget.fallback;
+  void _loadImage() {
+    final url = MediaUrl.resolve(widget.rawUrl);
+    _currentUrl = url;
+
+    if (url == null || !MediaUrl.isImage(url)) {
+      setState(() {
+        _bytes = null;
+        _isLoading = false;
+        _hasError = false;
+      });
+      return;
+    }
+
+    // 1. فحص وجود الصورة في كاش الذاكرة (RAM Cache) للعرض الفوري اللحظي
+    final cached = ImageLoaderService.instance.getCachedBytes(url);
+    if (cached != null) {
+      setState(() {
+        _bytes = cached;
+        _isLoading = false;
+        _hasError = false;
+      });
+      return;
+    }
+
+    // 2. البدء بجلب بايتات الصورة عبر الشبكة
+    setState(() {
+      _bytes = null;
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    ImageLoaderService.instance.fetchImageBytes(url).then((bytes) {
+      if (!mounted || _currentUrl != url) return;
+      if (bytes != null && bytes.isNotEmpty) {
+        setState(() {
+          _bytes = bytes;
+          _isLoading = false;
+          _hasError = false;
+        });
+      } else {
+        setState(() {
+          _bytes = null;
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }).catchError((_) {
+      if (!mounted || _currentUrl != url) return;
+      setState(() {
+        _bytes = null;
+        _isLoading = false;
+        _hasError = true;
+      });
+    });
+  }
+
+  Widget get _loadingWidget => widget.placeholder ?? widget.fallback;
 
   @override
   Widget build(BuildContext context) {
     final url = MediaUrl.resolve(widget.rawUrl);
     if (url == null || !MediaUrl.isImage(url)) return widget.fallback;
 
-    if (_useHtmlElement) {
-      // المسار الثاني: بلا ترويسات ليتمكّن Flutter من استخدام وسم `img`،
-      // وهو غير خاضع لسياسة المصدر الواحد.
-      return Image.network(
-        url,
+    if (_bytes != null) {
+      return Image.memory(
+        _bytes!,
         width: widget.width,
         height: widget.height,
         fit: widget.fit,
-        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-        loadingBuilder: (context, child, progress) =>
-            progress == null ? child : _loading,
         errorBuilder: (context, error, stackTrace) => widget.fallback,
       );
     }
 
-    return Image.network(
-      url,
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      headers: MediaUrl.imageHeaders,
-      loadingBuilder: (context, child, progress) =>
-          progress == null ? child : _loading,
-      errorBuilder: (context, error, stackTrace) {
-        // لا يجوز استدعاء setState أثناء البناء، فيؤجَّل إلى ما بعد الإطار.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && !_useHtmlElement) {
-            setState(() => _useHtmlElement = true);
-          }
-        });
-        return _loading;
-      },
-    );
+    if (_hasError) {
+      return widget.fallback;
+    }
+
+    return _loadingWidget;
   }
 }

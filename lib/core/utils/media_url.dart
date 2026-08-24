@@ -26,16 +26,23 @@ class MediaUrl {
     final value = raw?.trim() ?? '';
     if (value.isEmpty) return null;
 
+    String url = value;
     final lower = value.toLowerCase();
-    if (lower.startsWith('http://') ||
-        lower.startsWith('https://') ||
-        lower.startsWith('data:') ||
-        lower.startsWith('blob:')) {
-      return value;
+    if (!lower.startsWith('http://') &&
+        !lower.startsWith('https://') &&
+        !lower.startsWith('data:') &&
+        !lower.startsWith('blob:')) {
+      final path = value.startsWith('/') ? value : '/$value';
+      url = '$_host$path';
     }
 
-    final path = value.startsWith('/') ? value : '/$value';
-    return '$_host$path';
+    // ترقية http إلى https تلقائياً عند استخدام الخادم لـ https لتجنب حظر المحتوى المزدوج (Mixed Content)
+    if (ApiEndpoints.baseUrl.startsWith('https://') &&
+        url.startsWith('http://')) {
+      url = 'https://${url.substring(7)}';
+    }
+
+    return url;
   }
 
   /// ترويسات طلب الصورة.
