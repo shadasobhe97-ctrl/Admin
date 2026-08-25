@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
+  static const String baseUrl = 'https://terrible-squid-82.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
