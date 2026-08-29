@@ -15,7 +15,8 @@ class AdminFormScreen extends StatelessWidget {
 
   const AdminFormScreen({super.key, this.initialAdmin});
 
-  static void show(BuildContext context, {AdminModel? initialAdmin, VoidCallback? onSuccess}) {
+  static void show(BuildContext context,
+      {AdminModel? initialAdmin, VoidCallback? onSuccess}) {
     // Kept alive by the caller (admins list screen), unlike the form's own
     // factory cubit which is closed as soon as this dialog pops.
     final callerContext = context;
@@ -25,7 +26,8 @@ class AdminFormScreen extends StatelessWidget {
       builder: (context) => BlocProvider(
         create: (context) => sl<AdminManagementCubit>(),
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 560),
             padding: const EdgeInsets.all(24),
@@ -36,7 +38,9 @@ class AdminFormScreen extends StatelessWidget {
     ).then((result) {
       if (onSuccess != null) onSuccess();
 
-      if (result != null && result['email_verification'] != null && callerContext.mounted) {
+      if (result != null &&
+          result['email_verification'] != null &&
+          callerContext.mounted) {
         EmailVerificationWaitingDialog.show(
           callerContext,
           adminId: result['admin_id'] as int,
@@ -60,14 +64,11 @@ class AdminFormScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: BlocConsumer<AdminManagementCubit, AdminManagementState>(
         listener: (context, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red),
-            );
-          }
           if (state.successMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage!), backgroundColor: Colors.green),
+              SnackBar(
+                  content: Text(state.successMessage!),
+                  backgroundColor: Colors.green),
             );
           }
         },
@@ -81,7 +82,9 @@ class AdminFormScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isEditMode ? 'تعديل بيانات المشرف' : 'إضافة مشرف جديد للوحة التحكم',
+                      isEditMode
+                          ? 'تعديل بيانات المشرف'
+                          : 'إضافة مشرف جديد للوحة التحكم',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -99,6 +102,7 @@ class AdminFormScreen extends StatelessWidget {
                   initialAdmin: initialAdmin,
                   currentUserId: currentUserId,
                   isLoading: state.isCreating || state.isUpdating,
+                  errorMessage: state.errorMessage,
                   onCreate: (CreateAdminRequestModel createReq) async {
                     final cubit = context.read<AdminManagementCubit>();
                     final result = await cubit.createAdmin(createReq);
@@ -109,14 +113,16 @@ class AdminFormScreen extends StatelessWidget {
 
                       Navigator.pop(context, {
                         'admin_id': result['admin_id'],
-                        'email_verification': hasPendingEmail ? emailVerification : null,
+                        'email_verification':
+                            hasPendingEmail ? emailVerification : null,
                       });
                     }
                   },
                   onUpdate: (UpdateAdminRequestModel updateReq) async {
                     if (initialAdmin == null) return;
                     final cubit = context.read<AdminManagementCubit>();
-                    final result = await cubit.updateAdmin(initialAdmin!.id, updateReq);
+                    final result =
+                        await cubit.updateAdmin(initialAdmin!.id, updateReq);
                     if (result['success'] == true && context.mounted) {
                       final emailVerification = result['email_verification'];
                       final hasPendingEmail = emailVerification != null &&
@@ -126,7 +132,8 @@ class AdminFormScreen extends StatelessWidget {
                       // pops, so it runs on a cubit that outlives this form.
                       Navigator.pop(context, {
                         'admin_id': initialAdmin!.id,
-                        'email_verification': hasPendingEmail ? emailVerification : null,
+                        'email_verification':
+                            hasPendingEmail ? emailVerification : null,
                       });
                     }
                   },

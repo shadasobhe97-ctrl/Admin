@@ -13,6 +13,7 @@ class AdminFormWidget extends StatefulWidget {
   final AdminModel? initialAdmin;
   final int currentUserId;
   final bool isLoading;
+  final String? errorMessage;
   final Function(CreateAdminRequestModel createRequest) onCreate;
   final Function(UpdateAdminRequestModel updateRequest) onUpdate;
 
@@ -21,6 +22,7 @@ class AdminFormWidget extends StatefulWidget {
     this.initialAdmin,
     required this.currentUserId,
     required this.isLoading,
+    this.errorMessage,
     required this.onCreate,
     required this.onUpdate,
   });
@@ -34,13 +36,12 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _passwordController;
 
   late bool _isActive;
-  bool _isPasswordVisible = false;
 
   Uint8List? _avatarBytes;
   String? _avatarFileName;
+  String? _serverEmailError;
 
   bool get _isEditMode => widget.initialAdmin != null;
 
@@ -53,17 +54,45 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         TextEditingController(text: widget.initialAdmin?.email ?? '');
     _phoneController =
         TextEditingController(text: widget.initialAdmin?.phoneNumber ?? '');
-    _passwordController = TextEditingController();
 
     _isActive = widget.initialAdmin?.isActive ?? true;
+
+    _emailController.addListener(_onEmailChanged);
+    if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) {
+      _serverEmailError = widget.errorMessage;
+    }
+  }
+
+  void _onEmailChanged() {
+    if (_serverEmailError != null) {
+      setState(() {
+        _serverEmailError = null;
+      });
+      _formKey.currentState?.validate();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AdminFormWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.errorMessage != oldWidget.errorMessage &&
+        widget.errorMessage != null &&
+        widget.errorMessage!.isNotEmpty) {
+      setState(() {
+        _serverEmailError = widget.errorMessage;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _formKey.currentState?.validate();
+      });
+    }
   }
 
   @override
   void dispose() {
+    _emailController.removeListener(_onEmailChanged);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -94,6 +123,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   }
 
   void _handleSubmit() {
+    setState(() {
+      _serverEmailError = null;
+    });
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (widget.isLoading) return;
 
@@ -105,9 +137,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        password: _passwordController.text.trim().isNotEmpty
-            ? _passwordController.text.trim()
-            : null,
+        password: null,
         isActive: isCurrentMainAdmin ? _isActive : null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -118,9 +148,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        password: _passwordController.text.trim().isNotEmpty
-            ? _passwordController.text.trim()
-            : null,
+        password: null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
       );
@@ -170,14 +198,12 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Full Name
           TextFormField(
             controller: _nameController,
-            style: TextStyle(
-                color: context.textPrimary,
-                fontSize: 14),
+            style: TextStyle(color: context.textPrimary, fontSize: 14),
             decoration: InputDecoration(
               labelText: 'الاسم الثلاثي الكامل',
               hintText: 'مثال: سارة توفيق العجيلي',
-              prefixIcon:
-                  Icon(Icons.person_outline_rounded, color: context.primaryColor),
+              prefixIcon: Icon(Icons.person_outline_rounded,
+                  color: context.primaryColor),
             ),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
@@ -195,9 +221,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Email
           TextFormField(
             controller: _emailController,
-            style: TextStyle(
-                color: context.textPrimary,
-                fontSize: 14),
+            style: TextStyle(color: context.textPrimary, fontSize: 14),
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: 'البريد الإلكتروني',
@@ -212,6 +236,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
               if (!val.contains('@') || !val.contains('.')) {
                 return 'صيغة البريد الإلكتروني غير صحيحة.';
               }
+              if (_serverEmailError != null && _serverEmailError!.isNotEmpty) {
+                return _serverEmailError;
+              }
               return null;
             },
           ),
@@ -220,15 +247,13 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           // Phone Number
           TextFormField(
             controller: _phoneController,
-            style: TextStyle(
-                color: context.textPrimary,
-                fontSize: 14),
+            style: TextStyle(color: context.textPrimary, fontSize: 14),
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
               labelText: 'رقم الهاتف (10 أرقام تبدأ بـ 09)',
               hintText: '0928669900',
-              prefixIcon:
-                  Icon(Icons.phone_android_rounded, color: context.primaryColor),
+              prefixIcon: Icon(Icons.phone_android_rounded,
+                  color: context.primaryColor),
             ),
             validator: (val) {
               final trimmed = val?.trim() ?? '';
@@ -249,38 +274,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           ),
           const SizedBox(height: 16),
 
-          // Password
-          TextFormField(
-            controller: _passwordController,
-            obscureText: !_isPasswordVisible,
-            style: TextStyle(
-                color: context.textPrimary,
-                fontSize: 14),
-            decoration: InputDecoration(
-              labelText: _isEditMode
-                  ? 'كلمة المرور الجديدة (اختياري عند التعديل)'
-                  : 'كلمة المرور (اختياري - يولدها النظام تلقائياً إن تركت فارغة)',
-              hintText: '••••••••',
-              prefixIcon:
-                  Icon(Icons.lock_outline_rounded, color: context.primaryColor),
-              suffixIcon: IconButton(
-                icon: Icon(_isPasswordVisible
-                    ? Icons.visibility_rounded
-                    : Icons.visibility_off_rounded),
-                onPressed: () =>
-                    setState(() => _isPasswordVisible = !_isPasswordVisible),
-              ),
-            ),
-            validator: (val) {
-              if (val != null &&
-                  val.trim().isNotEmpty &&
-                  val.trim().length < 6) {
-                return 'كلمة المرور يجب ألا تقل عن 6 خانات.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
+
 
           // Is Active Switch (عند التعديل)
           if (_isEditMode) ...[
@@ -370,9 +364,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                           : Icons.person_add_rounded,
                       size: 20),
               label: Text(
-                _isEditMode
-                    ? 'حفظ التعديلات في Backend'
-                    : 'إضافة المشرف في Backend',
+                _isEditMode ? 'حفظ التعديلات' : 'إضافة المشرف',
                 style:
                     const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),

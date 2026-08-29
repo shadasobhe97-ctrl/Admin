@@ -24,9 +24,11 @@ class AdminDetailsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => BlocProvider(
-        create: (context) => sl<AdminManagementCubit>()..fetchAdminDetails(adminId),
+        create: (context) =>
+            sl<AdminManagementCubit>()..fetchAdminDetails(adminId),
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 600),
             child: AdminDetailsScreen(adminId: adminId),
@@ -44,7 +46,8 @@ class AdminDetailsScreen extends StatelessWidget {
       builder: (dialogCtx) => BlocProvider.value(
         value: context.read<AdminManagementCubit>(),
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 550),
             padding: const EdgeInsets.all(24),
@@ -59,7 +62,8 @@ class AdminDetailsScreen extends StatelessWidget {
                         children: [
                           const Text(
                             'تعديل بيانات المشرف',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           IconButton(
                             icon: const Icon(Icons.close),
@@ -74,21 +78,29 @@ class AdminDetailsScreen extends StatelessWidget {
                         isLoading: state.isUpdating,
                         onCreate: (CreateAdminRequestModel createReq) {},
                         onUpdate: (UpdateAdminRequestModel updateReq) async {
-                          final result = await ctx.read<AdminManagementCubit>().updateAdmin(admin.id, updateReq);
+                          final result = await ctx
+                              .read<AdminManagementCubit>()
+                              .updateAdmin(admin.id, updateReq);
                           if (result['success'] == true && dialogCtx.mounted) {
                             Navigator.pop(dialogCtx);
-                            ctx.read<AdminManagementCubit>().fetchAdminDetails(admin.id);
+                            ctx
+                                .read<AdminManagementCubit>()
+                                .fetchAdminDetails(admin.id);
 
-                            final emailVerification = result['email_verification'];
+                            final emailVerification =
+                                result['email_verification'];
                             if (emailVerification != null &&
                                 emailVerification['new_email'] != null) {
-                              final newEmail = emailVerification['new_email'].toString();
+                              final newEmail =
+                                  emailVerification['new_email'].toString();
                               EmailVerificationWaitingDialog.show(
                                 ctx,
                                 adminId: admin.id,
                                 newEmail: newEmail,
                                 onRefresh: () {
-                                  ctx.read<AdminManagementCubit>().fetchAdminDetails(admin.id);
+                                  ctx
+                                      .read<AdminManagementCubit>()
+                                      .fetchAdminDetails(admin.id);
                                 },
                               );
                             }
@@ -116,12 +128,16 @@ class AdminDetailsScreen extends StatelessWidget {
         listener: (context, state) {
           if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!), backgroundColor: Colors.red),
+              SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: Colors.red),
             );
           }
           if (state.successMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage!), backgroundColor: Colors.green),
+              SnackBar(
+                  content: Text(state.successMessage!),
+                  backgroundColor: Colors.green),
             );
           }
         },
@@ -157,12 +173,12 @@ class AdminDetailsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-
                 if (state.isLoading)
                   SizedBox(
                     height: 250,
                     child: Center(
-                      child: CircularProgressIndicator(color: context.primaryColor),
+                      child: CircularProgressIndicator(
+                          color: context.primaryColor),
                     ),
                   )
                 else if (admin == null)
@@ -227,17 +243,25 @@ class AdminDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       // Details List
-                      _buildDetailRow(context, Icons.email_outlined, 'البريد الإلكتروني', admin.email),
+                      _buildDetailRow(context, Icons.email_outlined,
+                          'البريد الإلكتروني', admin.email),
                       const SizedBox(height: 12),
-                      _buildDetailRow(context, Icons.phone_android_rounded, 'رقم الهاتف', admin.phoneNumber),
+                      _buildDetailRow(context, Icons.phone_android_rounded,
+                          'رقم الهاتف', admin.phoneNumber),
                       const SizedBox(height: 12),
-                      _buildDetailRow(context, Icons.admin_panel_settings_outlined, 'الدور والصلاحية', admin.roleName),
+                      _buildDetailRow(
+                          context,
+                          Icons.admin_panel_settings_outlined,
+                          'الدور والصلاحية',
+                          admin.roleName),
                       const SizedBox(height: 12),
                       _buildDetailRow(
                         context,
                         Icons.calendar_today_rounded,
                         'تاريخ الإنشاء',
-                        admin.createdAt != null && admin.createdAt!.isNotEmpty ? admin.createdAt! : 'غير محدد في Backend',
+                        admin.createdAt != null && admin.createdAt!.isNotEmpty
+                            ? admin.createdAt!
+                            : 'غير محدد في Backend',
                       ),
                       const SizedBox(height: 24),
 
@@ -246,9 +270,11 @@ class AdminDetailsScreen extends StatelessWidget {
                         children: [
                           OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               side: BorderSide(color: theme.dividerColor),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back, size: 16),
@@ -259,12 +285,15 @@ class AdminDetailsScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: context.primaryColor,
                               foregroundColor: context.onPrimary,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
                             onPressed: () => _openEditDialog(context, admin),
                             icon: const Icon(Icons.edit_outlined, size: 16),
-                            label: const Text('تعديل البيانات', style: TextStyle(fontWeight: FontWeight.bold)),
+                            label: const Text('تعديل البيانات',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -278,7 +307,8 @@ class AdminDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
+  Widget _buildDetailRow(
+      BuildContext context, IconData icon, String label, String value) {
     final theme = Theme.of(context);
 
     return Container(
