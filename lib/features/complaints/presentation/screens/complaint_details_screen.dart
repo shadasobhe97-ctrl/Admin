@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/cubit/complaints_cubit.dart';
 import '../../logic/state/complaints_state.dart';
@@ -315,7 +316,7 @@ class ComplaintDetailsScreen extends StatelessWidget {
                         Divider(color: context.borderSoft),
                         const SizedBox(height: 12),
 
-                        if (complaint.status == 'pending') ...[
+                        if (complaint.status == 'pending' && PermissionHelper.hasPermission('complaints.resolve')) ...[
                           Text(
                             'هذه الشكوى قيد الانتظار لم يتم اتخاذ قرار فيها بعد. يرجى اختيار أحد القرارات التالية:',
                             style: TextStyle(

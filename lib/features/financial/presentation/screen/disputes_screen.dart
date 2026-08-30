@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/permission_helper.dart';
+import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/cubit/financial_cubit.dart';
 import '../../logic/state/financial_state.dart';
 import '../widget/dispute_card.dart';
@@ -16,6 +18,43 @@ class DisputesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionHelper.hasPermission('financial.resolve_disputes')) {
+      return Scaffold(
+        backgroundColor: context.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: context.cardColor,
+          elevation: 0,
+          title: Text('النزاعات المالية', style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold)),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_person_rounded, size: 56, color: context.warningColor),
+                const SizedBox(height: 16),
+                Text(
+                  'صلاحية غير كافية',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'استعراض والبت في النزاعات المالية يتطلب صلاحية (financial.resolve_disputes).',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: context.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return BlocProvider<FinancialCubit>(
       create: (_) => sl<FinancialCubit>()..loadDisputes(),
       child: const _DisputesView(),

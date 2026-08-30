@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../data/models/geo_search_result.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -11,12 +13,42 @@ import '../../logic/state/zones_state.dart';
 import '../widget/geo_breadcrumb.dart';
 import '../widget/geo_form_dialog.dart';
 import '../widget/geo_node_card.dart';
+import '../widget/geo_search_bar.dart';
 
 class ZonesScreen extends StatelessWidget {
   const ZonesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionHelper.hasPermission('geography.manage')) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_person_rounded, size: 56, color: context.warningColor),
+              const SizedBox(height: 16),
+              Text(
+                'صلاحية غير كافية',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'استعراض وإدارة التخطيط الجغرافي يتطلب صلاحية (geography.manage).',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: context.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocProvider<ZonesCubit>(
       create: (_) => sl<ZonesCubit>()..loadGeography(),
       child: const ZonesViewContent(),
@@ -176,6 +208,7 @@ class ZonesViewContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cubit = context.read<ZonesCubit>();
     return BlocConsumer<ZonesCubit, ZonesState>(
       listener: (context, state) {
         if (state is GeoActionSuccess) {
@@ -191,6 +224,12 @@ class ZonesViewContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _GeoHeader(state: state, onAdd: () => _handleAdd(context, state)),
+            const SizedBox(height: 12),
+            GeoSearchBar(
+              initialQuery: cubit.searchQuery,
+              onChanged: (q) => cubit.search(q),
+              onClear: () => cubit.clearSearch(),
+            ),
             const SizedBox(height: 14),
             Expanded(child: _buildBody(context, state)),
           ],
@@ -227,6 +266,10 @@ class ZonesViewContent extends StatelessWidget {
       );
     }
 
+    if (state is GeoSearchResultsLoaded) {
+      return _buildSearchResultsList(context, state);
+    }
+
     if (state is MunicipalitiesLoaded) {
       return _buildMunicipalitiesList(context, state);
     }
@@ -240,6 +283,113 @@ class ZonesViewContent extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+
+  // ── نتائج البحث ──────────────────────────────────────────────────────────
+
+  Widget _buildSearchResultsList(
+    BuildContext context,
+    GeoSearchResultsLoaded state,
+  ) {
+    if (state.isEmpty) {
+      return _GeoMessage(
+        icon: Icons.search_off_rounded,
+        color: context.textMuted,
+        title: 'لا توجد نتائج طابقت "${state.query}"',
+        body: 'جرّب البحث باسم بلدية كبرى، محلة (بلدية فرعية)، أو منطقة دقيقة أخرى.',
+        actionLabel: 'مسح البحث',
+        onAction: () => context.read<ZonesCubit>().clearSearch(),
+      );
+    }
+
+    final cubit = context.read<ZonesCubit>();
+
+    return ListView(
+      children: [
+        _SectionLabel(
+          label: 'نتائج البحث عن "${state.query}" (${state.results.length})',
+        ),
+        const SizedBox(height: 8),
+        for (final item in state.results)
+          _buildSearchResultCard(context, cubit, item),
+      ],
+    );
+  }
+
+  Widget _buildSearchResultCard(
+    BuildContext context,
+    ZonesCubit cubit,
+    GeoSearchResult item,
+  ) {
+    switch (item.type) {
+      case GeoSearchResultType.municipality:
+        final m = item.municipality!;
+        return GeoNodeCard(
+          icon: Icons.location_city_rounded,
+          title: m.name,
+          subtitle: 'بلدية كبرى',
+          badges: [
+            '${m.subMunicipalitiesCount} محلة',
+            '${m.zonesCount} منطقة',
+          ],
+          onTap: () => cubit.openMunicipality(m.id),
+          onEdit: () => _openMunicipalityForm(context, municipality: m),
+          onDelete: () => _confirmDelete(
+            context,
+            title: 'حذف البلدية الكبرى',
+            body: 'هل تريد حذف "${m.name}"؟ '
+                'لا يمكن الحذف إذا كانت تتبعها بلديات فرعية قائمة.',
+            onConfirm: () => cubit.deleteMunicipality(m.id),
+          ),
+        );
+
+      case GeoSearchResultType.subMunicipality:
+        final s = item.subMunicipality!;
+        final m = item.municipality!;
+        return GeoNodeCard(
+          icon: Icons.holiday_village_rounded,
+          title: s.name,
+          subtitle: item.subtitle,
+          badges: ['${s.zonesCount} منطقة'],
+          onTap: () => cubit.openSubMunicipalityWithParent(m.id, s.id),
+          onEdit: () => _openSubMunicipalityForm(
+            context,
+            municipality: m,
+            subMunicipality: s,
+          ),
+          onDelete: () => _confirmDelete(
+            context,
+            title: 'حذف البلدية الفرعية',
+            body: 'هل تريد حذف "${s.name}"؟ '
+                'لا يمكن الحذف إذا كانت تتبعها مناطق قائمة.',
+            onConfirm: () => cubit.deleteSubMunicipality(s.id),
+          ),
+        );
+
+      case GeoSearchResultType.zone:
+        final z = item.zone!;
+        return GeoNodeCard(
+          icon: item.subMunicipality != null
+              ? Icons.place_rounded
+              : Icons.wrong_location_rounded,
+          title: z.name,
+          subtitle: item.subtitle,
+          onTap: item.municipality != null && item.subMunicipality != null
+              ? () => cubit.openSubMunicipalityWithParent(
+                    item.municipality!.id,
+                    item.subMunicipality!.id,
+                  )
+              : null,
+          onEdit: () => _openZoneForm(context, zone: z),
+          onDelete: () => _confirmDelete(
+            context,
+            title: 'حذف المنطقة',
+            body: 'هل تريد حذف منطقة "${z.name}"؟ '
+                'لا يمكن الحذف إذا كان بها سائقون نشطون.',
+            onConfirm: () => cubit.deleteZone(z.id),
+          ),
+        );
+    }
   }
 
   // ── المستوى الأول: البلديات الكبرى ────────────────────────────────────────
@@ -434,9 +584,13 @@ class _GeoHeader extends StatelessWidget {
       items.add(GeoBreadcrumbItem(label: current.subMunicipality.name));
       addLabel = 'إضافة منطقة';
       addIcon = Icons.add_location_alt_rounded;
+    } else if (state is GeoSearchResultsLoaded) {
+      items.add(const GeoBreadcrumbItem(label: 'نتائج البحث'));
     }
 
-    final canGoBack = state is SubMunicipalitiesLoaded || state is ZonesLoaded;
+    final canGoBack = state is SubMunicipalitiesLoaded ||
+        state is ZonesLoaded ||
+        state is GeoSearchResultsLoaded;
 
     return Row(
       children: [

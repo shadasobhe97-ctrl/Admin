@@ -5,6 +5,9 @@ class AdminModel {
   final String phoneNumber;
   final int roleId;
   final String roleName;
+  final String? roleKey;
+  final List<String> permissions;
+  final List<String> customPermissions;
   final bool isActive;
   final String? avatarUrl;
   final String? createdAt;
@@ -18,6 +21,9 @@ class AdminModel {
     required this.phoneNumber,
     this.roleId = 2,
     this.roleName = 'مشرف',
+    this.roleKey,
+    this.permissions = const [],
+    this.customPermissions = const [],
     required this.isActive,
     this.avatarUrl,
     this.createdAt,
@@ -48,13 +54,31 @@ class AdminModel {
           json['email_change_pending'].toString() == 'true';
     }
 
+    List<String> parseList(dynamic val) {
+      if (val is List) {
+        return val.map((e) {
+          if (e is Map<String, dynamic>) {
+            return e['key']?.toString() ?? e['name']?.toString() ?? '';
+          }
+          return e.toString();
+        }).where((element) => element.isNotEmpty).toList();
+      }
+      return [];
+    }
+
+    final parsedRoleKey = json['role_key']?.toString() ??
+        json['role']?['key']?.toString();
+
     return AdminModel(
       id: parsedId,
       fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       phoneNumber: json['phone_number']?.toString() ?? json['phone']?.toString() ?? '',
       roleId: parsedRoleId,
-      roleName: json['role_name']?.toString() ?? (parsedRoleId == 1 ? 'أدمن' : 'مشرف'),
+      roleName: json['role_name']?.toString() ?? json['role']?['name']?.toString() ?? (parsedRoleId == 1 ? 'أدمن' : 'مشرف'),
+      roleKey: parsedRoleKey,
+      permissions: parseList(json['permissions']),
+      customPermissions: parseList(json['custom_permissions']),
       isActive: parsedActive,
       avatarUrl: json['avatar_url']?.toString() ??
           json['avatar']?.toString() ??
@@ -74,6 +98,9 @@ class AdminModel {
       'phone_number': phoneNumber,
       'role_id': roleId,
       'role_name': roleName,
+      if (roleKey != null) 'role_key': roleKey,
+      'permissions': permissions,
+      'custom_permissions': customPermissions,
       'is_active': isActive,
       'avatar_url': avatarUrl,
       'created_at': createdAt,

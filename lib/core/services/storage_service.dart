@@ -13,11 +13,14 @@ class StorageService {
   static const String _tokenKey = 'auth_token';
   static const String _roleIdKey = 'role_id';
   static const String _roleNameKey = 'role_name';
+  static const String _roleKeyKey = 'role_key';
   static const String _userIdKey = 'user_id';
   static const String _userNameKey = 'user_name';
   static const String _userPhoneKey = 'user_phone';
   static const String _userEmailKey = 'user_email';
   static const String _avatarUrlKey = 'user_avatar_url';
+  static const String _permissionsKey = 'user_permissions';
+  static const String _customPermissionsKey = 'user_custom_permissions';
 
   /// صورة الحساب الحالية، ليصل إليها الشريط الجانبي وبقيّة الواجهات
   /// المشتركة ويتحدّث فور تغييرها من شاشة الملف الشخصي.
@@ -35,11 +38,16 @@ class StorageService {
   static String? getToken() => _prefs?.getString(_tokenKey);
   static int? getRoleId() => _prefs?.getInt(_roleIdKey);
   static String? getRoleName() => _prefs?.getString(_roleNameKey);
+  static String? getRoleKey() => _prefs?.getString(_roleKeyKey);
   static int? getUserId() => _prefs?.getInt(_userIdKey);
   static String? getUserName() => _prefs?.getString(_userNameKey);
   static String? getUserPhone() => _prefs?.getString(_userPhoneKey);
   static String? getUserEmail() => _prefs?.getString(_userEmailKey);
   static String? getAvatarUrl() => _prefs?.getString(_avatarUrlKey);
+  static List<String> getPermissions() =>
+      _prefs?.getStringList(_permissionsKey) ?? [];
+  static List<String> getCustomPermissions() =>
+      _prefs?.getStringList(_customPermissionsKey) ?? [];
 
   /// يحفظ رابط صورة الحساب ويُخطر المستمعين فوراً.
   /// تمرير قيمة فارغة يمسح الصورة المخزّنة.
@@ -73,6 +81,23 @@ class StorageService {
         '-$_avatarRevision';
   }
 
+  /// حفظ الصلاحيات والدور بالتفصيل
+  static Future<void> savePermissions({
+    String? roleKey,
+    List<String>? permissions,
+    List<String>? customPermissions,
+  }) async {
+    if (roleKey != null && roleKey.isNotEmpty) {
+      await _prefs?.setString(_roleKeyKey, roleKey);
+    }
+    if (permissions != null) {
+      await _prefs?.setStringList(_permissionsKey, permissions);
+    }
+    if (customPermissions != null) {
+      await _prefs?.setStringList(_customPermissionsKey, customPermissions);
+    }
+  }
+
   static Future<bool> saveSession({
     required String token,
     required int roleId,
@@ -82,6 +107,9 @@ class StorageService {
     required String userPhone,
     String userEmail = '',
     String? avatarUrl,
+    String? roleKey,
+    List<String>? permissions,
+    List<String>? customPermissions,
   }) async {
     await _prefs?.setString(_tokenKey, token);
     await _prefs?.setInt(_roleIdKey, roleId);
@@ -90,6 +118,15 @@ class StorageService {
     await _prefs?.setString(_userNameKey, userName);
     await _prefs?.setString(_userPhoneKey, userPhone);
     await saveAvatarUrl(avatarUrl);
+    if (roleKey != null && roleKey.isNotEmpty) {
+      await _prefs?.setString(_roleKeyKey, roleKey);
+    }
+    if (permissions != null) {
+      await _prefs?.setStringList(_permissionsKey, permissions);
+    }
+    if (customPermissions != null) {
+      await _prefs?.setStringList(_customPermissionsKey, customPermissions);
+    }
     return await _prefs?.setString(_userEmailKey, userEmail) ?? false;
   }
 
@@ -97,10 +134,13 @@ class StorageService {
     await _prefs?.remove(_tokenKey);
     await _prefs?.remove(_roleIdKey);
     await _prefs?.remove(_roleNameKey);
+    await _prefs?.remove(_roleKeyKey);
     await _prefs?.remove(_userIdKey);
     await _prefs?.remove(_userNameKey);
     await _prefs?.remove(_userPhoneKey);
     await _prefs?.remove(_userEmailKey);
+    await _prefs?.remove(_permissionsKey);
+    await _prefs?.remove(_customPermissionsKey);
     await saveAvatarUrl(null);
   }
 

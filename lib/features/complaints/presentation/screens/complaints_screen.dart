@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_pagination.dart';
 import '../../logic/cubit/complaints_cubit.dart';
@@ -20,6 +21,35 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionHelper.hasPermission('complaints.view')) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_person_rounded, size: 56, color: context.warningColor),
+              const SizedBox(height: 16),
+              Text(
+                'صلاحية غير كافية',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'استعراض قسم الشكاوى والبلاغات يتطلب صلاحية (complaints.view).',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: context.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_activeDetailsComplaintId != null) {
       return ComplaintDetailsScreen(
         complaintId: _activeDetailsComplaintId,

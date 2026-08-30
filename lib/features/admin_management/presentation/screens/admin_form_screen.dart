@@ -24,7 +24,7 @@ class AdminFormScreen extends StatelessWidget {
     showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => BlocProvider(
-        create: (context) => sl<AdminManagementCubit>(),
+        create: (context) => sl<AdminManagementCubit>()..fetchRolesPermissions(),
         child: Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

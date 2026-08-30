@@ -2,6 +2,7 @@ import '../datasources/admin_management_remote_data_source.dart';
 import '../models/admin_details_model.dart';
 import '../models/admin_model.dart';
 import '../models/create_admin_request_model.dart';
+import '../models/roles_permissions_model.dart';
 import '../models/update_admin_request_model.dart';
 
 class AdminManagementRepository {
@@ -87,6 +88,14 @@ class AdminManagementRepository {
   Future<String> rejectEmailChange(String token) async {
     try {
       return await _remoteDataSource.rejectEmailChange(token);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<RolesPermissionsResponseModel> getRolesPermissions() async {
+    try {
+      return await _remoteDataSource.getRolesPermissions();
     } catch (e) {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }

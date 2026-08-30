@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
+  static const String baseUrl = 'https://tidy-bobcat-51.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -51,6 +51,7 @@ class ApiEndpoints {
 
   // ── 3. Admins ───────────────────────────────────────────────────────────────
   static const String admins = '/admin/admins';
+  static const String rolesPermissions = '/admin/roles-permissions';
   static String adminDetails(dynamic id) => '/admin/admins/$id';
   static String adminEmailChangeStatus(dynamic id) =>
       '/admin/admins/$id/email-change/status';

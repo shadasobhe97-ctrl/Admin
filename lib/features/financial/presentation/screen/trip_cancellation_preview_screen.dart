@@ -9,6 +9,8 @@ import '../../logic/state/financial_state.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../widget/trip_cancellation_preview_card.dart';
 
+import '../../../../core/services/permission_helper.dart';
+
 /// معاينة إلغاء رحلة حسب مصفوفة الغرامات، ثم تنفيذ الإلغاء بعد التأكيد.
 class TripCancellationPreviewScreen extends StatelessWidget {
   final int tripId;
@@ -52,6 +54,17 @@ class _TripCancellationViewState extends State<_TripCancellationView> {
   Future<void> _confirmCancellation(
     TripCancellationPreviewModel preview,
   ) async {
+    final canCancel = PermissionHelper.hasPermission('trips.emergency_cancel') ||
+        PermissionHelper.hasPermission('financial.resolve_disputes');
+    if (!canCancel) {
+      showAdminSnackBar(
+        context,
+        'عذراً، غير مصرح لك بتنفيذ إلغاء الرحلة. (الصلاحية المطلوبة: trips.emergency_cancel)',
+        isError: true,
+      );
+      return;
+    }
+
     final cubit = context.read<FinancialCubit>();
     final confirmed = await showAdminConfirmDialog(
       context,
@@ -70,6 +83,20 @@ class _TripCancellationViewState extends State<_TripCancellationView> {
 
   @override
   Widget build(BuildContext context) {
+    final canView = PermissionHelper.hasPermission('trips.emergency_cancel') ||
+        PermissionHelper.hasPermission('financial.resolve_disputes');
+    if (!canView) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          appBar: AppBar(title: Text('معاينة إلغاء الرحلة #${widget.tripId}')),
+          body: const AdminErrorView(
+            message: 'عذراً، لا تملك الصلاحية المطلوبة للوصول إلى هذه الشاشة. (الصلاحية المطلوبة: trips.emergency_cancel)',
+          ),
+        ),
+      );
+    }
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

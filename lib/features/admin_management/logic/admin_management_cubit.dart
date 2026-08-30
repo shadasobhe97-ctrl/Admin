@@ -299,6 +299,28 @@ class AdminManagementCubit extends Cubit<AdminManagementState> {
     }
   }
 
+  /// 6. GET /api/admin/roles-permissions
+  Future<void> fetchRolesPermissions() async {
+    emit(state.copyWith(
+      isRolesLoading: true,
+      clearError: true,
+    ));
+
+    try {
+      final response = await _repository.getRolesPermissions();
+      emit(state.copyWith(
+        isRolesLoading: false,
+        roles: response.roles,
+        permissionsTree: response.permissionsTree,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isRolesLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+    }
+  }
+
   void clearMessages() {
     emit(state.copyWith(clearError: true, clearSuccess: true));
   }

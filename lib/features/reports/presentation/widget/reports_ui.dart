@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 
@@ -351,7 +352,7 @@ class ReportToolbar extends StatelessWidget {
                 color: isBusy ? context.textTertiary : context.primaryColor,
               ),
             ),
-            if (onExport != null) ...[
+            if (onExport != null && PermissionHelper.hasPermission('reports.export')) ...[
               const SizedBox(width: 6),
               OutlinedButton.icon(
                 onPressed: isBusy ? null : onExport,

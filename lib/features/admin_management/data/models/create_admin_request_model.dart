@@ -5,6 +5,9 @@ class CreateAdminRequestModel {
   final String email;
   final String phoneNumber;
   final String? password;
+  final int? roleId;
+  final List<String>? customPermissions;
+  final bool? isActive;
   final List<int>? avatarBytes;
   final String? avatarFileName;
 
@@ -13,6 +16,9 @@ class CreateAdminRequestModel {
     required this.email,
     required this.phoneNumber,
     this.password,
+    this.roleId,
+    this.customPermissions,
+    this.isActive,
     this.avatarBytes,
     this.avatarFileName,
   });
@@ -26,6 +32,18 @@ class CreateAdminRequestModel {
 
     if (password != null && password!.isNotEmpty) {
       map['password'] = password;
+    }
+
+    if (roleId != null) {
+      map['role_id'] = roleId;
+    }
+
+    if (customPermissions != null) {
+      map['custom_permissions[]'] = customPermissions;
+    }
+
+    if (isActive != null) {
+      map['is_active'] = isActive! ? 1 : 0;
     }
 
     if (avatarBytes != null && avatarBytes!.isNotEmpty) {

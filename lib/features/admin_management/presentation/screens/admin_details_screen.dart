@@ -263,6 +263,24 @@ class AdminDetailsScreen extends StatelessWidget {
                             ? admin.createdAt!
                             : 'غير محدد في Backend',
                       ),
+                      if (admin.permissions.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildPermissionsSection(
+                          context,
+                          'صلاحيات الدور الأساسية (${admin.roleName}):',
+                          admin.permissions,
+                          context.primaryColor,
+                        ),
+                      ],
+                      if (admin.customPermissions.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildPermissionsSection(
+                          context,
+                          'الصلاحيات المخصصة الإضافية للمشرف:',
+                          admin.customPermissions,
+                          context.warningColor,
+                        ),
+                      ],
                       const SizedBox(height: 24),
 
                       Row(
@@ -341,6 +359,58 @@ class AdminDetailsScreen extends StatelessWidget {
               ),
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionsSection(BuildContext context, String title,
+      List<String> permissions, Color chipColor) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: permissions.map((perm) {
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: chipColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: chipColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  perm,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: chipColor,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),

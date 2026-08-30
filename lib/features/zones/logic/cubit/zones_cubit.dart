@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../data/models/geo_action_result.dart';
+import '../../data/models/geo_search_result.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -23,11 +24,14 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   int? _selectedMunicipalityId;
   int? _selectedSubMunicipalityId;
+  String _searchQuery = '';
 
   List<MunicipalityModel> get municipalities => _tree;
+  String get searchQuery => _searchQuery;
 
   /// المستوى المعروض حالياً، لتحديد سلوك أزرار الإضافة والرجوع.
   GeoLevel get currentLevel {
+    if (_searchQuery.isNotEmpty) return GeoLevel.search;
     if (_selectedSubMunicipalityId != null) return GeoLevel.zones;
     if (_selectedMunicipalityId != null) return GeoLevel.subMunicipalities;
     return GeoLevel.municipalities;
@@ -40,6 +44,75 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   void _emitIfOpen(ZonesState state) {
     if (!isClosed) emit(state);
+  }
+
+  // ── البحث الجغرافي الشامل ──────────────────────────────────────────────────
+
+  void search(String query) {
+    _searchQuery = query.trim();
+    _emitCurrentLevel();
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _emitCurrentLevel();
+  }
+
+  List<GeoSearchResult> _performSearch(String query) {
+    final results = <GeoSearchResult>[];
+    final q = query.toLowerCase();
+
+    for (final municipality in _tree) {
+      // 1. البلديات الكبرى
+      if (municipality.name.toLowerCase().contains(q)) {
+        results.add(GeoSearchResult(
+          type: GeoSearchResultType.municipality,
+          name: municipality.name,
+          municipality: municipality,
+        ));
+      }
+
+      for (final sub in municipality.subMunicipalities) {
+        // 2. المحلات (البلديات الفرعية)
+        if (sub.name.toLowerCase().contains(q)) {
+          results.add(GeoSearchResult(
+            type: GeoSearchResultType.subMunicipality,
+            name: sub.name,
+            subtitle: 'تابعة لـ ${municipality.name}',
+            municipality: municipality,
+            subMunicipality: sub,
+          ));
+        }
+
+        for (final zone in sub.zones) {
+          // 3. المناطق الدقيقة
+          if (zone.name.toLowerCase().contains(q)) {
+            results.add(GeoSearchResult(
+              type: GeoSearchResultType.zone,
+              name: zone.name,
+              subtitle: '${municipality.name} ← ${sub.name}',
+              municipality: municipality,
+              subMunicipality: sub,
+              zone: zone,
+            ));
+          }
+        }
+      }
+    }
+
+    // 4. مناطق غير مرتبطة بأي محلة
+    for (final zone in _unassignedZones) {
+      if (zone.name.toLowerCase().contains(q)) {
+        results.add(GeoSearchResult(
+          type: GeoSearchResultType.zone,
+          name: zone.name,
+          subtitle: 'غير مرتبطة بمحلة',
+          zone: zone,
+        ));
+      }
+    }
+
+    return results;
   }
 
   // ── جلب الشجرة ────────────────────────────────────────────────────────────
@@ -66,6 +139,12 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   /// يعيد إصدار حالة المستوى المعروض حالياً اعتماداً على آخر شجرة.
   void _emitCurrentLevel() {
+    if (_searchQuery.isNotEmpty) {
+      final results = _performSearch(_searchQuery);
+      _emitIfOpen(GeoSearchResultsLoaded(query: _searchQuery, results: results));
+      return;
+    }
+
     final municipality = _findMunicipality(_selectedMunicipalityId);
 
     // البلدية المحددة قد تكون حُذفت أثناء العملية الأخيرة.
@@ -139,19 +218,30 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   /// ينزل من البلدية الكبرى إلى محلاتها.
   void openMunicipality(int municipalityId) {
+    _searchQuery = '';
     _selectedMunicipalityId = municipalityId;
     _selectedSubMunicipalityId = null;
     _emitCurrentLevel();
   }
 
-  /// ينزل من المحلة إلى مناطقها الدقيقة.
+  /// ينزل من المحلة إلى مناطقها الدقيقة (داخل البلدية المحددة حالياً).
   void openSubMunicipality(int subMunicipalityId) {
+    _searchQuery = '';
+    _selectedSubMunicipalityId = subMunicipalityId;
+    _emitCurrentLevel();
+  }
+
+  /// ينزل مباشرة من نتائج البحث إلى محلة داخل بلديتها الكبرى.
+  void openSubMunicipalityWithParent(int municipalityId, int subMunicipalityId) {
+    _searchQuery = '';
+    _selectedMunicipalityId = municipalityId;
     _selectedSubMunicipalityId = subMunicipalityId;
     _emitCurrentLevel();
   }
 
   /// يرجع مستوى واحداً للأعلى.
   void goBack() {
+    _searchQuery = '';
     if (_selectedSubMunicipalityId != null) {
       _selectedSubMunicipalityId = null;
     } else {
@@ -162,6 +252,7 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   /// يرجع مباشرة إلى قائمة البلديات الكبرى.
   void goToRoot() {
+    _searchQuery = '';
     _selectedMunicipalityId = null;
     _selectedSubMunicipalityId = null;
     _emitCurrentLevel();

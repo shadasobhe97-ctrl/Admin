@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../../profile/data/repositories/admin_profile_repository.dart';
@@ -42,24 +43,50 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
     _ensureAvatarLoaded();
 
-    final roleId = StorageService.getRoleId();
-    final isAdmin = roleId == 1;
-
-    _navItems = [
+    final items = <NavigationItem>[
       NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
-      NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
-      NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0),
-      NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3),
-      if (isAdmin)
-        NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0),
-      NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0),
-      NavigationItem('zones', 'المناطق الجغرافية', Icons.map_rounded, badge: 0),
-      NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
-      NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
-      NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0),
-      NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
     ];
 
+    if (PermissionHelper.hasAnyPermission(['dashboard.view_stats', 'dashboard.view_radar'])) {
+      items.add(NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('drivers.view')) {
+      items.add(NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('drivers.review_changes')) {
+      items.add(NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3));
+    }
+    if (PermissionHelper.hasPermission('admins.manage')) {
+      items.add(NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('schools.manage')) {
+      items.add(NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('geography.manage')) {
+      items.add(NavigationItem('zones', 'المناطق الجغرافية', Icons.map_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('complaints.view')) {
+      items.add(NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2));
+    }
+    if (PermissionHelper.hasPermission('driver_reviews.manage')) {
+      items.add(NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasAnyPermission([
+      'financial.view_summary',
+      'financial.view_ledger',
+      'financial.manage_withdrawals',
+      'financial.manage_recharges',
+      'financial.release_escrows',
+      'financial.resolve_disputes',
+      'financial.manage_settlements',
+    ])) {
+      items.add(NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0));
+    }
+    if (PermissionHelper.hasPermission('reports.view')) {
+      items.add(NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0));
+    }
+
+    _navItems = items;
   }
 
   /// استجابة تسجيل الدخول لا تحمل صورة الحساب، فتُجلب مرة واحدة من

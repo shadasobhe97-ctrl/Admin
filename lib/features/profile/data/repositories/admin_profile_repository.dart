@@ -1,3 +1,4 @@
+import '../../../../core/services/storage_service.dart';
 import '../datasources/admin_profile_remote_data_source.dart';
 import '../models/admin_profile_model.dart';
 import '../models/email_change_status_model.dart';
@@ -9,7 +10,13 @@ class AdminProfileRepository {
   AdminProfileRepository(this._remoteDataSource);
 
   Future<AdminProfileModel> getProfile() async {
-    return await _remoteDataSource.getProfile();
+    final profile = await _remoteDataSource.getProfile();
+    await StorageService.savePermissions(
+      roleKey: profile.roleKey,
+      permissions: profile.permissions,
+      customPermissions: profile.customPermissions,
+    );
+    return profile;
   }
 
   Future<Map<String, dynamic>> updateProfile(ProfileUpdateRequest request) async {

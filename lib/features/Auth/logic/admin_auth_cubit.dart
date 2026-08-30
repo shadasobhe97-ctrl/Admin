@@ -68,6 +68,9 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
         userName:  user.fullName,
         userPhone: user.phoneNumber,
         userEmail: user.email,
+        roleKey:   user.roleKey,
+        permissions: user.permissions,
+        customPermissions: user.customPermissions,
       );
 
       emit(state.copyWith(

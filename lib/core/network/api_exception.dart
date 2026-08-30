@@ -92,6 +92,10 @@ class ApiErrorMapper {
 
   static String? _parseMessage(dynamic data) {
     if (data is Map) {
+      final reqPerm = data['required_permission'];
+      if (reqPerm != null && reqPerm.toString().trim().isNotEmpty) {
+        return 'غير مصرح لك بتنفيذ هذه العملية. الصلاحية المطلوبة: $reqPerm';
+      }
       final message = data['message'];
       if (message != null && message.toString().trim().isNotEmpty) {
         return message.toString();

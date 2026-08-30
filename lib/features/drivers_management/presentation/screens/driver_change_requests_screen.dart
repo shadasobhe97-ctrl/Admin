@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
@@ -14,6 +15,35 @@ class DriverChangeRequestsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!PermissionHelper.hasPermission('drivers.review_changes')) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_person_rounded, size: 56, color: context.warningColor),
+              const SizedBox(height: 16),
+              Text(
+                'صلاحية غير كافية',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'استعراض طلبات تحديث بيانات السائقين يتطلب صلاحية (drivers.review_changes).',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: context.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocProvider(
       create: (context) =>
           sl<DriversManagementCubit>()..fetchPendingDriverChanges(),

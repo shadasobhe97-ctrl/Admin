@@ -5,6 +5,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../models/admin_details_model.dart';
 import '../models/admin_model.dart';
 import '../models/create_admin_request_model.dart';
+import '../models/roles_permissions_model.dart';
 import '../models/update_admin_request_model.dart';
 
 class AdminManagementRemoteDataSource {
@@ -17,7 +18,13 @@ class AdminManagementRemoteDataSource {
     String message = ' الاتصال بالخادم ($status)';
 
     final data = e.response?.data;
-    if (data is Map<String, dynamic>) {
+    if (status == 403 &&
+        data is Map<String, dynamic> &&
+        data['required_permission'] != null &&
+        data['required_permission'].toString().trim().isNotEmpty) {
+      final reqPerm = data['required_permission'].toString().trim();
+      message = 'غير مصرح لك بتنفيذ هذه العملية. الصلاحية المطلوبة: $reqPerm';
+    } else if (data is Map<String, dynamic>) {
       if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
         final firstVal = (data['errors'] as Map).values.first;
         if (firstVal is List && firstVal.isNotEmpty) {
@@ -258,6 +265,24 @@ class AdminManagementRemoteDataSource {
             'تم رفض تغيير البريد الإلكتروني.';
       }
       return 'تم رفض تغيير البريد الإلكتروني.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'GET', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GET /api/admin/roles-permissions
+  Future<RolesPermissionsResponseModel> getRolesPermissions() async {
+    const endpoint = ApiEndpoints.rolesPermissions;
+    try {
+      final response = await _apiClient.get(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return RolesPermissionsResponseModel.fromJson(
+            response.data as Map<String, dynamic>);
+      }
+      throw Exception(
+          'استجابة غير متوافقة من الخادم عند جلب الأدوار والصلاحيات.');
     } on DioException catch (e) {
       throw _handleDioError(e, 'GET', endpoint);
     } catch (e) {

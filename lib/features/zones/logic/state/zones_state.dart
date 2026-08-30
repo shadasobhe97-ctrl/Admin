@@ -1,9 +1,10 @@
+import '../../data/models/geo_search_result.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
 
 /// المستوى المعروض حالياً في التدرّج الجغرافي.
-enum GeoLevel { municipalities, subMunicipalities, zones }
+enum GeoLevel { municipalities, subMunicipalities, zones, search }
 
 abstract class ZonesState {
   const ZonesState();
@@ -21,6 +22,20 @@ class ZonesError extends ZonesState {
   final String message;
   const ZonesError(this.message);
 }
+
+/// حالة نتائج البحث الفوري عبر كل المستويات الجغرافية.
+class GeoSearchResultsLoaded extends ZonesState {
+  final String query;
+  final List<GeoSearchResult> results;
+
+  const GeoSearchResultsLoaded({
+    required this.query,
+    required this.results,
+  });
+
+  bool get isEmpty => results.isEmpty;
+}
+
 
 /// المستوى الأول: قائمة البلديات الكبرى.
 class MunicipalitiesLoaded extends ZonesState {

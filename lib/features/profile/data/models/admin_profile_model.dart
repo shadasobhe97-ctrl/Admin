@@ -8,6 +8,9 @@ class AdminProfileModel {
   final bool? isActive;
   final int? roleId;
   final String? roleName;
+  final String? roleKey;
+  final List<String> permissions;
+  final List<String> customPermissions;
   final int? createdBy;
   final String? creatorName;
   final String? createdAt;
@@ -25,6 +28,9 @@ class AdminProfileModel {
     this.isActive,
     this.roleId,
     this.roleName,
+    this.roleKey,
+    this.permissions = const [],
+    this.customPermissions = const [],
     this.createdBy,
     this.creatorName,
     this.createdAt,
@@ -52,6 +58,18 @@ class AdminProfileModel {
       return str == '1' || str == 'true';
     }
 
+    List<String> parseStringList(dynamic val) {
+      if (val is List) {
+        return val.map((e) {
+          if (e is Map<String, dynamic>) {
+            return e['key']?.toString() ?? e['name']?.toString() ?? '';
+          }
+          return e.toString();
+        }).where((element) => element.isNotEmpty).toList();
+      }
+      return [];
+    }
+
     return AdminProfileModel(
       id: parseId(json['id']),
       userId: parseNullableId(json['user_id']),
@@ -65,6 +83,9 @@ class AdminProfileModel {
       isActive: parseBool(json['is_active']),
       roleId: parseNullableId(json['role_id']),
       roleName: json['role_name']?.toString() ?? json['role']?.toString(),
+      roleKey: json['role_key']?.toString() ?? json['role']?['key']?.toString(),
+      permissions: parseStringList(json['permissions']),
+      customPermissions: parseStringList(json['custom_permissions']),
       createdBy: parseNullableId(json['created_by']),
       creatorName: json['creator_name']?.toString(),
       createdAt: json['created_at']?.toString(),
@@ -85,6 +106,9 @@ class AdminProfileModel {
       if (isActive != null) 'is_active': isActive,
       if (roleId != null) 'role_id': roleId,
       if (roleName != null) 'role_name': roleName,
+      if (roleKey != null) 'role_key': roleKey,
+      'permissions': permissions,
+      'custom_permissions': customPermissions,
       if (createdBy != null) 'created_by': createdBy,
       if (creatorName != null) 'creator_name': creatorName,
       if (createdAt != null) 'created_at': createdAt,
@@ -104,6 +128,9 @@ class AdminProfileModel {
     bool? isActive,
     int? roleId,
     String? roleName,
+    String? roleKey,
+    List<String>? permissions,
+    List<String>? customPermissions,
     int? createdBy,
     String? creatorName,
     String? createdAt,
@@ -121,6 +148,9 @@ class AdminProfileModel {
       isActive: isActive ?? this.isActive,
       roleId: roleId ?? this.roleId,
       roleName: roleName ?? this.roleName,
+      roleKey: roleKey ?? this.roleKey,
+      permissions: permissions ?? this.permissions,
+      customPermissions: customPermissions ?? this.customPermissions,
       createdBy: createdBy ?? this.createdBy,
       creatorName: creatorName ?? this.creatorName,
       createdAt: createdAt ?? this.createdAt,

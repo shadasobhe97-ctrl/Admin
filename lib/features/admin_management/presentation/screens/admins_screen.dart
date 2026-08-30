@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../admin_audit_logs/presentation/screen/audit_logs_screen.dart';
 import '../../data/models/admin_model.dart';
@@ -19,7 +19,7 @@ class AdminsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (StorageService.getRoleId() != 1) {
+    if (!PermissionHelper.hasPermission('admins.manage')) {
       return Scaffold(
         backgroundColor: context.scaffoldBackgroundColor,
         body: Directionality(
@@ -42,7 +42,7 @@ class AdminsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'صفحة إدارة المشرفين مخصصة لمدير النظام (الأدمن) فقط.',
+                    'صفحة إدارة المشرفين تتطلب صلاحية (admins.manage).',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13, color: context.textMuted),
                   ),
@@ -162,7 +162,7 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                           children: [
                             // سجل الإجراءات للأدمن العام فقط؛ الحماية الفعلية
                             // على الخادم (403) وهذا الإخفاء لتجربة المستخدم.
-                            if (canViewAuditLogs()) ...[
+                            if (PermissionHelper.hasPermission('audit_logs.view')) ...[
                               OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
