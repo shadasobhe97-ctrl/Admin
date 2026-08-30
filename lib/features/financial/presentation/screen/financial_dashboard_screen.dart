@@ -12,6 +12,8 @@ import 'escrows_screen.dart';
 import 'financial_audit_logs_screen.dart';
 import 'financial_ledger_screen.dart';
 import 'invoices_screen.dart';
+import 'payment_methods_screen.dart';
+import 'pricing_settings_screen.dart';
 import 'recharges_screen.dart';
 import 'settlements_screen.dart';
 import 'solvency_check_screen.dart';
@@ -167,6 +169,20 @@ class FinancialDashboardView extends StatelessWidget {
         icon: Icons.receipt_rounded,
         color: context.infoColor,
         onTap: () => _open(context, const InvoicesScreen()),
+      ),
+      _FinancialSection(
+        title: 'إعدادات التسعير',
+        description: 'ضبط العمولة وخصومات الأطفال وأسعار الكيلومتر',
+        icon: Icons.tune_rounded,
+        color: context.primaryColor,
+        onTap: () => _open(context, const PricingSettingsScreen()),
+      ),
+      _FinancialSection(
+        title: 'طرق الدفع',
+        description: 'إدارة وتفعيل طرق الدفع المعتمدة في المنظومة',
+        icon: Icons.credit_card_rounded,
+        color: context.infoColor,
+        onTap: () => _open(context, const PaymentMethodsScreen()),
       ),
     ];
 

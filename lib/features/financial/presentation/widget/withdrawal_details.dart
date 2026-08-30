@@ -44,11 +44,11 @@ class WithdrawalDetailsPanel extends StatelessWidget {
           ),
           AdminInfoRow(
             label: 'رصيد المحفظة وقت الطلب',
-            value: AdminFormat.money(withdrawal.walletBalanceAtReq),
+            value: AdminFormat.money(withdrawal.walletBalanceAtRequest),
           ),
           AdminInfoRow(
             label: 'بيانات وسيلة الدفع',
-            value: AdminFormat.orDash(withdrawal.paymentMethodDetails),
+            value: withdrawal.paymentMethodDetails?.formattedDetails ?? '—',
           ),
           AdminInfoRow(
             label: 'تاريخ الطلب',

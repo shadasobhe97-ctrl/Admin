@@ -5,6 +5,8 @@ import '../../data/models/financial_invoice_model.dart';
 import '../../data/models/financial_summary_model.dart';
 import '../../data/models/ledger_entry_model.dart';
 import '../../../../core/models/paginated_result.dart';
+import '../../data/models/payment_method_model.dart';
+import '../../data/models/pricing_settings_model.dart';
 import '../../data/models/recharge_model.dart';
 import '../../data/models/settlement_contract_model.dart';
 import '../../data/models/solvency_check_model.dart';
@@ -385,4 +387,79 @@ class InvoiceDetailsLoaded extends FinancialState {
 class InvoicesError extends FinancialState {
   final String message;
   const InvoicesError(this.message);
+}
+
+// ── Pricing Settings ────────────────────────────────────────────────────────
+
+class PricingSettingsLoading extends FinancialState {
+  const PricingSettingsLoading();
+}
+
+class PricingSettingsLoaded extends FinancialState {
+  final PricingSettingsModel settings;
+  final bool isSaving;
+  final bool isExisting;
+
+  const PricingSettingsLoaded(
+    this.settings, {
+    this.isSaving = false,
+    this.isExisting = true,
+  });
+
+  PricingSettingsLoaded copyWith({
+    PricingSettingsModel? settings,
+    bool? isSaving,
+    bool? isExisting,
+  }) {
+    return PricingSettingsLoaded(
+      settings ?? this.settings,
+      isSaving: isSaving ?? this.isSaving,
+      isExisting: isExisting ?? this.isExisting,
+    );
+  }
+}
+
+class PricingSettingsSaveSuccess extends FinancialState {
+  final String message;
+  const PricingSettingsSaveSuccess(this.message);
+}
+
+class PricingSettingsError extends FinancialState {
+  final String message;
+  const PricingSettingsError(this.message);
+}
+
+// ── Payment Methods ─────────────────────────────────────────────────────────
+
+class PaymentMethodsLoading extends FinancialState {
+  const PaymentMethodsLoading();
+}
+
+class PaymentMethodsLoaded extends FinancialState {
+  final List<PaymentMethodModel> methods;
+  final int? actionMethodId;
+
+  const PaymentMethodsLoaded(this.methods, {this.actionMethodId});
+
+  PaymentMethodsLoaded copyWith({
+    List<PaymentMethodModel>? methods,
+    int? actionMethodId,
+    bool clearAction = false,
+  }) {
+    return PaymentMethodsLoaded(
+      methods ?? this.methods,
+      actionMethodId:
+          clearAction ? null : (actionMethodId ?? this.actionMethodId),
+    );
+  }
+}
+
+class PaymentMethodActionSuccess extends FinancialState {
+  final String message;
+  const PaymentMethodActionSuccess(this.message);
+}
+
+class PaymentMethodsError extends FinancialState {
+  final String message;
+  const PaymentMethodsError(this.message);
 }

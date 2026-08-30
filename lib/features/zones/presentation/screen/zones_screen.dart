@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/widgets/admin_ui.dart';
+import '../../data/models/geography_item_model.dart';
+import '../../data/models/geography_type.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -11,6 +14,7 @@ import '../../logic/state/zones_state.dart';
 import '../widget/geo_breadcrumb.dart';
 import '../widget/geo_form_dialog.dart';
 import '../widget/geo_node_card.dart';
+import '../widget/geography_search_bar.dart';
 
 class ZonesScreen extends StatelessWidget {
   const ZonesScreen({super.key});
@@ -24,11 +28,28 @@ class ZonesScreen extends StatelessWidget {
   }
 }
 
-class ZonesViewContent extends StatelessWidget {
+class ZonesViewContent extends StatefulWidget {
   const ZonesViewContent({super.key});
 
-  void _showSnack(BuildContext context, String message,
-      {bool isError = false}) {
+  @override
+  State<ZonesViewContent> createState() => _ZonesViewContentState();
+}
+
+class _ZonesViewContentState extends State<ZonesViewContent> {
+  final TextEditingController _searchController = TextEditingController();
+  GeographyType _selectedFilterType = GeographyType.municipality;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _showSnack(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -40,8 +61,10 @@ class ZonesViewContent extends StatelessWidget {
 
   // ── نماذج الإضافة والتعديل ────────────────────────────────────────────────
 
-  void _openMunicipalityForm(BuildContext context,
-      {MunicipalityModel? municipality}) {
+  void _openMunicipalityForm(
+    BuildContext context, {
+    MunicipalityModel? municipality,
+  }) {
     final cubit = context.read<ZonesCubit>();
     showDialog(
       context: context,
@@ -110,7 +133,6 @@ class ZonesViewContent extends StatelessWidget {
     );
   }
 
-  /// كل المحلات عبر جميع البلديات، مع اسم البلدية للتمييز بين المتشابهات.
   List<GeoParentOption> _allSubMunicipalityOptions(
     List<MunicipalityModel> municipalities,
   ) {
@@ -191,8 +213,33 @@ class ZonesViewContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _GeoHeader(state: state, onAdd: () => _handleAdd(context, state)),
+            const SizedBox(height: 12),
+            GeographySearchBar(
+              controller: _searchController,
+              currentType: _selectedFilterType,
+              onTypeChanged: (newType) {
+                setState(() {
+                  _selectedFilterType = newType;
+                });
+                if (_searchController.text.trim().isNotEmpty) {
+                  context.read<ZonesCubit>().searchGeography(
+                        query: _searchController.text,
+                        type: newType,
+                      );
+                }
+              },
+              onChanged: (text) {
+                context.read<ZonesCubit>().searchGeography(
+                      query: text,
+                      type: _selectedFilterType,
+                    );
+              },
+              onClear: () {
+                context.read<ZonesCubit>().clearSearch();
+              },
+            ),
             const SizedBox(height: 14),
-            Expanded(child: _buildBody(context, state)),
+            Expanded(child: _buildMainContent(context, state)),
           ],
         );
       },
@@ -203,10 +250,104 @@ class ZonesViewContent extends StatelessWidget {
     if (state is SubMunicipalitiesLoaded) {
       _openSubMunicipalityForm(context, municipality: state.municipality);
     } else if (state is ZonesLoaded) {
-      _openZoneForm(context, presetSubMunicipalityId: state.subMunicipality.id);
+      _openZoneForm(
+        context,
+        presetSubMunicipalityId: state.subMunicipality.id,
+      );
     } else {
       _openMunicipalityForm(context);
     }
+  }
+
+  Widget _buildMainContent(BuildContext context, ZonesState state) {
+    if (state is GeoSearchLoading) {
+      return const AdminLoadingView(
+        message: 'جاري البحث في البيانات الجغرافية...',
+      );
+    }
+
+    if (state is GeoSearchError) {
+      return AdminErrorView(
+        message: state.message,
+        onRetry: () => context.read<ZonesCubit>().retrySearch(),
+      );
+    }
+
+    if (state is GeoSearchEmpty) {
+      return AdminEmptyView(
+        icon: Icons.search_off_rounded,
+        message: 'لا توجد نتائج مطابقة للبحث',
+        hint: 'جرّب البحث باسم آخر أو اختيار نوع جغرافي مختلف.',
+        onRefresh: () {
+          _searchController.clear();
+          context.read<ZonesCubit>().clearSearch();
+        },
+      );
+    }
+
+    if (state is GeoSearchSuccess) {
+      return _buildSearchResultsList(
+        context,
+        state.results,
+        state.type,
+      );
+    }
+
+    // عند عدم وجود بحث نشط، نعرض شجرة البيانات الحالية
+    return _buildBody(context, state);
+  }
+
+  Widget _buildSearchResultsList(
+    BuildContext context,
+    List<GeographyItemModel> results,
+    GeographyType type,
+  ) {
+    final zonesCubit = context.read<ZonesCubit>();
+
+    IconData icon;
+    String badgeLabel;
+
+    switch (type) {
+      case GeographyType.municipality:
+        icon = Icons.location_city_rounded;
+        badgeLabel = 'بلدية كبرى';
+      case GeographyType.subMunicipality:
+        icon = Icons.holiday_village_rounded;
+        badgeLabel = 'بلدية فرعية';
+      case GeographyType.region:
+        icon = Icons.place_rounded;
+        badgeLabel = 'منطقة دقيقة';
+    }
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            'نتائج البحث (${results.length})',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: context.primaryColor,
+            ),
+          ),
+        ),
+        for (final item in results)
+          GeoNodeCard(
+            icon: icon,
+            title: item.name,
+            subtitle: zonesCubit.getHierarchySubtitle(item, type),
+            badges: [badgeLabel],
+            onTap: () {
+              if (type == GeographyType.municipality) {
+                _searchController.clear();
+                zonesCubit.clearSearch();
+                zonesCubit.openMunicipality(item.id);
+              }
+            },
+          ),
+      ],
+    );
   }
 
   Widget _buildBody(BuildContext context, ZonesState state) {
@@ -268,7 +409,7 @@ class ZonesViewContent extends StatelessWidget {
             icon: Icons.location_city_rounded,
             title: municipality.name,
             badges: [
-              '${municipality.subMunicipalitiesCount} محلة',
+              '${municipality.subMunicipalitiesCount} بلدية فرعية',
               '${municipality.zonesCount} منطقة',
             ],
             onTap: () => cubit.openMunicipality(municipality.id),
@@ -286,14 +427,14 @@ class ZonesViewContent extends StatelessWidget {
           const SizedBox(height: 10),
           _SectionLabel(
             label:
-                'مناطق غير مرتبطة بأي محلة (${state.unassignedZones.length})',
+                'مناطق غير مرتبطة بأي بلدية فرعية (${state.unassignedZones.length})',
           ),
           const SizedBox(height: 8),
           for (final zone in state.unassignedZones)
             GeoNodeCard(
               icon: Icons.wrong_location_rounded,
               title: zone.name,
-              subtitle: 'غير مرتبطة بمحلة — يمكن ربطها بالتعديل',
+              subtitle: 'غير مرتبطة ببلدية فرعية — يمكن ربطها بالتعديل',
               onEdit: () => _openZoneForm(context, zone: zone),
               onDelete: () => _confirmDelete(
                 context,
@@ -308,7 +449,7 @@ class ZonesViewContent extends StatelessWidget {
     );
   }
 
-  // ── المستوى الثاني: المحلات ───────────────────────────────────────────────
+  // ── المستوى الثاني: البلديات الفرعية ───────────────────────────────────────
 
   Widget _buildSubMunicipalitiesList(
     BuildContext context,
@@ -320,8 +461,8 @@ class ZonesViewContent extends StatelessWidget {
       return _GeoMessage(
         icon: Icons.holiday_village_rounded,
         color: context.textMuted,
-        title: 'لا توجد محلات تابعة لـ "${state.municipality.name}"',
-        body: 'أضف بلدية فرعية (محلة) لتتمكن من إضافة المناطق الدقيقة بداخلها.',
+        title: 'لا توجد بلديات فرعية تابعة لـ "${state.municipality.name}"',
+        body: 'أضف بلدية فرعية لتتمكن من إضافة المناطق الدقيقة بداخلها.',
         actionLabel: 'إضافة بلدية فرعية',
         onAction: () => _openSubMunicipalityForm(
           context,
@@ -366,7 +507,7 @@ class ZonesViewContent extends StatelessWidget {
         icon: Icons.map_rounded,
         color: context.textMuted,
         title: 'لا توجد مناطق في "${state.subMunicipality.name}"',
-        body: 'أضف أول منطقة دقيقة داخل هذه المحلة.',
+        body: 'أضف أول منطقة دقيقة داخل هذه البلدية الفرعية.',
         actionLabel: 'إضافة منطقة',
         onAction: () => _openZoneForm(
           context,
@@ -421,7 +562,7 @@ class _GeoHeader extends StatelessWidget {
     if (state is SubMunicipalitiesLoaded) {
       final current = state as SubMunicipalitiesLoaded;
       items.add(GeoBreadcrumbItem(label: current.municipality.name));
-      addLabel = 'إضافة محلة';
+      addLabel = 'إضافة بلدية فرعية';
       addIcon = Icons.add_home_work_rounded;
     } else if (state is ZonesLoaded) {
       final current = state as ZonesLoaded;
@@ -443,7 +584,10 @@ class _GeoHeader extends StatelessWidget {
         if (canGoBack)
           IconButton(
             tooltip: 'رجوع',
-            onPressed: cubit.goBack,
+            onPressed: () {
+              cubit.clearSearch();
+              cubit.goBack();
+            },
             icon: Icon(
               Icons.arrow_forward_rounded,
               size: 19,
@@ -453,7 +597,10 @@ class _GeoHeader extends StatelessWidget {
         Expanded(child: GeoBreadcrumb(items: items)),
         IconButton(
           tooltip: 'تحديث',
-          onPressed: cubit.loadGeography,
+          onPressed: () {
+            cubit.clearSearch();
+            cubit.loadGeography();
+          },
           icon: Icon(
             Icons.refresh_rounded,
             size: 19,

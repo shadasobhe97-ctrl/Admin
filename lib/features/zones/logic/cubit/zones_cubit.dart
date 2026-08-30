@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../data/models/geo_action_result.dart';
+import '../../data/models/geography_item_model.dart';
+import '../../data/models/geography_type.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -265,6 +268,56 @@ class ZonesCubit extends Cubit<ZonesState> {
         'تم حذف المنطقة من النظام بنجاح.',
       );
 
+  Timer? _debounceTimer;
+  String _lastSearchQuery = '';
+  GeographyType? _lastSearchType;
+
+  /// يرجع التسلسل الجغرافي الكامل كـ Subtitle لعنصر نتيجة البحث.
+  String? getHierarchySubtitle(GeographyItemModel item, GeographyType type) {
+    switch (type) {
+      case GeographyType.municipality:
+        final m = _findMunicipality(item.id);
+        if (m != null) {
+          return '${m.subMunicipalitiesCount} بلدية فرعية • ${m.zonesCount} منطقة';
+        }
+        return 'بلدية كبرى مسجلة في النظام';
+
+      case GeographyType.subMunicipality:
+        if (item.municipalityId != null) {
+          final parentM = _findMunicipality(item.municipalityId);
+          if (parentM != null) {
+            return 'تابعة لـ ${parentM.name}';
+          }
+        }
+        for (final m in _tree) {
+          for (final sub in m.subMunicipalities) {
+            if (sub.id == item.id) {
+              return 'تابعة لـ ${m.name}';
+            }
+          }
+        }
+        return 'بلدية فرعية';
+
+      case GeographyType.region:
+        for (final m in _tree) {
+          for (final sub in m.subMunicipalities) {
+            for (final z in sub.zones) {
+              if (z.id == item.id) {
+                return '${m.name} ← ${sub.name}';
+              }
+            }
+          }
+        }
+        if (item.municipalityId != null) {
+          final parentM = _findMunicipality(item.municipalityId);
+          if (parentM != null) {
+            return 'تابعة لـ ${parentM.name}';
+          }
+        }
+        return 'منطقة دقيقة';
+    }
+  }
+
   /// تفاصيل منطقة دقيقة من الخادم (GET /admin/zones/{id}).
   Future<void> loadZoneDetails(int id) async {
     _emitIfOpen(const ZoneDetailsLoading());
@@ -274,5 +327,86 @@ class ZonesCubit extends Cubit<ZonesState> {
     } catch (error) {
       _emitIfOpen(GeoActionError(_messageOf(error)));
     }
+  }
+
+  // ── 5. البحث في البيانات الجغرافية ─────────────────────────────────────────
+
+  /// ينفّذ عملية البحث مع التأكّد من التمهل (Debounce 400ms) وتنظيف النص.
+  void searchGeography({
+    required String query,
+    required GeographyType type,
+  }) {
+    final trimmed = query.trim();
+    _lastSearchQuery = trimmed;
+    _lastSearchType = type;
+
+    _debounceTimer?.cancel();
+
+    if (trimmed.isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      _performSearch(query: trimmed, type: type);
+    });
+  }
+
+  /// إعادة المحاولة الفورية لنفس النص ونفس نوع الجغرافيا عند حدوث خطأ.
+  void retrySearch() {
+    final currentState = state;
+    if (currentState is GeoSearchError) {
+      _performSearch(query: currentState.query, type: currentState.type);
+    } else if (_lastSearchQuery.isNotEmpty && _lastSearchType != null) {
+      _performSearch(query: _lastSearchQuery, type: _lastSearchType!);
+    }
+  }
+
+  Future<void> _performSearch({
+    required String query,
+    required GeographyType type,
+  }) async {
+    if (isClosed) return;
+    _emitIfOpen(GeoSearchLoading(query: query, type: type));
+
+    try {
+      final results = await _repository.searchGeography(
+        searchKeyword: query,
+        type: type,
+      );
+
+      if (isClosed) return;
+
+      if (results.isEmpty) {
+        _emitIfOpen(GeoSearchEmpty(query: query, type: type));
+      } else {
+        _emitIfOpen(GeoSearchSuccess(
+          results: results,
+          query: query,
+          type: type,
+        ));
+      }
+    } catch (error) {
+      if (isClosed) return;
+      _emitIfOpen(GeoSearchError(
+        message: _messageOf(error),
+        query: query,
+        type: type,
+      ));
+    }
+  }
+
+  /// إعادة ضبط حالة البحث وتفريغ النتائج والعودة للشجرة الأصلية المحفوظة في الذاكرة بدون طلب شبكة.
+  void clearSearch() {
+    _debounceTimer?.cancel();
+    _lastSearchQuery = '';
+    _lastSearchType = null;
+    _emitCurrentLevel();
+  }
+
+  @override
+  Future<void> close() {
+    _debounceTimer?.cancel();
+    return super.close();
   }
 }

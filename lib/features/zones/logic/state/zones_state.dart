@@ -1,3 +1,5 @@
+import '../../data/models/geography_item_model.dart';
+import '../../data/models/geography_type.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -90,4 +92,42 @@ class GeoActionSuccess extends ZonesState {
 class GeoActionError extends ZonesState {
   final String message;
   const GeoActionError(this.message);
+}
+
+// ── حالات البحث الجغرافي ───────────────────────────────────────────────────
+
+class GeoSearchLoading extends ZonesState {
+  final String query;
+  final GeographyType type;
+  const GeoSearchLoading({required this.query, required this.type});
+}
+
+class GeoSearchSuccess extends ZonesState {
+  final List<GeographyItemModel> results;
+  final String query;
+  final GeographyType type;
+
+  const GeoSearchSuccess({
+    required this.results,
+    required this.query,
+    required this.type,
+  });
+}
+
+class GeoSearchEmpty extends ZonesState {
+  final String query;
+  final GeographyType type;
+  const GeoSearchEmpty({required this.query, required this.type});
+}
+
+class GeoSearchError extends ZonesState {
+  final String message;
+  final String query;
+  final GeographyType type;
+
+  const GeoSearchError({
+    required this.message,
+    required this.query,
+    required this.type,
+  });
 }

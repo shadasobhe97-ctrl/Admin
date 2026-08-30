@@ -91,6 +91,9 @@ class ApiEndpoints {
   static String adminZones(dynamic subMunicipalityId) =>
       '/admin/sub-municipalities/$subMunicipalityId/zones';
 
+  // البحث في البيانات الجغرافية
+  static const String geographySearch = '/admin/geography/search';
+
   // ── 5.1 Reports & Analytics ─────────────────────────────────────────────────
   static const String reportsKpiSummary = '/admin/reports/kpi-summary';
   static const String reportsFinancial = '/admin/reports/financial';
@@ -153,6 +156,14 @@ class ApiEndpoints {
       '/admin/financial/trips/$tripId/cancel-preview';
   static String tripCancelWithMatrix(dynamic tripId) =>
       '/admin/financial/trips/$tripId/cancel-with-matrix';
+
+  static const String pricingSettings = '/admin/financial/pricing-settings';
+
+  // ── طرق الدفع (Payment Methods) ──────────────────────────────────────────
+  static const String paymentMethods = '/admin/payment-methods';
+  static String paymentMethodDetails(dynamic id) => '/admin/payment-methods/$id';
+  static String paymentMethodToggleStatus(dynamic id) =>
+      '/admin/payment-methods/$id/toggle-status';
 
   // مسارات الفواتير العادية للأدمن (قراءة فقط) — مستقلة عن /financial/invoices
   static const String adminInvoices = '/admin/invoices';

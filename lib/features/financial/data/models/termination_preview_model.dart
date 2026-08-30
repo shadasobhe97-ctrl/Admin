@@ -6,8 +6,9 @@ class TerminatedBy {
 
   static const String parent = 'parent';
   static const String driver = 'driver';
+  static const String admin = 'admin';
 
-  static const List<String> all = [parent, driver];
+  static const List<String> all = [parent, driver, admin];
 
   static String label(String value) {
     switch (value) {
@@ -15,6 +16,8 @@ class TerminatedBy {
         return 'ولي الأمر';
       case driver:
         return 'السائق';
+      case admin:
+        return 'الإدارة';
       default:
         return value;
     }
@@ -27,51 +30,57 @@ class TerminatedBy {
 class TerminationPreviewModel {
   final int contractId;
   final String contractNumber;
-  final double totalPrice;
-  final double executedCost;
-  final double remainingBalance;
-  final double cancellationFee;
-  final double refundedToParent;
+  final double totalContractValue;
+  final double completedTripsCost;
+  final double remainingEscrow;
+  final double penaltyFee;
+  final double refundToParent;
+  final double payoutToDriver;
 
   const TerminationPreviewModel({
     required this.contractId,
     required this.contractNumber,
-    required this.totalPrice,
-    required this.executedCost,
-    required this.remainingBalance,
-    required this.cancellationFee,
-    required this.refundedToParent,
+    required this.totalContractValue,
+    required this.completedTripsCost,
+    required this.remainingEscrow,
+    required this.penaltyFee,
+    required this.refundToParent,
+    required this.payoutToDriver,
   });
 
   factory TerminationPreviewModel.fromJson(Map<String, dynamic> json) {
     return TerminationPreviewModel(
       contractId: JsonParsers.intValue(json['contract_id']),
       contractNumber: JsonParsers.stringValue(json['contract_number']),
-      totalPrice: JsonParsers.doubleValue(json['total_price']),
-      executedCost: JsonParsers.doubleValue(json['executed_cost']),
-      remainingBalance: JsonParsers.doubleValue(json['remaining_balance']),
-      cancellationFee: JsonParsers.doubleValue(json['cancellation_fee']),
-      refundedToParent: JsonParsers.doubleValue(json['refunded_to_parent']),
+      totalContractValue: JsonParsers.doubleValue(json['total_contract_value']),
+      completedTripsCost: JsonParsers.doubleValue(json['completed_trips_cost']),
+      remainingEscrow: JsonParsers.doubleValue(json['remaining_escrow']),
+      penaltyFee: JsonParsers.doubleValue(json['penalty_fee']),
+      refundToParent: JsonParsers.doubleValue(json['refund_to_parent']),
+      payoutToDriver: JsonParsers.doubleValue(json['payout_to_driver']),
     );
   }
 
   TerminationPreviewModel copyWith({
     int? contractId,
     String? contractNumber,
-    double? totalPrice,
-    double? executedCost,
-    double? remainingBalance,
-    double? cancellationFee,
-    double? refundedToParent,
+    double? totalContractValue,
+    double? completedTripsCost,
+    double? remainingEscrow,
+    double? penaltyFee,
+    double? refundToParent,
+    double? payoutToDriver,
   }) {
     return TerminationPreviewModel(
       contractId: contractId ?? this.contractId,
       contractNumber: contractNumber ?? this.contractNumber,
-      totalPrice: totalPrice ?? this.totalPrice,
-      executedCost: executedCost ?? this.executedCost,
-      remainingBalance: remainingBalance ?? this.remainingBalance,
-      cancellationFee: cancellationFee ?? this.cancellationFee,
-      refundedToParent: refundedToParent ?? this.refundedToParent,
+      totalContractValue: totalContractValue ?? this.totalContractValue,
+      completedTripsCost: completedTripsCost ?? this.completedTripsCost,
+      remainingEscrow: remainingEscrow ?? this.remainingEscrow,
+      penaltyFee: penaltyFee ?? this.penaltyFee,
+      refundToParent: refundToParent ?? this.refundToParent,
+      payoutToDriver: payoutToDriver ?? this.payoutToDriver,
     );
   }
 }
+

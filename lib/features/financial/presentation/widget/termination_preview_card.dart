@@ -55,25 +55,31 @@ class TerminationPreviewCard extends StatelessWidget {
           Divider(color: context.dividerLine, height: 24),
           AdminInfoRow(
             label: 'إجمالي قيمة العقد',
-            value: AdminFormat.money(preview.totalPrice),
+            value: AdminFormat.money(preview.totalContractValue),
           ),
           AdminInfoRow(
             label: 'تكلفة الجزء المنفَّذ',
-            value: AdminFormat.money(preview.executedCost),
+            value: AdminFormat.money(preview.completedTripsCost),
           ),
           AdminInfoRow(
-            label: 'الرصيد المتبقّي',
-            value: AdminFormat.money(preview.remainingBalance),
+            label: 'الأمانة المتبقية',
+            value: AdminFormat.money(preview.remainingEscrow),
           ),
           AdminInfoRow(
-            label: 'رسوم الإلغاء',
-            value: AdminFormat.money(preview.cancellationFee),
+            label: 'الغرامة',
+            value: AdminFormat.money(preview.penaltyFee),
             valueColor: context.dangerColor,
           ),
           AdminInfoRow(
             label: 'المبلغ المسترجَع لولي الأمر',
-            value: AdminFormat.money(preview.refundedToParent),
+            value: AdminFormat.money(preview.refundToParent),
             valueColor: context.successColor,
+            emphasized: true,
+          ),
+          AdminInfoRow(
+            label: 'مستحقات السائق',
+            value: AdminFormat.money(preview.payoutToDriver),
+            valueColor: context.infoColor,
             emphasized: true,
           ),
         ],

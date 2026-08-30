@@ -61,8 +61,8 @@ class _TerminationPreviewViewState extends State<_TerminationPreviewView> {
       context,
       title: 'تأكيد إنهاء العقد',
       message: 'سيتم إنهاء العقد ${preview.contractNumber} فعلياً، مع اقتطاع '
-          'رسوم إلغاء بقيمة ${AdminFormat.money(preview.cancellationFee)} '
-          'وإرجاع ${AdminFormat.money(preview.refundedToParent)} لولي الأمر. '
+          'غرامة بقيمة ${AdminFormat.money(preview.penaltyFee)} '
+          'وإرجاع ${AdminFormat.money(preview.refundToParent)} لولي الأمر. '
           'هذه العملية غير قابلة للتراجع. هل تريد المتابعة؟',
       confirmLabel: 'تنفيذ الإنهاء',
       isDestructive: true,

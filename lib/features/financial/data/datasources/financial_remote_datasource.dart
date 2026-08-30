@@ -14,6 +14,8 @@ import '../models/financial_summary_model.dart';
 import '../../../../core/utils/json_parsers.dart';
 import '../models/ledger_entry_model.dart';
 import '../../../../core/models/paginated_result.dart';
+import '../models/payment_method_model.dart';
+import '../models/pricing_settings_model.dart';
 import '../models/recharge_model.dart';
 import '../models/settlement_contract_model.dart';
 import '../models/solvency_check_model.dart';
@@ -37,6 +39,9 @@ abstract class FinancialRemoteDataSource {
 
   Future<PaginatedResult<WithdrawalModel>> getWithdrawals({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page,
     int perPage,
   });
@@ -51,6 +56,9 @@ abstract class FinancialRemoteDataSource {
 
   Future<PaginatedResult<RechargeModel>> getRecharges({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page,
     int perPage,
   });
@@ -119,6 +127,25 @@ abstract class FinancialRemoteDataSource {
   });
 
   Future<FinancialInvoiceModel> getInvoiceDetails(int id);
+
+  Future<PricingSettingsModel> getPricingSettings();
+
+  Future<FinancialActionResult> createPricingSettings(
+      PricingSettingsModel settings);
+
+  Future<FinancialActionResult> updatePricingSettings(
+      PricingSettingsModel settings);
+
+  Future<List<PaymentMethodModel>> getPaymentMethods();
+
+  Future<FinancialActionResult> createPaymentMethod(PaymentMethodModel method);
+
+  Future<FinancialActionResult> updatePaymentMethod(
+      int id, PaymentMethodModel method);
+
+  Future<FinancialActionResult> togglePaymentMethodStatus(int id);
+
+  Future<FinancialActionResult> deletePaymentMethod(int id);
 }
 
 class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
@@ -208,13 +235,20 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
 
   Map<String, dynamic> _listQuery({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     required int page,
     required int perPage,
   }) {
     return <String, dynamic>{
       'page': page,
       'per_page': perPage,
-      if (status != null && status.isNotEmpty) 'status': status,
+      if (status != null && status.trim().isNotEmpty) 'status': status.trim(),
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (dateFrom != null && dateFrom.trim().isNotEmpty)
+        'date_from': dateFrom.trim(),
+      if (dateTo != null && dateTo.trim().isNotEmpty) 'date_to': dateTo.trim(),
     };
   }
 
@@ -266,12 +300,22 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
   @override
   Future<PaginatedResult<WithdrawalModel>> getWithdrawals({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page = 1,
     int perPage = 20,
   }) {
     return _getList(
       ApiEndpoints.withdrawals,
-      query: _listQuery(status: status, page: page, perPage: perPage),
+      query: _listQuery(
+        status: status,
+        search: search,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        page: page,
+        perPage: perPage,
+      ),
       parser: WithdrawalModel.fromJson,
       fallbackMessage: 'تعذّر جلب طلبات سحب الأرباح.',
     );
@@ -312,12 +356,22 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
   @override
   Future<PaginatedResult<RechargeModel>> getRecharges({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page = 1,
     int perPage = 20,
   }) {
     return _getList(
       ApiEndpoints.recharges,
-      query: _listQuery(status: status, page: page, perPage: perPage),
+      query: _listQuery(
+        status: status,
+        search: search,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        page: page,
+        perPage: perPage,
+      ),
       parser: RechargeModel.fromJson,
       fallbackMessage: 'تعذّر جلب طلبات شحن المحافظ.',
     );
@@ -549,5 +603,112 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
       parser: (json, _) => FinancialInvoiceModel.fromJson(json),
       fallbackMessage: 'تعذّر جلب تفاصيل الفاتورة.',
     );
+  }
+
+  // ── 13. Pricing Settings ──────────────────────────────────────────────────
+
+  @override
+  Future<PricingSettingsModel> getPricingSettings() {
+    return _getObject(
+      ApiEndpoints.pricingSettings,
+      parser: (json, _) => PricingSettingsModel.fromJson(json),
+      fallbackMessage: 'تعذّر جلب إعدادات التسعير.',
+    );
+  }
+
+  @override
+  Future<FinancialActionResult> createPricingSettings(
+      PricingSettingsModel settings) {
+    return _post(
+      ApiEndpoints.pricingSettings,
+      body: settings.toJson(),
+      fallbackMessage: 'تم إنشاء إعدادات التسعير بنجاح.',
+      errorMessage: 'تعذّر إنشاء إعدادات التسعير.',
+    );
+  }
+
+  @override
+  Future<FinancialActionResult> updatePricingSettings(
+      PricingSettingsModel settings) async {
+    final endpoint = ApiEndpoints.pricingSettings;
+    try {
+      final response = await _apiClient.put(endpoint, data: settings.toJson());
+      return FinancialActionResult.fromResponse(
+        response.data,
+        fallbackMessage: 'تم تحديث إعدادات التسعير بنجاح.',
+      );
+    } catch (error) {
+      _fail('PUT', endpoint, error, 'تعذّر تحديث إعدادات التسعير.');
+    }
+  }
+
+  // ── 14. Payment Methods ───────────────────────────────────────────────────
+
+  @override
+  Future<List<PaymentMethodModel>> getPaymentMethods() async {
+    final endpoint = ApiEndpoints.paymentMethods;
+    try {
+      final response = await _apiClient.get(endpoint);
+      return JsonParsers.extractList(response.data)
+          .map(PaymentMethodModel.fromJson)
+          .toList();
+    } catch (error) {
+      _fail('GET', endpoint, error, 'تعذّر جلب طرق الدفع.');
+    }
+  }
+
+  @override
+  Future<FinancialActionResult> createPaymentMethod(
+      PaymentMethodModel method) {
+    return _post(
+      ApiEndpoints.paymentMethods,
+      body: method.toCreateJson(),
+      fallbackMessage: 'تم إضافة طريقة الدفع بنجاح.',
+      errorMessage: 'تعذّر إضافة طريقة الدفع.',
+    );
+  }
+
+  @override
+  Future<FinancialActionResult> updatePaymentMethod(
+      int id, PaymentMethodModel method) async {
+    final endpoint = ApiEndpoints.paymentMethodDetails(id);
+    try {
+      final response =
+          await _apiClient.put(endpoint, data: method.toUpdateJson());
+      return FinancialActionResult.fromResponse(
+        response.data,
+        fallbackMessage: 'تم تحديث طريقة الدفع بنجاح.',
+      );
+    } catch (error) {
+      _fail('PUT', endpoint, error, 'تعذّر تحديث طريقة الدفع.');
+    }
+  }
+
+  @override
+  Future<FinancialActionResult> togglePaymentMethodStatus(int id) async {
+    final endpoint = ApiEndpoints.paymentMethodToggleStatus(id);
+    try {
+      final response = await _apiClient.patch(endpoint);
+      return FinancialActionResult.fromResponse(
+        response.data,
+        fallbackMessage: 'تم تغيير حالة طريقة الدفع بنجاح.',
+      );
+    } catch (error) {
+      _fail('PATCH', endpoint, error, 'تعذّر تغيير حالة طريقة الدفع.');
+    }
+  }
+
+  @override
+  Future<FinancialActionResult> deletePaymentMethod(int id) async {
+    final endpoint = ApiEndpoints.paymentMethodDetails(id);
+    try {
+      final response = await _apiClient.delete(endpoint);
+      return FinancialActionResult.fromResponse(
+        response.data,
+        fallbackMessage: 'تم حذف طريقة الدفع بنجاح.',
+      );
+    } catch (error) {
+      _fail('DELETE', endpoint, error, 'تعذّر حذف طريقة الدفع.');
+    }
   }
 }
