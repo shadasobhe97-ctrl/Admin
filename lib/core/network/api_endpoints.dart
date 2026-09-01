@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
+  static const String baseUrl = 'https://witty-otter-10.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -161,11 +161,21 @@ class ApiEndpoints {
 
   // ── طرق الدفع (Payment Methods) ──────────────────────────────────────────
   static const String paymentMethods = '/admin/payment-methods';
-  static String paymentMethodDetails(dynamic id) => '/admin/payment-methods/$id';
+  static String paymentMethodDetails(dynamic id) =>
+      '/admin/payment-methods/$id';
   static String paymentMethodToggleStatus(dynamic id) =>
       '/admin/payment-methods/$id/toggle-status';
 
   // مسارات الفواتير العادية للأدمن (قراءة فقط) — مستقلة عن /financial/invoices
   static const String adminInvoices = '/admin/invoices';
   static String adminInvoiceDetails(dynamic id) => '/admin/invoices/$id';
+
+  // ── Admin Notifications (إشعارات الأدمن) ───────────────────────────────────
+  static const String adminNotifications = '/admin/notifications';
+  static const String adminNotificationsUnreadCount =
+      '/admin/notifications/unread-count';
+  static String adminNotificationMarkAsRead(dynamic id) =>
+      '/admin/notifications/$id/read';
+  static const String adminNotificationsReadAll =
+      '/admin/notifications/read-all';
 }

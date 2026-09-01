@@ -621,7 +621,7 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
       PricingSettingsModel settings) {
     return _post(
       ApiEndpoints.pricingSettings,
-      body: settings.toJson(),
+      body: settings.toRequestJson(),
       fallbackMessage: 'تم إنشاء إعدادات التسعير بنجاح.',
       errorMessage: 'تعذّر إنشاء إعدادات التسعير.',
     );
@@ -632,7 +632,8 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
       PricingSettingsModel settings) async {
     final endpoint = ApiEndpoints.pricingSettings;
     try {
-      final response = await _apiClient.put(endpoint, data: settings.toJson());
+      final response =
+          await _apiClient.put(endpoint, data: settings.toRequestJson());
       return FinancialActionResult.fromResponse(
         response.data,
         fallbackMessage: 'تم تحديث إعدادات التسعير بنجاح.',

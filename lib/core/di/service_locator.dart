@@ -40,6 +40,9 @@ import '../../features/zones/logic/cubit/zones_cubit.dart';
 import '../../features/complaints/data/datasources/complaints_remote_datasource.dart';
 import '../../features/complaints/data/repositories/complaints_repository.dart';
 import '../../features/complaints/logic/cubit/complaints_cubit.dart';
+import '../../features/admin_notifications/data/datasources/admin_notifications_remote_datasource.dart';
+import '../../features/admin_notifications/data/repositories/admin_notifications_repository.dart';
+import '../../features/admin_notifications/logic/cubit/admin_notifications_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -194,5 +197,16 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory<AuditLogsCubit>(
     () => AuditLogsCubit(sl<AuditLogsRepository>()),
+  );
+
+  // ── Admin Notifications Feature (إشعارات الأدمن) ──────────────────────────
+  sl.registerLazySingleton<AdminNotificationsRemoteDataSource>(
+    () => AdminNotificationsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AdminNotificationsRepository>(
+    () => AdminNotificationsRepositoryImpl(sl<AdminNotificationsRemoteDataSource>()),
+  );
+  sl.registerFactory<AdminNotificationsCubit>(
+    () => AdminNotificationsCubit(sl<AdminNotificationsRepository>()),
   );
 }
