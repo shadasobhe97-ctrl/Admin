@@ -104,9 +104,7 @@ class _WithdrawalActionDialogState extends State<WithdrawalActionDialog> {
               ),
               AdminInfoRow(
                 label: 'وسيلة الدفع',
-                value: AdminFormat.orDash(
-                  widget.withdrawal.paymentMethodDetails,
-                ),
+                value: widget.withdrawal.paymentMethodDetails?.formattedDetails ?? '—',
               ),
               if (_isRejecting) ...[
                 const SizedBox(height: 12),

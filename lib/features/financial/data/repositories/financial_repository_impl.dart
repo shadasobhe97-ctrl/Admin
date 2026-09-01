@@ -7,6 +7,8 @@ import '../models/financial_invoice_model.dart';
 import '../models/financial_summary_model.dart';
 import '../models/ledger_entry_model.dart';
 import '../../../../core/models/paginated_result.dart';
+import '../models/payment_method_model.dart';
+import '../models/pricing_settings_model.dart';
 import '../models/recharge_model.dart';
 import '../models/settlement_contract_model.dart';
 import '../models/solvency_check_model.dart';
@@ -29,6 +31,9 @@ abstract class FinancialRepository {
 
   Future<PaginatedResult<WithdrawalModel>> getWithdrawals({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page,
     int perPage,
   });
@@ -43,6 +48,9 @@ abstract class FinancialRepository {
 
   Future<PaginatedResult<RechargeModel>> getRecharges({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page,
     int perPage,
   });
@@ -111,6 +119,25 @@ abstract class FinancialRepository {
   });
 
   Future<FinancialInvoiceModel> getInvoiceDetails(int id);
+
+  Future<PricingSettingsModel> getPricingSettings();
+
+  Future<FinancialActionResult> createPricingSettings(
+      PricingSettingsModel settings);
+
+  Future<FinancialActionResult> updatePricingSettings(
+      PricingSettingsModel settings);
+
+  Future<List<PaymentMethodModel>> getPaymentMethods();
+
+  Future<FinancialActionResult> createPaymentMethod(PaymentMethodModel method);
+
+  Future<FinancialActionResult> updatePaymentMethod(
+      int id, PaymentMethodModel method);
+
+  Future<FinancialActionResult> togglePaymentMethodStatus(int id);
+
+  Future<FinancialActionResult> deletePaymentMethod(int id);
 }
 
 class FinancialRepositoryImpl implements FinancialRepository {
@@ -141,11 +168,17 @@ class FinancialRepositoryImpl implements FinancialRepository {
   @override
   Future<PaginatedResult<WithdrawalModel>> getWithdrawals({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page = 1,
     int perPage = 20,
   }) =>
       _remoteDataSource.getWithdrawals(
         status: status,
+        search: search,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
         page: page,
         perPage: perPage,
       );
@@ -169,11 +202,17 @@ class FinancialRepositoryImpl implements FinancialRepository {
   @override
   Future<PaginatedResult<RechargeModel>> getRecharges({
     String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
     int page = 1,
     int perPage = 20,
   }) =>
       _remoteDataSource.getRecharges(
         status: status,
+        search: search,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
         page: page,
         perPage: perPage,
       );
@@ -296,4 +335,40 @@ class FinancialRepositoryImpl implements FinancialRepository {
   @override
   Future<FinancialInvoiceModel> getInvoiceDetails(int id) =>
       _remoteDataSource.getInvoiceDetails(id);
+
+  @override
+  Future<PricingSettingsModel> getPricingSettings() =>
+      _remoteDataSource.getPricingSettings();
+
+  @override
+  Future<FinancialActionResult> createPricingSettings(
+          PricingSettingsModel settings) =>
+      _remoteDataSource.createPricingSettings(settings);
+
+  @override
+  Future<FinancialActionResult> updatePricingSettings(
+          PricingSettingsModel settings) =>
+      _remoteDataSource.updatePricingSettings(settings);
+
+  @override
+  Future<List<PaymentMethodModel>> getPaymentMethods() =>
+      _remoteDataSource.getPaymentMethods();
+
+  @override
+  Future<FinancialActionResult> createPaymentMethod(
+          PaymentMethodModel method) =>
+      _remoteDataSource.createPaymentMethod(method);
+
+  @override
+  Future<FinancialActionResult> updatePaymentMethod(
+          int id, PaymentMethodModel method) =>
+      _remoteDataSource.updatePaymentMethod(id, method);
+
+  @override
+  Future<FinancialActionResult> togglePaymentMethodStatus(int id) =>
+      _remoteDataSource.togglePaymentMethodStatus(id);
+
+  @override
+  Future<FinancialActionResult> deletePaymentMethod(int id) =>
+      _remoteDataSource.deletePaymentMethod(id);
 }

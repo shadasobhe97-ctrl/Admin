@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../data/models/geo_action_result.dart';
 import '../../data/models/geo_search_result.dart';
+import '../../data/models/geography_item_model.dart';
+import '../../data/models/geography_type.dart';
 import '../../data/models/municipality_model.dart';
 import '../../data/models/sub_municipality_model.dart';
 import '../../data/models/zone_model.dart';
@@ -46,19 +49,75 @@ class ZonesCubit extends Cubit<ZonesState> {
     if (!isClosed) emit(state);
   }
 
-  // ── البحث الجغرافي الشامل ──────────────────────────────────────────────────
+  // ── جلب الشجرة من السيرفر ──────────────────────────────────────────────────
+
+  Future<void> loadGeography() async {
+    _emitIfOpen(const ZonesLoading());
+    await _fetchTree();
+    _emitCurrentLevel();
+  }
+
+  Future<void> _fetchTree() async {
+    try {
+      _tree = await _repository.getZonesTree();
+      _unassignedZones = const [];
+    } catch (error) {
+      _emitIfOpen(ZonesError(_messageOf(error)));
+    }
+  }
+
+  /// يصدر الحالة المطابقة للمستوى الحالي أو نتائج البحث المحلي.
+  void _emitCurrentLevel() {
+    if (_searchQuery.isNotEmpty) {
+      final results = _performLocalSearch(_searchQuery);
+      _emitIfOpen(GeoSearchResultsLoaded(
+        query: _searchQuery,
+        results: results,
+      ));
+      return;
+    }
+
+    if (_selectedSubMunicipalityId != null && _selectedMunicipalityId != null) {
+      final parentM = _findMunicipality(_selectedMunicipalityId);
+      final sub = parentM != null
+          ? _findSubMunicipality(parentM, _selectedSubMunicipalityId)
+          : null;
+
+      if (parentM != null && sub != null) {
+        _emitIfOpen(ZonesLoaded(
+          municipality: parentM,
+          subMunicipality: sub,
+          zones: sub.zones,
+        ));
+        return;
+      }
+    }
+
+    if (_selectedMunicipalityId != null) {
+      final parentM = _findMunicipality(_selectedMunicipalityId);
+      if (parentM != null) {
+        _emitIfOpen(SubMunicipalitiesLoaded(
+          municipality: parentM,
+          subMunicipalities: parentM.subMunicipalities,
+        ));
+        return;
+      }
+    }
+
+    _emitIfOpen(MunicipalitiesLoaded(
+      _tree,
+      unassignedZones: _unassignedZones,
+    ));
+  }
+
+  // ── البحث الجغرافي المحلي والشامل ──────────────────────────────────────────
 
   void search(String query) {
     _searchQuery = query.trim();
     _emitCurrentLevel();
   }
 
-  void clearSearch() {
-    _searchQuery = '';
-    _emitCurrentLevel();
-  }
-
-  List<GeoSearchResult> _performSearch(String query) {
+  List<GeoSearchResult> _performLocalSearch(String query) {
     final results = <GeoSearchResult>[];
     final q = query.toLowerCase();
 
@@ -106,93 +165,13 @@ class ZonesCubit extends Cubit<ZonesState> {
         results.add(GeoSearchResult(
           type: GeoSearchResultType.zone,
           name: zone.name,
-          subtitle: 'غير مرتبطة بمحلة',
+          subtitle: 'منطقة مستقلة (غير مرتبطة ببلدية فرعية)',
           zone: zone,
         ));
       }
     }
 
     return results;
-  }
-
-  // ── جلب الشجرة ────────────────────────────────────────────────────────────
-
-  /// يجلب الشجرة الكاملة ثم يعرض المستوى الحالي.
-  Future<void> loadGeography() async {
-    _emitIfOpen(const ZonesLoading());
-    try {
-      await _fetchTree();
-      _emitCurrentLevel();
-    } catch (error) {
-      _emitIfOpen(ZonesError(_messageOf(error)));
-    }
-  }
-
-  Future<void> _fetchTree() async {
-    _tree = await _repository.getZonesTree();
-
-    // المناطق التي لا تتبع أي محلة لا تظهر في الشجرة، فتُجلب من القائمة المسطّحة.
-    final allZones = await _repository.getZones();
-    _unassignedZones =
-        allZones.where((zone) => zone.subMunicipalityId == null).toList();
-  }
-
-  /// يعيد إصدار حالة المستوى المعروض حالياً اعتماداً على آخر شجرة.
-  void _emitCurrentLevel() {
-    if (_searchQuery.isNotEmpty) {
-      final results = _performSearch(_searchQuery);
-      _emitIfOpen(GeoSearchResultsLoaded(query: _searchQuery, results: results));
-      return;
-    }
-
-    final municipality = _findMunicipality(_selectedMunicipalityId);
-
-    // البلدية المحددة قد تكون حُذفت أثناء العملية الأخيرة.
-    if (_selectedMunicipalityId != null && municipality == null) {
-      _selectedMunicipalityId = null;
-      _selectedSubMunicipalityId = null;
-      _emitIfOpen(MunicipalitiesLoaded(_tree, unassignedZones: _unassignedZones));
-      return;
-    }
-
-    if (municipality == null) {
-      _emitIfOpen(MunicipalitiesLoaded(_tree, unassignedZones: _unassignedZones));
-      return;
-    }
-
-    final subMunicipality = _findSubMunicipality(
-      municipality,
-      _selectedSubMunicipalityId,
-    );
-
-    if (_selectedSubMunicipalityId != null && subMunicipality == null) {
-      _selectedSubMunicipalityId = null;
-      _emitIfOpen(
-        SubMunicipalitiesLoaded(
-          municipality: municipality,
-          subMunicipalities: municipality.subMunicipalities,
-        ),
-      );
-      return;
-    }
-
-    if (subMunicipality == null) {
-      _emitIfOpen(
-        SubMunicipalitiesLoaded(
-          municipality: municipality,
-          subMunicipalities: municipality.subMunicipalities,
-        ),
-      );
-      return;
-    }
-
-    _emitIfOpen(
-      ZonesLoaded(
-        municipality: municipality,
-        subMunicipality: subMunicipality,
-        zones: subMunicipality.zones,
-      ),
-    );
   }
 
   MunicipalityModel? _findMunicipality(int? id) {
@@ -216,7 +195,6 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   // ── التنقل بين المستويات ──────────────────────────────────────────────────
 
-  /// ينزل من البلدية الكبرى إلى محلاتها.
   void openMunicipality(int municipalityId) {
     _searchQuery = '';
     _selectedMunicipalityId = municipalityId;
@@ -224,14 +202,12 @@ class ZonesCubit extends Cubit<ZonesState> {
     _emitCurrentLevel();
   }
 
-  /// ينزل من المحلة إلى مناطقها الدقيقة (داخل البلدية المحددة حالياً).
   void openSubMunicipality(int subMunicipalityId) {
     _searchQuery = '';
     _selectedSubMunicipalityId = subMunicipalityId;
     _emitCurrentLevel();
   }
 
-  /// ينزل مباشرة من نتائج البحث إلى محلة داخل بلديتها الكبرى.
   void openSubMunicipalityWithParent(int municipalityId, int subMunicipalityId) {
     _searchQuery = '';
     _selectedMunicipalityId = municipalityId;
@@ -239,7 +215,6 @@ class ZonesCubit extends Cubit<ZonesState> {
     _emitCurrentLevel();
   }
 
-  /// يرجع مستوى واحداً للأعلى.
   void goBack() {
     _searchQuery = '';
     if (_selectedSubMunicipalityId != null) {
@@ -250,7 +225,6 @@ class ZonesCubit extends Cubit<ZonesState> {
     _emitCurrentLevel();
   }
 
-  /// يرجع مباشرة إلى قائمة البلديات الكبرى.
   void goToRoot() {
     _searchQuery = '';
     _selectedMunicipalityId = null;
@@ -260,7 +234,6 @@ class ZonesCubit extends Cubit<ZonesState> {
 
   // ── تنفيذ عمليات الكتابة ──────────────────────────────────────────────────
 
-  /// ينفّذ عملية كتابة ثم يعيد تحميل الشجرة من الخادم ويعرض المستوى الحالي.
   Future<void> _runAction(
     Future<GeoActionResult> Function() action,
     String fallbackMessage,
@@ -275,12 +248,9 @@ class ZonesCubit extends Cubit<ZonesState> {
       _emitCurrentLevel();
     } catch (error) {
       _emitIfOpen(GeoActionError(_messageOf(error)));
-      // إعادة عرض البيانات الحالية حتى لا تبقى الشاشة على حالة الخطأ.
       _emitCurrentLevel();
     }
   }
-
-  // المستوى الأول: البلديات الكبرى
 
   Future<void> addMunicipality(String name) => _runAction(
         () => _repository.addMunicipality(name: name),
@@ -296,8 +266,6 @@ class ZonesCubit extends Cubit<ZonesState> {
         () => _repository.deleteMunicipality(id),
         'تم حذف البلدية بنجاح.',
       );
-
-  // المستوى الثاني: البلديات الفرعية
 
   Future<void> addSubMunicipality(String name, int municipalityId) =>
       _runAction(
@@ -327,8 +295,6 @@ class ZonesCubit extends Cubit<ZonesState> {
         'تم حذف البلدية الفرعية بنجاح.',
       );
 
-  // المستوى الثالث: المناطق الدقيقة
-
   Future<void> addZone(String name, {int? subMunicipalityId}) => _runAction(
         () => _repository.addZone(
           name: name,
@@ -356,7 +322,55 @@ class ZonesCubit extends Cubit<ZonesState> {
         'تم حذف المنطقة من النظام بنجاح.',
       );
 
-  /// تفاصيل منطقة دقيقة من الخادم (GET /admin/zones/{id}).
+  Timer? _debounceTimer;
+  String _lastSearchQuery = '';
+  GeographyType? _lastSearchType;
+
+  String? getHierarchySubtitle(GeographyItemModel item, GeographyType type) {
+    switch (type) {
+      case GeographyType.municipality:
+        final m = _findMunicipality(item.id);
+        if (m != null) {
+          return '${m.subMunicipalitiesCount} بلدية فرعية • ${m.zonesCount} منطقة';
+        }
+        return 'بلدية كبرى مسجلة في النظام';
+
+      case GeographyType.subMunicipality:
+        if (item.municipalityId != null) {
+          final parentM = _findMunicipality(item.municipalityId);
+          if (parentM != null) {
+            return 'تابعة لـ ${parentM.name}';
+          }
+        }
+        for (final m in _tree) {
+          for (final sub in m.subMunicipalities) {
+            if (sub.id == item.id) {
+              return 'تابعة لـ ${m.name}';
+            }
+          }
+        }
+        return 'بلدية فرعية';
+
+      case GeographyType.region:
+        for (final m in _tree) {
+          for (final sub in m.subMunicipalities) {
+            for (final z in sub.zones) {
+              if (z.id == item.id) {
+                return '${m.name} ← ${sub.name}';
+              }
+            }
+          }
+        }
+        if (item.municipalityId != null) {
+          final parentM = _findMunicipality(item.municipalityId);
+          if (parentM != null) {
+            return 'تابعة لـ ${parentM.name}';
+          }
+        }
+        return 'منطقة دقيقة';
+    }
+  }
+
   Future<void> loadZoneDetails(int id) async {
     _emitIfOpen(const ZoneDetailsLoading());
     try {
@@ -365,5 +379,84 @@ class ZonesCubit extends Cubit<ZonesState> {
     } catch (error) {
       _emitIfOpen(GeoActionError(_messageOf(error)));
     }
+  }
+
+  // ── 5. البحث في البيانات الجغرافية عبر API ─────────────────────────────────
+
+  void searchGeography({
+    required String query,
+    required GeographyType type,
+  }) {
+    final trimmed = query.trim();
+    _lastSearchQuery = trimmed;
+    _lastSearchType = type;
+
+    _debounceTimer?.cancel();
+
+    if (trimmed.isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      _performRemoteSearch(query: trimmed, type: type);
+    });
+  }
+
+  void retrySearch() {
+    final currentState = state;
+    if (currentState is GeoSearchError) {
+      _performRemoteSearch(query: currentState.query, type: currentState.type);
+    } else if (_lastSearchQuery.isNotEmpty && _lastSearchType != null) {
+      _performRemoteSearch(query: _lastSearchQuery, type: _lastSearchType!);
+    }
+  }
+
+  Future<void> _performRemoteSearch({
+    required String query,
+    required GeographyType type,
+  }) async {
+    if (isClosed) return;
+    _emitIfOpen(GeoSearchLoading(query: query, type: type));
+
+    try {
+      final results = await _repository.searchGeography(
+        searchKeyword: query,
+        type: type,
+      );
+
+      if (isClosed) return;
+
+      if (results.isEmpty) {
+        _emitIfOpen(GeoSearchEmpty(query: query, type: type));
+      } else {
+        _emitIfOpen(GeoSearchSuccess(
+          results: results,
+          query: query,
+          type: type,
+        ));
+      }
+    } catch (error) {
+      if (isClosed) return;
+      _emitIfOpen(GeoSearchError(
+        message: _messageOf(error),
+        query: query,
+        type: type,
+      ));
+    }
+  }
+
+  void clearSearch() {
+    _debounceTimer?.cancel();
+    _searchQuery = '';
+    _lastSearchQuery = '';
+    _lastSearchType = null;
+    _emitCurrentLevel();
+  }
+
+  @override
+  Future<void> close() {
+    _debounceTimer?.cancel();
+    return super.close();
   }
 }

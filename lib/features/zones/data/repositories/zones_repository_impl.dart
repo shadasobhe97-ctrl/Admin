@@ -1,5 +1,7 @@
 import '../datasources/zones_remote_datasource.dart';
 import '../models/geo_action_result.dart';
+import '../models/geography_item_model.dart';
+import '../models/geography_type.dart';
 import '../models/municipality_model.dart';
 import '../models/sub_municipality_model.dart';
 import '../models/zone_model.dart';
@@ -36,6 +38,11 @@ abstract class ZonesRepository {
     int? subMunicipalityId,
   });
   Future<GeoActionResult> deleteZone(int id);
+
+  Future<List<GeographyItemModel>> searchGeography({
+    required String searchKeyword,
+    required GeographyType type,
+  });
 }
 
 class ZonesRepositoryImpl implements ZonesRepository {
@@ -125,4 +132,14 @@ class ZonesRepositoryImpl implements ZonesRepository {
   @override
   Future<GeoActionResult> deleteZone(int id) =>
       _remoteDataSource.deleteZone(id);
+
+  @override
+  Future<List<GeographyItemModel>> searchGeography({
+    required String searchKeyword,
+    required GeographyType type,
+  }) =>
+      _remoteDataSource.searchGeography(
+        searchKeyword: searchKeyword,
+        type: type,
+      );
 }

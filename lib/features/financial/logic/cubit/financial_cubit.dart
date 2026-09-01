@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/models/financial_summary_model.dart';
 import '../../data/models/ledger_entry_model.dart';
+import '../../data/models/payment_method_model.dart';
+import '../../data/models/pricing_settings_model.dart';
 import '../../data/repositories/financial_repository_impl.dart';
 import '../state/financial_state.dart';
 
@@ -20,8 +22,15 @@ class FinancialCubit extends Cubit<FinancialState> {
   String? _auditSearch;
   int _auditPage = 1;
   String? _withdrawalsStatus;
+  String? _withdrawalsSearch;
+  String? _withdrawalsDateFrom;
+  String? _withdrawalsDateTo;
   int _withdrawalsPage = 1;
+
   String? _rechargesStatus;
+  String? _rechargesSearch;
+  String? _rechargesDateFrom;
+  String? _rechargesDateTo;
   int _rechargesPage = 1;
   String? _disputesStatus;
   int _disputesPage = 1;
@@ -106,14 +115,26 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   // ── 4. Withdrawals ────────────────────────────────────────────────────────
 
-  Future<void> loadWithdrawals({String? status, int page = 1}) async {
+  Future<void> loadWithdrawals({
+    String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
+    int page = 1,
+  }) async {
     _withdrawalsStatus = status;
+    _withdrawalsSearch = search;
+    _withdrawalsDateFrom = dateFrom;
+    _withdrawalsDateTo = dateTo;
     _withdrawalsPage = page;
 
     _emitIfOpen(const WithdrawalsLoading());
     try {
       final result = await _repository.getWithdrawals(
         status: _withdrawalsStatus,
+        search: _withdrawalsSearch,
+        dateFrom: _withdrawalsDateFrom,
+        dateTo: _withdrawalsDateTo,
         page: _withdrawalsPage,
         perPage: 20,
       );
@@ -129,6 +150,9 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   Future<void> refreshWithdrawals() => loadWithdrawals(
         status: _withdrawalsStatus,
+        search: _withdrawalsSearch,
+        dateFrom: _withdrawalsDateFrom,
+        dateTo: _withdrawalsDateTo,
         page: _withdrawalsPage,
       );
 
@@ -173,14 +197,26 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   // ── 5. Recharges ──────────────────────────────────────────────────────────
 
-  Future<void> loadRecharges({String? status, int page = 1}) async {
+  Future<void> loadRecharges({
+    String? status,
+    String? search,
+    String? dateFrom,
+    String? dateTo,
+    int page = 1,
+  }) async {
     _rechargesStatus = status;
+    _rechargesSearch = search;
+    _rechargesDateFrom = dateFrom;
+    _rechargesDateTo = dateTo;
     _rechargesPage = page;
 
     _emitIfOpen(const RechargesLoading());
     try {
       final result = await _repository.getRecharges(
         status: _rechargesStatus,
+        search: _rechargesSearch,
+        dateFrom: _rechargesDateFrom,
+        dateTo: _rechargesDateTo,
         page: _rechargesPage,
         perPage: 20,
       );
@@ -196,6 +232,9 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   Future<void> refreshRecharges() => loadRecharges(
         status: _rechargesStatus,
+        search: _rechargesSearch,
+        dateFrom: _rechargesDateFrom,
+        dateTo: _rechargesDateTo,
         page: _rechargesPage,
       );
 
@@ -508,6 +547,124 @@ class FinancialCubit extends Cubit<FinancialState> {
       _emitIfOpen(InvoiceDetailsLoaded(invoice));
     } catch (error) {
       _emitIfOpen(InvoicesError(_messageOf(error)));
+    }
+  }
+
+  // ── 13. Pricing Settings ──────────────────────────────────────────────────
+
+  Future<void> loadPricingSettings() async {
+    _emitIfOpen(const PricingSettingsLoading());
+    try {
+      final settings = await _repository.getPricingSettings();
+      _emitIfOpen(PricingSettingsLoaded(settings, isExisting: true));
+    } catch (error) {
+      _emitIfOpen(PricingSettingsError(_messageOf(error)));
+    }
+  }
+
+  Future<void> createPricingSettings(PricingSettingsModel settings) async {
+    final current = state;
+    if (current is PricingSettingsLoaded) {
+      if (current.isSaving) return;
+      _emitIfOpen(current.copyWith(isSaving: true));
+    }
+
+    try {
+      final result = await _repository.createPricingSettings(settings);
+      _emitIfOpen(PricingSettingsSaveSuccess(result.message));
+      await loadPricingSettings();
+    } catch (error) {
+      _emitIfOpen(PricingSettingsError(_messageOf(error)));
+      if (current is PricingSettingsLoaded) {
+        _emitIfOpen(current.copyWith(isSaving: false));
+      }
+    }
+  }
+
+  Future<void> updatePricingSettings(PricingSettingsModel settings) async {
+    final current = state;
+    if (current is PricingSettingsLoaded) {
+      if (current.isSaving) return;
+      _emitIfOpen(current.copyWith(isSaving: true));
+    }
+
+    try {
+      final result = await _repository.updatePricingSettings(settings);
+      _emitIfOpen(PricingSettingsSaveSuccess(result.message));
+      await loadPricingSettings();
+    } catch (error) {
+      _emitIfOpen(PricingSettingsError(_messageOf(error)));
+      if (current is PricingSettingsLoaded) {
+        _emitIfOpen(current.copyWith(isSaving: false));
+      }
+    }
+  }
+
+  // ── 14. Payment Methods ───────────────────────────────────────────────────
+
+  Future<void> loadPaymentMethods() async {
+    _emitIfOpen(const PaymentMethodsLoading());
+    try {
+      final methods = await _repository.getPaymentMethods();
+      _emitIfOpen(PaymentMethodsLoaded(methods));
+    } catch (error) {
+      _emitIfOpen(PaymentMethodsError(_messageOf(error)));
+    }
+  }
+
+  Future<void> createPaymentMethod(PaymentMethodModel method) async {
+    try {
+      final result = await _repository.createPaymentMethod(method);
+      _emitIfOpen(PaymentMethodActionSuccess(result.message));
+      await loadPaymentMethods();
+    } catch (error) {
+      _emitIfOpen(PaymentMethodsError(_messageOf(error)));
+    }
+  }
+
+  Future<void> updatePaymentMethod(int id, PaymentMethodModel method) async {
+    try {
+      final result = await _repository.updatePaymentMethod(id, method);
+      _emitIfOpen(PaymentMethodActionSuccess(result.message));
+      await loadPaymentMethods();
+    } catch (error) {
+      _emitIfOpen(PaymentMethodsError(_messageOf(error)));
+    }
+  }
+
+  Future<void> togglePaymentMethodStatus(int id) async {
+    final current = state;
+    if (current is PaymentMethodsLoaded) {
+      _emitIfOpen(current.copyWith(actionMethodId: id));
+    }
+
+    try {
+      final result = await _repository.togglePaymentMethodStatus(id);
+      _emitIfOpen(PaymentMethodActionSuccess(result.message));
+      await loadPaymentMethods();
+    } catch (error) {
+      _emitIfOpen(PaymentMethodsError(_messageOf(error)));
+      if (current is PaymentMethodsLoaded) {
+        _emitIfOpen(current.copyWith(clearAction: true));
+      }
+    }
+  }
+
+  Future<void> deletePaymentMethod(int id) async {
+    final current = state;
+    if (current is PaymentMethodsLoaded) {
+      _emitIfOpen(current.copyWith(actionMethodId: id));
+    }
+
+    try {
+      final result = await _repository.deletePaymentMethod(id);
+      _emitIfOpen(PaymentMethodActionSuccess(result.message));
+      await loadPaymentMethods();
+    } catch (error) {
+      _emitIfOpen(PaymentMethodsError(_messageOf(error)));
+      if (current is PaymentMethodsLoaded) {
+        _emitIfOpen(current.copyWith(clearAction: true));
+      }
     }
   }
 }

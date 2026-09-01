@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/admin_theme_context.dart';
 
-/// خيار جاهز لقائمة اختيار الأب (بلدية كبرى أو محلة).
+/// خيار جاهز لقائمة اختيار الأب (بلدية كبرى أو بلدية فرعية).
 class GeoParentOption {
   final int id;
   final String label;
@@ -22,7 +22,7 @@ class GeoFormDialog extends StatefulWidget {
   /// الاسم الحالي عند التعديل، و`null` عند الإضافة.
   final String? initialName;
 
-  /// معرّف الأب المختار مسبقاً (البلدية الكبرى أو المحلة).
+  /// معرّف الأب المختار مسبقاً (البلدية الكبرى أو البلدية الفرعية).
   final int? initialParentId;
 
   /// خيارات الأب المتاحة؛ فارغة إذا كان المستوى بلا أب.
@@ -83,7 +83,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
       case GeoFormKind.subMunicipality:
         return _isEditing
             ? 'تعديل البلدية الفرعية'
-            : 'إضافة بلدية فرعية (محلة) جديدة';
+            : 'إضافة بلدية فرعية جديدة';
       case GeoFormKind.zone:
         return _isEditing ? 'تعديل المنطقة الدقيقة' : 'إضافة منطقة دقيقة جديدة';
     }
@@ -94,7 +94,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
       case GeoFormKind.municipality:
         return 'اسم البلدية الكبرى';
       case GeoFormKind.subMunicipality:
-        return 'اسم البلدية الفرعية / المحلة';
+        return 'اسم البلدية الفرعية';
       case GeoFormKind.zone:
         return 'اسم المنطقة الدقيقة';
     }
@@ -105,7 +105,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
       case GeoFormKind.municipality:
         return 'مثال: طرابلس الكبرى';
       case GeoFormKind.subMunicipality:
-        return 'مثال: محلة قرقارش';
+        return 'مثال: سوق الجمعة';
       case GeoFormKind.zone:
         return 'مثال: حي الأندلس';
     }
@@ -135,7 +135,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
           content: Text(
             widget.kind == GeoFormKind.subMunicipality
                 ? 'يرجى اختيار البلدية الكبرى التابعة لها'
-                : 'يرجى اختيار البلدية الفرعية / المحلة التابعة لها',
+                : 'يرجى اختيار البلدية الفرعية التابعة لها',
           ),
           backgroundColor: context.dangerColor,
           behavior: SnackBarBehavior.floating,
@@ -196,7 +196,7 @@ class _GeoFormDialogState extends State<GeoFormDialog> {
                         DropdownMenuItem<int?>(
                           value: null,
                           child: Text(
-                            'بدون — غير مرتبطة بمحلة',
+                            'بدون — غير مرتبطة ببلدية فرعية',
                             style: TextStyle(
                               fontSize: 12,
                               color: context.textMuted,

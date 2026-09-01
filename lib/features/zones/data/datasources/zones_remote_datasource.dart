@@ -5,6 +5,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../models/geo_action_result.dart';
+import '../models/geography_item_model.dart';
+import '../models/geography_type.dart';
 import '../../../../core/utils/json_parsers.dart';
 import '../models/municipality_model.dart';
 import '../models/sub_municipality_model.dart';
@@ -44,6 +46,12 @@ abstract class ZonesRemoteDataSource {
     int? subMunicipalityId,
   });
   Future<GeoActionResult> deleteZone(int id);
+
+  // البحث في البيانات الجغرافية
+  Future<List<GeographyItemModel>> searchGeography({
+    required String searchKeyword,
+    required GeographyType type,
+  });
 }
 
 class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
@@ -178,8 +186,8 @@ class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
       ApiEndpoints.adminSubMunicipalities(municipalityId),
       method: 'POST',
       body: {'name': name.trim()},
-      fallbackMessage: 'تم إضافة المحلة بنجاح.',
-      errorMessage: 'تعذّر إضافة المحلة.',
+      fallbackMessage: 'تم إضافة البلدية الفرعية بنجاح.',
+      errorMessage: 'تعذّر إضافة البلدية الفرعية.',
     );
   }
 
@@ -291,5 +299,29 @@ class ZonesRemoteDataSourceImpl implements ZonesRemoteDataSource {
       fallbackMessage: 'تم حذف المنطقة من النظام بنجاح.',
       errorMessage: 'تعذّر حذف المنطقة.',
     );
+  }
+
+  // ── البحث في البيانات الجغرافية ─────────────────────────────────────────────
+
+  @override
+  Future<List<GeographyItemModel>> searchGeography({
+    required String searchKeyword,
+    required GeographyType type,
+  }) async {
+    final endpoint = ApiEndpoints.geographySearch;
+    try {
+      final response = await _apiClient.post(
+        endpoint,
+        data: {
+          'search_keyword': searchKeyword.trim(),
+          'type': type.apiKey,
+        },
+      );
+      return JsonParsers.extractList(response.data)
+          .map(GeographyItemModel.fromJson)
+          .toList();
+    } catch (error) {
+      _fail('POST', endpoint, error, 'تعذّر جلب نتائج البحث الجغرافي.');
+    }
   }
 }
