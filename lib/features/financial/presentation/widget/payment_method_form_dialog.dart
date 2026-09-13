@@ -1,9 +1,20 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/payment_method_model.dart';
 
-/// حوار إضافة/تعديل طريقة دفع.
+/// حوار إضافة/تعديل طريقة دفع — يعكس عقد Backend حرفياً.
+///
+/// حقول Backend المسموحة: `name_ar`, `code`, `min_amount`, `max_amount`,
+/// `sort_order`, `icon` (ملف). حقل `is_active` يُعدَّل فقط عبر
+/// `PATCH /toggle-status`، فلا يظهر هنا.
+///
+/// في وضع التعديل: كل الحقول اختيارية، وتُبنى نموذج جديد يمرَّر مع النموذج
+/// الأصلي إلى الـ Cubit ليحسب الحقول المتغيّرة فقط (Partial Update).
 class PaymentMethodFormDialog extends StatefulWidget {
   final PaymentMethodModel? initialMethod;
   final ValueChanged<PaymentMethodModel> onSubmit;
@@ -24,20 +35,14 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
 
   late final TextEditingController _nameArController;
   late final TextEditingController _codeController;
-  late final TextEditingController _nameEnController;
-  late final TextEditingController _accountNameController;
-  late final TextEditingController _accountNumberController;
-  late final TextEditingController _ibanController;
-  late final TextEditingController _walletNumberController;
   late final TextEditingController _minAmountController;
   late final TextEditingController _maxAmountController;
-  late final TextEditingController _instructionsArController;
-  late final TextEditingController _instructionsEnController;
   late final TextEditingController _sortOrderController;
 
-  late String _targetAudience;
-  late String _processingType;
-  late bool _isActive;
+  Uint8List? _iconBytes;
+  String? _iconFileName;
+
+  bool get _isEditing => widget.initialMethod != null;
 
   @override
   void initState() {
@@ -45,48 +50,59 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
     final m = widget.initialMethod;
     _nameArController = TextEditingController(text: m?.nameAr ?? '');
     _codeController = TextEditingController(text: m?.code ?? '');
-    _nameEnController = TextEditingController(text: m?.nameEn ?? '');
-    _accountNameController = TextEditingController(text: m?.accountName ?? '');
-    _accountNumberController =
-        TextEditingController(text: m?.accountNumber ?? '');
-    _ibanController = TextEditingController(text: m?.iban ?? '');
-    _walletNumberController =
-        TextEditingController(text: m?.walletNumber ?? '');
     _minAmountController =
         TextEditingController(text: m?.minAmount?.toString() ?? '');
     _maxAmountController =
         TextEditingController(text: m?.maxAmount?.toString() ?? '');
-    _instructionsArController =
-        TextEditingController(text: m?.instructionsAr ?? '');
-    _instructionsEnController =
-        TextEditingController(text: m?.instructionsEn ?? '');
     _sortOrderController =
-        TextEditingController(text: m?.sortOrder.toString() ?? '0');
-
-    _targetAudience = m?.targetAudience ?? 'both';
-    _processingType = m?.processingType ?? 'manual_proof';
-    _isActive = m?.isActive ?? true;
+        TextEditingController(text: (m?.sortOrder ?? 0).toString());
   }
 
   @override
   void dispose() {
     _nameArController.dispose();
     _codeController.dispose();
-    _nameEnController.dispose();
-    _accountNameController.dispose();
-    _accountNumberController.dispose();
-    _ibanController.dispose();
-    _walletNumberController.dispose();
     _minAmountController.dispose();
     _maxAmountController.dispose();
-    _instructionsArController.dispose();
-    _instructionsEnController.dispose();
     _sortOrderController.dispose();
     super.dispose();
   }
 
+  Future<void> _pickIcon() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 90,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _iconBytes = bytes;
+          _iconFileName = image.name;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تعذر اختيار الصورة: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+
+    // في الإضافة، الأيقونة إجبارية وفق العقد.
+    if (!_isEditing && (_iconBytes == null || _iconBytes!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب اختيار أيقونة طريقة الدفع.')),
+      );
+      return;
+    }
 
     final minAmt = _minAmountController.text.trim().isEmpty
         ? null
@@ -94,39 +110,22 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
     final maxAmt = _maxAmountController.text.trim().isEmpty
         ? null
         : double.tryParse(_maxAmountController.text.trim());
-    final sortOrd = int.tryParse(_sortOrderController.text.trim()) ?? 0;
+    final sortOrd = int.tryParse(_sortOrderController.text.trim()) ??
+        (widget.initialMethod?.sortOrder ?? 0);
 
     final model = PaymentMethodModel(
       id: widget.initialMethod?.id,
       nameAr: _nameArController.text.trim(),
       code: _codeController.text.trim(),
-      targetAudience: _targetAudience,
-      processingType: _processingType,
-      nameEn: _nameEnController.text.trim().isEmpty
-          ? null
-          : _nameEnController.text.trim(),
-      accountName: _accountNameController.text.trim().isEmpty
-          ? null
-          : _accountNameController.text.trim(),
-      accountNumber: _accountNumberController.text.trim().isEmpty
-          ? null
-          : _accountNumberController.text.trim(),
-      iban: _ibanController.text.trim().isEmpty
-          ? null
-          : _ibanController.text.trim(),
-      walletNumber: _walletNumberController.text.trim().isEmpty
-          ? null
-          : _walletNumberController.text.trim(),
+      iconUrl: widget.initialMethod?.iconUrl,
       minAmount: minAmt,
       maxAmount: maxAmt,
-      instructionsAr: _instructionsArController.text.trim().isEmpty
-          ? null
-          : _instructionsArController.text.trim(),
-      instructionsEn: _instructionsEnController.text.trim().isEmpty
-          ? null
-          : _instructionsEnController.text.trim(),
-      isActive: _isActive,
+      isActive: widget.initialMethod?.isActive ?? true,
       sortOrder: sortOrd,
+      createdAt: widget.initialMethod?.createdAt,
+      updatedAt: widget.initialMethod?.updatedAt,
+      iconBytes: _iconBytes,
+      iconFileName: _iconFileName,
     );
 
     widget.onSubmit(model);
@@ -135,14 +134,12 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.initialMethod != null;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
-          width: 650,
+          width: 560,
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
@@ -156,12 +153,14 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                 Row(
                   children: [
                     Icon(
-                      isEditing ? Icons.edit_rounded : Icons.add_rounded,
+                      _isEditing ? Icons.edit_rounded : Icons.add_rounded,
                       color: context.primaryColor,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isEditing ? 'تعديل طريقة الدفع' : 'إضافة طريقة دفع جديدة',
+                      _isEditing
+                          ? 'تعديل طريقة الدفع'
+                          : 'إضافة طريقة دفع جديدة',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -181,6 +180,8 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildIconPicker(context),
+                        const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
@@ -193,9 +194,13 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                                   hintText: 'مثال: سداد الإلكتروني',
                                   isDense: true,
                                 ),
-                                validator: (val) => val == null || val.trim().isEmpty
-                                    ? 'هذا الحقل إجباري'
-                                    : null,
+                                validator: (val) {
+                                  if (_isEditing) return null;
+                                  if (val == null || val.trim().isEmpty) {
+                                    return 'هذا الحقل إجباري';
+                                  }
+                                  return null;
+                                },
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -209,105 +214,10 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                                   hintText: 'مثال: SADAD',
                                   isDense: true,
                                 ),
-                                validator: (val) => val == null || val.trim().isEmpty
-                                    ? 'هذا الحقل إجباري'
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _targetAudience,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'الجمهور المستهدف *',
-                                  isDense: true,
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'parent',
-                                    child: Text('أولياء الأمور'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'driver',
-                                    child: Text('السائقون'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'both',
-                                    child: Text('الجميع'),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() => _targetAudience = val);
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _processingType,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'نوع المعالجة *',
-                                  isDense: true,
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'manual_proof',
-                                    child: Text('إثبات يدوي'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'instant_simulation',
-                                    child: Text('دفع فوري'),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() => _processingType = val);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _nameEnController,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'اسم الطريقة بالإنجليزية (اختياري)',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _sortOrderController,
-                                keyboardType: TextInputType.number,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'الترتيب (Sort Order)',
-                                  isDense: true,
-                                ),
                                 validator: (val) {
-                                  if (val != null && val.isNotEmpty) {
-                                    if (int.tryParse(val) == null) {
-                                      return 'يرجى إدخال رقم صحيح';
-                                    }
+                                  if (_isEditing) return null;
+                                  if (val == null || val.trim().isEmpty) {
+                                    return 'هذا الحقل إجباري';
                                   }
                                   return null;
                                 },
@@ -320,65 +230,10 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                controller: _accountNameController,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'اسم الحساب (اختياري)',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _accountNumberController,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'رقم الحساب (اختياري)',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _ibanController,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'IBAN (اختياري)',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _walletNumberController,
-                                style: TextStyle(
-                                    fontSize: 13, color: context.textPrimary),
-                                decoration: const InputDecoration(
-                                  labelText: 'رقم المحفظة (اختياري)',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
                                 controller: _minAmountController,
-                                keyboardType: const TextInputType.numberWithOptions(
-                                    decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 style: TextStyle(
                                     fontSize: 13, color: context.textPrimary),
                                 decoration: const InputDecoration(
@@ -399,8 +254,9 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                             Expanded(
                               child: TextFormField(
                                 controller: _maxAmountController,
-                                keyboardType: const TextInputType.numberWithOptions(
-                                    decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 style: TextStyle(
                                     fontSize: 13, color: context.textPrimary),
                                 decoration: const InputDecoration(
@@ -421,21 +277,22 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
-                          controller: _instructionsArController,
-                          maxLines: 2,
+                          controller: _sortOrderController,
+                          keyboardType: TextInputType.number,
                           style: TextStyle(
                               fontSize: 13, color: context.textPrimary),
                           decoration: const InputDecoration(
-                            labelText: 'تعليمات بالعربية (اختياري)',
-                            alignLabelWithHint: true,
+                            labelText: 'ترتيب الظهور (Sort Order)',
+                            isDense: true,
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        SwitchListTile(
-                          title: const Text('تفعيل طريقة الدفع (Active)'),
-                          value: _isActive,
-                          onChanged: (val) => setState(() => _isActive = val),
-                          contentPadding: EdgeInsets.zero,
+                          validator: (val) {
+                            if (val != null && val.isNotEmpty) {
+                              if (int.tryParse(val) == null) {
+                                return 'يرجى إدخال رقم صحيح';
+                              }
+                            }
+                            return null;
+                          },
                         ),
                       ],
                     ),
@@ -452,7 +309,7 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: _submit,
-                      child: Text(isEditing ? 'تحديث' : 'إضافة'),
+                      child: Text(_isEditing ? 'تحديث' : 'إضافة'),
                     ),
                   ],
                 ),
@@ -461,6 +318,76 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIconPicker(BuildContext context) {
+    final hasNewIcon = _iconBytes != null && _iconBytes!.isNotEmpty;
+    final currentUrl = widget.initialMethod?.iconUrl;
+
+    return Row(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: context.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.borderSoft),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: hasNewIcon
+              ? Image.memory(_iconBytes!, fit: BoxFit.cover)
+              : (currentUrl != null && currentUrl.isNotEmpty
+                  ? RemoteImage(
+                      rawUrl: currentUrl,
+                      fit: BoxFit.cover,
+                      fallback: Icon(Icons.image_outlined,
+                          color: context.textMuted, size: 28),
+                    )
+                  : Icon(Icons.image_outlined,
+                      color: context.textMuted, size: 28)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEditing
+                    ? 'الأيقونة الحالية (اختر صورة جديدة لاستبدالها)'
+                    : 'أيقونة طريقة الدفع *',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _pickIcon,
+                    icon: const Icon(Icons.upload_file_rounded, size: 16),
+                    label: Text(hasNewIcon ? 'تغيير الصورة' : 'اختيار صورة'),
+                  ),
+                  if (hasNewIcon) ...[
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () => setState(() {
+                        _iconBytes = null;
+                        _iconFileName = null;
+                      }),
+                      icon: const Icon(Icons.clear_rounded, size: 16),
+                      label: const Text('إلغاء الاختيار'),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

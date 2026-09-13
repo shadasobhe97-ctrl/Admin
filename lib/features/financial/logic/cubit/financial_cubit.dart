@@ -19,8 +19,6 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   // ── حالة داخلية للحفاظ على الفلاتر بين عمليات إعادة التحميل ────────────────
   LedgerFilters _ledgerFilters = const LedgerFilters();
-  String? _auditSearch;
-  int _auditPage = 1;
   String? _withdrawalsStatus;
   String? _withdrawalsSearch;
   String? _withdrawalsDateFrom;
@@ -32,11 +30,11 @@ class FinancialCubit extends Cubit<FinancialState> {
   String? _rechargesDateFrom;
   String? _rechargesDateTo;
   int _rechargesPage = 1;
-  String? _disputesStatus;
-  int _disputesPage = 1;
-  int _settlementsPage = 1;
   String? _invoicesStatus;
   int _invoicesPage = 1;
+
+  int _paymentMethodsPage = 1;
+  static const int _paymentMethodsPerPage = 15;
 
   LedgerFilters get ledgerFilters => _ledgerFilters;
 
@@ -84,34 +82,6 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   Future<void> resetLedgerFilters() =>
       loadLedger(filters: const LedgerFilters());
-
-  // ── 3. Audit Logs ─────────────────────────────────────────────────────────
-
-  Future<void> loadAuditLogs({int? page, String? search}) async {
-    _auditPage = page ?? 1;
-    if (search != null) _auditSearch = search.trim().isEmpty ? null : search.trim();
-
-    _emitIfOpen(const AuditLogsLoading());
-    try {
-      final result = await _repository.getAuditLogs(
-        page: _auditPage,
-        perPage: 20,
-        search: _auditSearch,
-      );
-      if (result.isEmpty) {
-        _emitIfOpen(AuditLogsEmpty(search: _auditSearch));
-      } else {
-        _emitIfOpen(AuditLogsLoaded(result, search: _auditSearch));
-      }
-    } catch (error) {
-      _emitIfOpen(AuditLogsError(_messageOf(error)));
-    }
-  }
-
-  void clearAuditSearch() {
-    _auditSearch = null;
-    loadAuditLogs(page: 1);
-  }
 
   // ── 4. Withdrawals ────────────────────────────────────────────────────────
 
@@ -310,160 +280,6 @@ class FinancialCubit extends Cubit<FinancialState> {
     }
   }
 
-  // ── 7. Disputes ───────────────────────────────────────────────────────────
-
-  Future<void> loadDisputes({String? status, int page = 1}) async {
-    _disputesStatus = status;
-    _disputesPage = page;
-
-    _emitIfOpen(const DisputesLoading());
-    try {
-      final result = await _repository.getDisputes(
-        status: _disputesStatus,
-        page: _disputesPage,
-        perPage: 20,
-      );
-      if (result.isEmpty) {
-        _emitIfOpen(DisputesEmpty(status: _disputesStatus));
-      } else {
-        _emitIfOpen(DisputesLoaded(result, status: _disputesStatus));
-      }
-    } catch (error) {
-      _emitIfOpen(DisputeError(_messageOf(error)));
-    }
-  }
-
-  Future<void> refreshDisputes() =>
-      loadDisputes(status: _disputesStatus, page: _disputesPage);
-
-  Future<void> loadDisputeDetails(int id) async {
-    _emitIfOpen(const DisputeDetailsLoading());
-    try {
-      final dispute = await _repository.getDisputeDetails(id);
-      _emitIfOpen(DisputeDetailsLoaded(dispute));
-    } catch (error) {
-      _emitIfOpen(DisputeError(_messageOf(error)));
-    }
-  }
-
-  Future<void> resolveDispute(
-    int disputeId, {
-    required String resolution,
-    String? notes,
-  }) async {
-    final current = state;
-    if (current is DisputeDetailsLoaded) {
-      if (current.isResolving) return;
-      _emitIfOpen(DisputeDetailsLoaded(current.dispute, isResolving: true));
-    }
-
-    try {
-      final result = await _repository.resolveDispute(
-        disputeId,
-        resolution: resolution,
-        notes: notes,
-      );
-      _emitIfOpen(DisputeResolved(result.message));
-      await loadDisputeDetails(disputeId);
-    } catch (error) {
-      _emitIfOpen(DisputeError(_messageOf(error)));
-      await loadDisputeDetails(disputeId);
-    }
-  }
-
-  // ── 8. Settlements ────────────────────────────────────────────────────────
-
-  Future<void> loadPendingSettlements({int page = 1}) async {
-    _settlementsPage = page;
-    _emitIfOpen(const SettlementsLoading());
-    try {
-      final result = await _repository.getPendingSettlements(
-        page: _settlementsPage,
-        perPage: 15,
-      );
-      if (result.isEmpty) {
-        _emitIfOpen(const SettlementsEmpty());
-      } else {
-        _emitIfOpen(SettlementsLoaded(result));
-      }
-    } catch (error) {
-      _emitIfOpen(SettlementError(_messageOf(error)));
-    }
-  }
-
-  /// لا تُستدعى عند فتح الشاشة — فقط بعد تأكيد المستخدم صراحةً.
-  Future<void> settleMonthly(int contractId) async {
-    final current = state;
-    if (current is SettlementsLoaded) {
-      if (current.processingContractId != null) return;
-      _emitIfOpen(current.copyWith(processingContractId: contractId));
-    }
-
-    try {
-      final result = await _repository.settleMonthly(contractId);
-      _emitIfOpen(
-        SettlementSuccess(
-          'تمت تسوية العقد ${result.contractNumber} بنجاح.',
-          result,
-        ),
-      );
-      await loadPendingSettlements(page: _settlementsPage);
-    } catch (error) {
-      _emitIfOpen(SettlementError(_messageOf(error)));
-      await loadPendingSettlements(page: _settlementsPage);
-    }
-  }
-
-  // ── 9. Contract Termination ───────────────────────────────────────────────
-
-  Future<void> loadTerminationPreview(
-    int contractId, {
-    required String terminatedBy,
-    required bool isArbitraryParent,
-  }) async {
-    _emitIfOpen(const PreviewLoading());
-    try {
-      final preview = await _repository.getTerminationPreview(
-        contractId,
-        terminatedBy: terminatedBy,
-        isArbitraryParent: isArbitraryParent,
-      );
-      _emitIfOpen(
-        TerminationPreviewLoaded(
-          preview,
-          terminatedBy: terminatedBy,
-          isArbitraryParent: isArbitraryParent,
-        ),
-      );
-    } catch (error) {
-      _emitIfOpen(PreviewError(_messageOf(error)));
-    }
-  }
-
-  /// ينفّذ الإنهاء الفعلي عبر Endpoint منفصل عن المعاينة.
-  Future<void> terminateMidMonth(int contractId) async {
-    final current = state;
-    if (current is! TerminationPreviewLoaded || current.isExecuting) return;
-
-    _emitIfOpen(current.copyWith(isExecuting: true));
-    try {
-      final result = await _repository.terminateMidMonth(
-        contractId,
-        terminatedBy: current.terminatedBy,
-        isArbitraryParent: current.isArbitraryParent,
-      );
-      _emitIfOpen(TerminationExecuted(result.message));
-      await loadTerminationPreview(
-        contractId,
-        terminatedBy: current.terminatedBy,
-        isArbitraryParent: current.isArbitraryParent,
-      );
-    } catch (error) {
-      _emitIfOpen(PreviewError(_messageOf(error)));
-      _emitIfOpen(current.copyWith(isExecuting: false));
-    }
-  }
-
   // ── 10. Trip Cancellation ─────────────────────────────────────────────────
 
   Future<void> loadTripCancellationPreview(
@@ -502,18 +318,6 @@ class FinancialCubit extends Cubit<FinancialState> {
     } catch (error) {
       _emitIfOpen(PreviewError(_messageOf(error)));
       _emitIfOpen(current.copyWith(isExecuting: false));
-    }
-  }
-
-  // ── 11. Solvency ──────────────────────────────────────────────────────────
-
-  Future<void> loadSolvencyCheck() async {
-    _emitIfOpen(const SolvencyLoading());
-    try {
-      final solvency = await _repository.getSolvencyCheck();
-      _emitIfOpen(SolvencyLoaded(solvency));
-    } catch (error) {
-      _emitIfOpen(SolvencyError(_messageOf(error)));
     }
   }
 
@@ -602,11 +406,15 @@ class FinancialCubit extends Cubit<FinancialState> {
 
   // ── 14. Payment Methods ───────────────────────────────────────────────────
 
-  Future<void> loadPaymentMethods() async {
+  Future<void> loadPaymentMethods({int? page}) async {
+    if (page != null) _paymentMethodsPage = page;
     _emitIfOpen(const PaymentMethodsLoading());
     try {
-      final methods = await _repository.getPaymentMethods();
-      _emitIfOpen(PaymentMethodsLoaded(methods));
+      final result = await _repository.getPaymentMethods(
+        page: _paymentMethodsPage,
+        perPage: _paymentMethodsPerPage,
+      );
+      _emitIfOpen(PaymentMethodsLoaded(result.items, meta: result.meta));
     } catch (error) {
       _emitIfOpen(PaymentMethodsError(_messageOf(error)));
     }
@@ -616,15 +424,21 @@ class FinancialCubit extends Cubit<FinancialState> {
     try {
       final result = await _repository.createPaymentMethod(method);
       _emitIfOpen(PaymentMethodActionSuccess(result.message));
+      _paymentMethodsPage = 1;
       await loadPaymentMethods();
     } catch (error) {
       _emitIfOpen(PaymentMethodsError(_messageOf(error)));
     }
   }
 
-  Future<void> updatePaymentMethod(int id, PaymentMethodModel method) async {
+  Future<void> updatePaymentMethod(
+    int id,
+    PaymentMethodModel method,
+    PaymentMethodModel original,
+  ) async {
     try {
-      final result = await _repository.updatePaymentMethod(id, method);
+      final result =
+          await _repository.updatePaymentMethod(id, method, original);
       _emitIfOpen(PaymentMethodActionSuccess(result.message));
       await loadPaymentMethods();
     } catch (error) {

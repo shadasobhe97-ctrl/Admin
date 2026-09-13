@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'admin_colors.dart';
 
 class AdminTheme {
-  static const String fontFamily = 'Tajawal';
+  static const String fontFamily = 'Cairo';
 
   static const double radiusSmall = 12;
   static const double radiusMedium = 16;
@@ -16,7 +16,8 @@ class AdminTheme {
   );
 
   static BorderRadius radius(double value) => BorderRadius.circular(value);
-  static BorderRadiusGeometry radiusAll(double value) => BorderRadius.circular(value);
+  static BorderRadiusGeometry radiusAll(double value) =>
+      BorderRadius.circular(value);
   static Radius cornerRadius(double value) => Radius.circular(value);
 
   static BorderRadius onlyRadius({
@@ -54,9 +55,7 @@ class AdminTheme {
     double width = 1,
     BorderStyle style = BorderStyle.solid,
   }) {
-    return Border(
-      bottom: borderSide(color: color, width: width, style: style),
-    );
+    return Border(bottom: borderSide(color: color, width: width, style: style));
   }
 
   static RoundedRectangleBorder roundedRectangleBorder({
@@ -163,7 +162,7 @@ class AdminTheme {
         brightness: brightness,
         primary: AdminColors.brandPrimary,
         onPrimary: AdminColors.onBrand,
-        secondary: AdminColors.statusSuccess,
+        secondary: AdminColors.secondary, // تم تعديلها لتطابق اللون الليموني
         onSecondary: AdminColors.onBrand,
         surface: card,
         onSurface: textPrimary,
@@ -211,7 +210,7 @@ class AdminTheme {
         elevation: isDark ? 0 : 2,
         shadowColor: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24), // تم التعديل إلى 24
           side: BorderSide(color: borderSoft, width: 1),
         ),
       ),
@@ -229,34 +228,46 @@ class AdminTheme {
         prefixIconColor: AdminColors.brandPrimary,
         suffixIconColor: textMuted,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
           borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
           borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
           borderSide:
               const BorderSide(color: AdminColors.brandPrimary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
           borderSide:
               const BorderSide(color: AdminColors.statusDanger, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
           borderSide:
               const BorderSide(color: AdminColors.statusDanger, width: 2),
         ),
       ),
       textTheme: TextTheme(
-        headlineLarge: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
-        headlineMedium: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(fontFamily: fontFamily, color: textPrimary, fontWeight: FontWeight.w600),
+        headlineLarge: TextStyle(
+            fontFamily: fontFamily,
+            color: textPrimary,
+            fontWeight: FontWeight.bold),
+        headlineMedium: TextStyle(
+            fontFamily: fontFamily,
+            color: textPrimary,
+            fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(
+            fontFamily: fontFamily,
+            color: textPrimary,
+            fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(
+            fontFamily: fontFamily,
+            color: textPrimary,
+            fontWeight: FontWeight.w600),
         bodyLarge: TextStyle(fontFamily: fontFamily, color: textPrimary),
         bodyMedium: TextStyle(fontFamily: fontFamily, color: textSecondary),
         bodySmall: TextStyle(fontFamily: fontFamily, color: textTertiary),
@@ -268,18 +279,24 @@ class AdminTheme {
           disabledBackgroundColor: borderStrong,
           disabledForegroundColor: textMuted,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          textStyle: const TextStyle(fontFamily: fontFamily, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30)), // تم التعديل إلى 30
+          padding: const EdgeInsets.symmetric(
+              horizontal: 20, vertical: 14), // ترك الحجم كما هو
+          textStyle: const TextStyle(
+              fontFamily: fontFamily, fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AdminColors.brandPrimary,
           side: BorderSide(color: borderStrong),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          textStyle: const TextStyle(fontFamily: fontFamily, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30)), // تم التعديل إلى 30
+          padding: const EdgeInsets.symmetric(
+              horizontal: 20, vertical: 14), // ترك الحجم كما هو
+          textStyle: const TextStyle(
+              fontFamily: fontFamily, fontWeight: FontWeight.bold),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

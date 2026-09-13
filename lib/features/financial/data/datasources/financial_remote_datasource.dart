@@ -7,8 +7,6 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/models/pagination_meta_model.dart';
 import '../models/escrow_summary_model.dart';
 import '../models/financial_action_result.dart';
-import '../models/financial_audit_log_model.dart';
-import '../models/financial_dispute_model.dart';
 import '../models/financial_invoice_model.dart';
 import '../models/financial_summary_model.dart';
 import '../../../../core/utils/json_parsers.dart';
@@ -17,9 +15,6 @@ import '../../../../core/models/paginated_result.dart';
 import '../models/payment_method_model.dart';
 import '../models/pricing_settings_model.dart';
 import '../models/recharge_model.dart';
-import '../models/settlement_contract_model.dart';
-import '../models/solvency_check_model.dart';
-import '../models/termination_preview_model.dart';
 import '../models/trip_cancellation_preview_model.dart';
 import '../models/withdrawal_model.dart';
 
@@ -30,12 +25,6 @@ abstract class FinancialRemoteDataSource {
   Future<FinancialSummaryModel> getFinancialSummary();
 
   Future<PaginatedResult<LedgerEntryModel>> getLedger(LedgerFilters filters);
-
-  Future<PaginatedResult<FinancialAuditLogModel>> getAuditLogs({
-    int page,
-    int perPage,
-    String? search,
-  });
 
   Future<PaginatedResult<WithdrawalModel>> getWithdrawals({
     String? status,
@@ -75,39 +64,6 @@ abstract class FinancialRemoteDataSource {
 
   Future<FinancialActionResult> releaseEscrows();
 
-  Future<PaginatedResult<FinancialDisputeModel>> getDisputes({
-    String? status,
-    int page,
-    int perPage,
-  });
-
-  Future<FinancialDisputeModel> getDisputeDetails(int id);
-
-  Future<FinancialActionResult> resolveDispute(
-    int disputeId, {
-    required String resolution,
-    String? notes,
-  });
-
-  Future<PaginatedResult<SettlementContractModel>> getPendingSettlements({
-    int page,
-    int perPage,
-  });
-
-  Future<MonthlySettlementResultModel> settleMonthly(int contractId);
-
-  Future<TerminationPreviewModel> getTerminationPreview(
-    int contractId, {
-    required String terminatedBy,
-    bool? isArbitraryParent,
-  });
-
-  Future<FinancialActionResult> terminateMidMonth(
-    int contractId, {
-    required String terminatedBy,
-    required bool isArbitraryParent,
-  });
-
   Future<TripCancellationPreviewModel> getTripCancellationPreview(
     int tripId, {
     required String cancelledBy,
@@ -117,8 +73,6 @@ abstract class FinancialRemoteDataSource {
     int tripId, {
     required String cancelledBy,
   });
-
-  Future<SolvencyCheckModel> getSolvencyCheck();
 
   Future<PaginatedResult<FinancialInvoiceModel>> getInvoices({
     String? status,
@@ -136,12 +90,18 @@ abstract class FinancialRemoteDataSource {
   Future<FinancialActionResult> updatePricingSettings(
       PricingSettingsModel settings);
 
-  Future<List<PaymentMethodModel>> getPaymentMethods();
+  Future<PaginatedResult<PaymentMethodModel>> getPaymentMethods({
+    int page,
+    int perPage,
+  });
 
   Future<FinancialActionResult> createPaymentMethod(PaymentMethodModel method);
 
   Future<FinancialActionResult> updatePaymentMethod(
-      int id, PaymentMethodModel method);
+    int id,
+    PaymentMethodModel method,
+    PaymentMethodModel original,
+  );
 
   Future<FinancialActionResult> togglePaymentMethodStatus(int id);
 
@@ -275,26 +235,6 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
     );
   }
 
-  // ── 3. Audit Logs ──────────────────────────────────────────────────────────
-
-  @override
-  Future<PaginatedResult<FinancialAuditLogModel>> getAuditLogs({
-    int page = 1,
-    int perPage = 20,
-    String? search,
-  }) {
-    return _getList(
-      ApiEndpoints.financialAuditLogs,
-      query: <String, dynamic>{
-        'page': page,
-        'per_page': perPage,
-        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-      },
-      parser: FinancialAuditLogModel.fromJson,
-      fallbackMessage: 'تعذّر جلب سجل عمليات المشرفين.',
-    );
-  }
-
   // ── 4. Withdrawals ─────────────────────────────────────────────────────────
 
   @override
@@ -425,119 +365,6 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
     );
   }
 
-  // ── 7. Disputes ────────────────────────────────────────────────────────────
-
-  @override
-  Future<PaginatedResult<FinancialDisputeModel>> getDisputes({
-    String? status,
-    int page = 1,
-    int perPage = 20,
-  }) {
-    return _getList(
-      ApiEndpoints.disputes,
-      query: _listQuery(status: status, page: page, perPage: perPage),
-      parser: FinancialDisputeModel.fromJson,
-      fallbackMessage: 'تعذّر جلب النزاعات المالية.',
-    );
-  }
-
-  @override
-  Future<FinancialDisputeModel> getDisputeDetails(int id) {
-    return _getObject(
-      ApiEndpoints.disputeDetails(id),
-      parser: (json, _) => FinancialDisputeModel.fromJson(json),
-      fallbackMessage: 'تعذّر جلب تفاصيل النزاع.',
-    );
-  }
-
-  @override
-  Future<FinancialActionResult> resolveDispute(
-    int disputeId, {
-    required String resolution,
-    String? notes,
-  }) {
-    return _post(
-      ApiEndpoints.disputeResolve(disputeId),
-      body: <String, dynamic>{
-        'resolution': resolution,
-        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
-      },
-      fallbackMessage: 'تم حل النزاع.',
-      errorMessage: 'تعذّر حل النزاع.',
-    );
-  }
-
-  // ── 8. Settlements ─────────────────────────────────────────────────────────
-
-  @override
-  Future<PaginatedResult<SettlementContractModel>> getPendingSettlements({
-    int page = 1,
-    int perPage = 15,
-  }) {
-    return _getList(
-      ApiEndpoints.pendingSettlements,
-      query: <String, dynamic>{'page': page, 'per_page': perPage},
-      parser: SettlementContractModel.fromJson,
-      fallbackMessage: 'تعذّر جلب العقود الجاهزة للتسوية.',
-    );
-  }
-
-  @override
-  Future<MonthlySettlementResultModel> settleMonthly(int contractId) async {
-    final endpoint = ApiEndpoints.contractSettleMonthly(contractId);
-    try {
-      final response = await _apiClient.post(endpoint, data: const {});
-      final object = JsonParsers.extractObject(response.data);
-      if (object == null) {
-        throw ApiException(
-          JsonParsers.extractMessage(response.data) ??
-              'استجابة غير متوافقة من الخادم عند تنفيذ التسوية.',
-          statusCode: response.statusCode,
-        );
-      }
-      return MonthlySettlementResultModel.fromJson(object);
-    } catch (error) {
-      _fail('POST', endpoint, error, 'تعذّر تنفيذ التسوية الشهرية.');
-    }
-  }
-
-  // ── 9. Contract Termination ────────────────────────────────────────────────
-
-  @override
-  Future<TerminationPreviewModel> getTerminationPreview(
-    int contractId, {
-    required String terminatedBy,
-    bool? isArbitraryParent,
-  }) {
-    return _getObject(
-      ApiEndpoints.contractTerminationPreview(contractId),
-      query: <String, dynamic>{
-        'terminated_by': terminatedBy,
-        if (isArbitraryParent != null)
-          'is_arbitrary_parent': isArbitraryParent.toString(),
-      },
-      parser: (json, _) => TerminationPreviewModel.fromJson(json),
-      fallbackMessage: 'تعذّر جلب معاينة إنهاء العقد.',
-    );
-  }
-
-  @override
-  Future<FinancialActionResult> terminateMidMonth(
-    int contractId, {
-    required String terminatedBy,
-    required bool isArbitraryParent,
-  }) {
-    return _post(
-      ApiEndpoints.contractTerminateMidMonth(contractId),
-      body: <String, dynamic>{
-        'terminated_by': terminatedBy,
-        'is_arbitrary_parent': isArbitraryParent,
-      },
-      fallbackMessage: 'تم تنفيذ إنهاء العقد.',
-      errorMessage: 'تعذّر تنفيذ إنهاء العقد.',
-    );
-  }
-
   // ── 10. Trip Cancellation ──────────────────────────────────────────────────
 
   @override
@@ -563,20 +390,6 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
       body: <String, dynamic>{'cancelled_by': cancelledBy},
       fallbackMessage: 'تم تنفيذ إلغاء الرحلة.',
       errorMessage: 'تعذّر تنفيذ إلغاء الرحلة.',
-    );
-  }
-
-  // ── 11. Solvency ───────────────────────────────────────────────────────────
-
-  @override
-  Future<SolvencyCheckModel> getSolvencyCheck() {
-    return _getObject(
-      ApiEndpoints.solvencyCheck,
-      parser: (json, body) => SolvencyCheckModel.fromJson(
-        json,
-        message: JsonParsers.extractMessage(body),
-      ),
-      fallbackMessage: 'تعذّر تنفيذ فحص الملاءة المالية.',
     );
   }
 
@@ -646,36 +459,48 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
   // ── 14. Payment Methods ───────────────────────────────────────────────────
 
   @override
-  Future<List<PaymentMethodModel>> getPaymentMethods() async {
-    final endpoint = ApiEndpoints.paymentMethods;
-    try {
-      final response = await _apiClient.get(endpoint);
-      return JsonParsers.extractList(response.data)
-          .map(PaymentMethodModel.fromJson)
-          .toList();
-    } catch (error) {
-      _fail('GET', endpoint, error, 'تعذّر جلب طرق الدفع.');
-    }
-  }
-
-  @override
-  Future<FinancialActionResult> createPaymentMethod(
-      PaymentMethodModel method) {
-    return _post(
+  Future<PaginatedResult<PaymentMethodModel>> getPaymentMethods({
+    int page = 1,
+    int perPage = 15,
+  }) {
+    return _getList(
       ApiEndpoints.paymentMethods,
-      body: method.toCreateJson(),
-      fallbackMessage: 'تم إضافة طريقة الدفع بنجاح.',
-      errorMessage: 'تعذّر إضافة طريقة الدفع.',
+      query: <String, dynamic>{'page': page, 'per_page': perPage},
+      parser: PaymentMethodModel.fromJson,
+      fallbackMessage: 'تعذّر جلب طرق الدفع.',
     );
   }
 
   @override
+  Future<FinancialActionResult> createPaymentMethod(
+      PaymentMethodModel method) async {
+    final endpoint = ApiEndpoints.paymentMethods;
+    try {
+      final response = await _apiClient.post(
+        endpoint,
+        data: method.toCreateFormData(),
+      );
+      return FinancialActionResult.fromResponse(
+        response.data,
+        fallbackMessage: 'تم إضافة طريقة الدفع بنجاح.',
+      );
+    } catch (error) {
+      _fail('POST', endpoint, error, 'تعذّر إضافة طريقة الدفع.');
+    }
+  }
+
+  @override
   Future<FinancialActionResult> updatePaymentMethod(
-      int id, PaymentMethodModel method) async {
+    int id,
+    PaymentMethodModel method,
+    PaymentMethodModel original,
+  ) async {
     final endpoint = ApiEndpoints.paymentMethodDetails(id);
     try {
-      final response =
-          await _apiClient.put(endpoint, data: method.toUpdateJson());
+      final response = await _apiClient.put(
+        endpoint,
+        data: method.toUpdatePartialFormData(original),
+      );
       return FinancialActionResult.fromResponse(
         response.data,
         fallbackMessage: 'تم تحديث طريقة الدفع بنجاح.',
