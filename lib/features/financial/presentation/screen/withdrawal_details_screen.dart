@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/withdrawal_model.dart';
 import '../../logic/cubit/financial_cubit.dart';
@@ -161,6 +162,23 @@ class _ActionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!AuthorizationService.hasPermission('financial.manage_withdrawals')) {
+      return AdminPanel(
+        child: Row(
+          children: [
+            Icon(Icons.lock_rounded, size: 18, color: context.textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'لا تملك صلاحية معالجة طلبات السحب.',
+                style: TextStyle(fontSize: 12.5, color: context.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (!withdrawal.isPending) {
       return AdminPanel(
         child: Row(

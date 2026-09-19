@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
@@ -186,25 +187,26 @@ class DriverChangeDetailsScreen extends StatelessWidget {
                           icon: const Icon(Icons.arrow_back, size: 16),
                           label: const Text('إغلاق'),
                         ),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.primaryColor,
-                            foregroundColor: context.onPrimary,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        if (AuthorizationService.hasPermission('drivers.review_changes'))
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.primaryColor,
+                              foregroundColor: context.onPrimary,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: state.isSubmittingReview
+                                ? null
+                                : () => _openReviewDialog(context, details.changeType ?? 'تعديل مركبة'),
+                            icon: state.isSubmittingReview
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.fact_check_outlined, size: 16),
+                            label: const Text('اتخاذ قرار التعديل', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                          onPressed: state.isSubmittingReview
-                              ? null
-                              : () => _openReviewDialog(context, details.changeType ?? 'تعديل مركبة'),
-                          icon: state.isSubmittingReview
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Icon(Icons.fact_check_outlined, size: 16),
-                          label: const Text('اتخاذ قرار التعديل', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
                       ],
                     ),
                   ],

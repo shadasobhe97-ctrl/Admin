@@ -70,6 +70,15 @@ class AdminProfileModel {
       return [];
     }
 
+    final nestedUser = json['user'] is Map<String, dynamic>
+        ? json['user'] as Map<String, dynamic>
+        : null;
+
+    final rawPermissions = json['permissions'] ?? nestedUser?['permissions'];
+    final parsedPermissions = rawPermissions is List
+        ? parseStringList(rawPermissions)
+        : <String>[];
+
     return AdminProfileModel(
       id: parseId(json['id']),
       userId: parseNullableId(json['user_id']),
@@ -83,8 +92,8 @@ class AdminProfileModel {
       isActive: parseBool(json['is_active']),
       roleId: parseNullableId(json['role_id']),
       roleName: json['role_name']?.toString() ?? json['role']?.toString(),
-      roleKey: json['role_key']?.toString() ?? json['role']?['key']?.toString(),
-      permissions: parseStringList(json['permissions']),
+      roleKey: (json['role_key'] ?? nestedUser?['role_key'])?.toString() ?? json['role']?['key']?.toString(),
+      permissions: parsedPermissions,
       customPermissions: parseStringList(json['custom_permissions']),
       createdBy: parseNullableId(json['created_by']),
       creatorName: json['creator_name']?.toString(),

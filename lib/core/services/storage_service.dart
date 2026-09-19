@@ -49,85 +49,60 @@ class StorageService {
   static List<String> getCustomPermissions() =>
       _prefs?.getStringList(_customPermissionsKey) ?? [];
 
-  /// يحفظ رابط صورة الحساب ويُخطر المستمعين فوراً.
-  /// تمرير قيمة فارغة يمسح الصورة المخزّنة.
-  ///
-  /// [bustCache] يلزم بعد رفع صورة جديدة: الخادم يعيد الصورة على المسار
-  /// نفسه غالباً، فلا يتغيّر النص ولا يُخطَر المستمعون، ويبقى Flutter
-  /// يعرض البايتات القديمة من ذاكرة الصور. إضافة بصمة وقت للرابط المعروض
-  /// تكسر الحالتين معاً، بينما يبقى المخزَّن نظيفاً.
-  static Future<void> saveAvatarUrl(String? url, {bool bustCache = false}) async {
-    final value = url?.trim() ?? '';
-    if (value.isEmpty) {
-      await _prefs?.remove(_avatarUrlKey);
-    } else {
-      await _prefs?.setString(_avatarUrlKey, value);
-    }
+  static bool hasToken() => getToken() != null && getToken()!.isNotEmpty;
 
-    final stored = getAvatarUrl();
-    avatarUrlListenable.value = stored == null || !bustCache
-        ? stored
-        : _withCacheBuster(stored);
-  }
-
-  /// عدّاد يضمن اختلاف البصمة حتى لو تتابع حفظان في المللي ثانية نفسها.
-  static int _avatarRevision = 0;
-
-  /// يضيف بصمة إلى الرابط لتجاوز ذاكرة الصور.
-  static String _withCacheBuster(String url) {
-    _avatarRevision++;
-    final separator = url.contains('?') ? '&' : '?';
-    return '$url${separator}v=${DateTime.now().millisecondsSinceEpoch}'
-        '-$_avatarRevision';
-  }
-
-  /// حفظ الصلاحيات والدور بالتفصيل
-  static Future<void> savePermissions({
-    String? roleKey,
-    List<String>? permissions,
-    List<String>? customPermissions,
-  }) async {
-    if (roleKey != null && roleKey.isNotEmpty) {
-      await _prefs?.setString(_roleKeyKey, roleKey);
-    }
-    if (permissions != null) {
-      await _prefs?.setStringList(_permissionsKey, permissions);
-    }
-    if (customPermissions != null) {
-      await _prefs?.setStringList(_customPermissionsKey, customPermissions);
-    }
-  }
-
-  static Future<bool> saveSession({
+  static Future<void> saveUserSession({
     required String token,
-    required int roleId,
-    String roleName = 'مدير النظام',
-    required int userId,
-    required String userName,
-    required String userPhone,
-    String userEmail = '',
-    String? avatarUrl,
+    int? roleId,
+    String? roleName,
     String? roleKey,
-    List<String>? permissions,
-    List<String>? customPermissions,
+    List<String> permissions = const [],
+    List<String> customPermissions = const [],
+    int? userId,
+    String? userName,
+    String? userPhone,
+    String? userEmail,
+    String? avatarUrl,
   }) async {
     await _prefs?.setString(_tokenKey, token);
-    await _prefs?.setInt(_roleIdKey, roleId);
-    await _prefs?.setString(_roleNameKey, roleName);
-    await _prefs?.setInt(_userIdKey, userId);
-    await _prefs?.setString(_userNameKey, userName);
-    await _prefs?.setString(_userPhoneKey, userPhone);
-    await saveAvatarUrl(avatarUrl);
-    if (roleKey != null && roleKey.isNotEmpty) {
+    if (roleId != null) await _prefs?.setInt(_roleIdKey, roleId);
+    if (roleName != null) await _prefs?.setString(_roleNameKey, roleName);
+    if (roleKey != null) await _prefs?.setString(_roleKeyKey, roleKey);
+    await _prefs?.setStringList(_permissionsKey, permissions);
+    await _prefs?.setStringList(_customPermissionsKey, customPermissions);
+    if (userId != null) await _prefs?.setInt(_userIdKey, userId);
+    if (userName != null) await _prefs?.setString(_userNameKey, userName);
+    if (userPhone != null) await _prefs?.setString(_userPhoneKey, userPhone);
+    if (userEmail != null) await _prefs?.setString(_userEmailKey, userEmail);
+    if (avatarUrl != null) await saveAvatarUrl(avatarUrl);
+  }
+
+  static Future<void> saveAvatarUrl(String? url) async {
+    if (url != null && url.isNotEmpty) {
+      await _prefs?.setString(_avatarUrlKey, url);
+      avatarUrlListenable.value = url;
+    } else {
+      await _prefs?.remove(_avatarUrlKey);
+      avatarUrlListenable.value = null;
+    }
+  }
+
+  static Future<void> updateUserName(String name) async {
+    await _prefs?.setString(_userNameKey, name);
+  }
+
+  static Future<void> updateUserEmail(String email) async {
+    await _prefs?.setString(_userEmailKey, email);
+  }
+
+  static Future<void> updateRoleAndPermissions({
+    String? roleKey,
+    List<String> permissions = const [],
+  }) async {
+    if (roleKey != null) {
       await _prefs?.setString(_roleKeyKey, roleKey);
     }
-    if (permissions != null) {
-      await _prefs?.setStringList(_permissionsKey, permissions);
-    }
-    if (customPermissions != null) {
-      await _prefs?.setStringList(_customPermissionsKey, customPermissions);
-    }
-    return await _prefs?.setString(_userEmailKey, userEmail) ?? false;
+    await _prefs?.setStringList(_permissionsKey, permissions);
   }
 
   static Future<void> clearSession() async {

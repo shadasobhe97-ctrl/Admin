@@ -11,7 +11,6 @@ class FinancialSummaryGrid extends StatelessWidget {
   final FinancialSummaryModel summary;
   final VoidCallback? onWithdrawalsTap;
   final VoidCallback? onRechargesTap;
-  final VoidCallback? onDisputesTap;
   final VoidCallback? onEscrowsTap;
 
   const FinancialSummaryGrid({
@@ -19,7 +18,6 @@ class FinancialSummaryGrid extends StatelessWidget {
     required this.summary,
     this.onWithdrawalsTap,
     this.onRechargesTap,
-    this.onDisputesTap,
     this.onEscrowsTap,
   });
 
@@ -55,13 +53,6 @@ class FinancialSummaryGrid extends StatelessWidget {
         subtitle: 'PLATFORM_REVENUE_POOL',
       ),
       FinancialSummaryCard(
-        title: 'صندوق الغرامات',
-        value: AdminFormat.money(summary.penaltyPool),
-        icon: Icons.gavel_rounded,
-        accentColor: context.dangerColor,
-        subtitle: 'PENALTY_POOL',
-      ),
-      FinancialSummaryCard(
         title: 'طلبات السحب المعلّقة',
         value: AdminFormat.count(summary.pendingWithdrawalsCount),
         icon: Icons.outbox_rounded,
@@ -76,14 +67,6 @@ class FinancialSummaryGrid extends StatelessWidget {
         accentColor: context.infoColor,
         subtitle: 'محافظ أولياء الأمور',
         onTap: onRechargesTap,
-      ),
-      FinancialSummaryCard(
-        title: 'النزاعات المعلّقة',
-        value: AdminFormat.count(summary.pendingDisputesCount),
-        icon: Icons.report_problem_rounded,
-        accentColor: context.dangerColor,
-        subtitle: 'بانتظار الحل',
-        onTap: onDisputesTap,
       ),
       FinancialSummaryCard(
         title: 'الأمانات المعلّقة',

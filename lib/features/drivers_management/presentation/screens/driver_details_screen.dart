@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/services/permission_helper.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/driver_details_model.dart';
 import '../../data/models/driver_document_model.dart';
@@ -366,7 +366,7 @@ class _DriverBody extends StatelessWidget {
               label: const Text('إغلاق'),
             ),
             // تعديل مباشر لكامل بيانات السائق ما دام قيد الانتظار.
-            if (_isPending && PermissionHelper.hasPermission('drivers.edit_data'))
+            if (_isPending && AuthorizationService.hasPermission('drivers.edit_data'))
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: context.primaryColor,
@@ -390,7 +390,7 @@ class _DriverBody extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-            if (_isPending && PermissionHelper.hasPermission('drivers.review_initial'))
+            if (_isPending && AuthorizationService.hasPermission('drivers.review_initial'))
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.primaryColor,

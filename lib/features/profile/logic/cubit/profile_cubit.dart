@@ -28,6 +28,11 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       // تُخزَّن الصورة في الجلسة ليعرضها الشريط الجانبي بلا طلب إضافي.
       await StorageService.saveAvatarUrl(profile.avatarUrl);
+      // تحديث الصلاحيات من أحدث استجابة للبروفايل (RBAC V2).
+      await StorageService.savePermissions(
+        profile.permissions,
+        roleKey: profile.roleKey,
+      );
 
       emit(ProfileLoaded(
         profile: profile,

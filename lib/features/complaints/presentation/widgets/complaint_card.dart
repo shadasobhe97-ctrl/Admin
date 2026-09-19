@@ -53,7 +53,7 @@ class ComplaintCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          complaint.title,
+                          'شكوى رقم #${complaint.id}',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

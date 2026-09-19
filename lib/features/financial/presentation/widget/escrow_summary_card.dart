@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/escrow_summary_model.dart';
 import '../../../../core/widgets/admin_ui.dart';
@@ -20,7 +21,10 @@ class EscrowSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canRelease = escrows.hasReleasableEscrows && !isReleasing;
+    final canManageEscrows =
+        AuthorizationService.hasPermission('financial.release_escrows');
+    final canRelease =
+        escrows.hasReleasableEscrows && !isReleasing && canManageEscrows;
 
     return AdminPanel(
       child: Column(
@@ -70,29 +74,33 @@ class EscrowSummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  canRelease
-                      ? 'سيؤدي التحرير إلى نقل الأرباح المستحقة إلى أرصدة السائقين المتاحة.'
-                      : isReleasing
-                          ? 'جارٍ تنفيذ عملية التحرير على الخادم...'
-                          : 'لا توجد أمانات مستحقة للتحرير حالياً حسب بيانات الخادم.',
+                  !canManageEscrows
+                      ? 'لا تملك صلاحية تحرير الأمانات.'
+                      : canRelease
+                          ? 'سيؤدي التحرير إلى نقل الأرباح المستحقة إلى أرصدة السائقين المتاحة.'
+                          : isReleasing
+                              ? 'جارٍ تنفيذ عملية التحرير على الخادم...'
+                              : 'لا توجد أمانات مستحقة للتحرير حالياً حسب بيانات الخادم.',
                   style:
                       TextStyle(fontSize: 12, color: context.textSecondary),
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: canRelease ? onRelease : null,
-                icon: isReleasing
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.lock_open_rounded, size: 16),
-                label: Text(
-                  isReleasing ? 'جارٍ التحرير...' : 'تحرير الأمانات المستحقة',
+              if (canManageEscrows) ...[
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: canRelease ? onRelease : null,
+                  icon: isReleasing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.lock_open_rounded, size: 16),
+                  label: Text(
+                    isReleasing ? 'جارٍ التحرير...' : 'تحرير الأمانات المستحقة',
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ],

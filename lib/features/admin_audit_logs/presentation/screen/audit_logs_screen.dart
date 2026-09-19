@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_pagination.dart';
 import '../../../../core/widgets/admin_ui.dart';
@@ -12,10 +11,8 @@ import '../widget/audit_log_card.dart';
 import '../widget/audit_log_filter_bar.dart';
 import 'audit_log_details_screen.dart';
 
-/// معرّف دور الأدمن العام حسب عقد الخادم — السجل مخصّص له وحده.
-const int _superAdminRoleId = 1;
-
-/// سجل إجراءات المشرفين — يُفتح من «إدارة المشرفين» وللأدمن فقط.
+/// سجل إجراءات المشرفين — يُفتح من «إدارة المشرفين»، محمي بصلاحية
+/// `audit_logs.view` (RBAC V2).
 class AuditLogsScreen extends StatelessWidget {
   const AuditLogsScreen({super.key});
 
@@ -259,8 +256,3 @@ class _ForbiddenView extends StatelessWidget {
     );
   }
 }
-
-/// هل المستخدم الحالي أدمن عام؟ تُستعمل لإظهار مدخل السجل أو إخفائه.
-///
-/// الإخفاء تحسين لتجربة المستخدم فقط — الحماية الحقيقية على الخادم (403).
-bool canViewAuditLogs() => StorageService.getRoleId() == _superAdminRoleId;

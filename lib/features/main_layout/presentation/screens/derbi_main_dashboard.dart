@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/services/permission_helper.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../../profile/data/repositories/admin_profile_repository.dart';
@@ -25,6 +25,7 @@ import '../../../profile/presentation/screen/admin_profile_screen.dart';
 import '../../../admin_notifications/logic/cubit/admin_notifications_cubit.dart';
 import '../../../admin_notifications/logic/cubit/admin_notifications_state.dart';
 import '../../../admin_notifications/presentation/screens/admin_notifications_screen.dart';
+import '../../../ai_alerts/presentation/screens/ai_alerts_screen.dart';
 
 class DerbiMainDashboard extends StatefulWidget {
   const DerbiMainDashboard({super.key});
@@ -44,68 +45,69 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     super.initState();
     _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
-    _ensureAvatarLoaded();
-
-    final items = <NavigationItem>[
-      NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
-    ];
-
-    if (PermissionHelper.hasAnyPermission(['dashboard.view_stats', 'dashboard.view_radar'])) {
-      items.add(NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0));
-    }
-    // Notifications Center tab
-    items.add(NavigationItem('notifications', 'إشعارات النظام', Icons.notifications_rounded, badge: 0));
-
-    if (PermissionHelper.hasPermission('drivers.view')) {
-      items.add(NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasPermission('drivers.review_changes')) {
-      items.add(NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3));
-    }
-    if (PermissionHelper.hasPermission('admins.manage')) {
-      items.add(NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasPermission('schools.manage')) {
-      items.add(NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasPermission('geography.manage')) {
-      items.add(NavigationItem('zones', 'المناطق الجغرافية', Icons.map_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasPermission('complaints.view')) {
-      items.add(NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2));
-    }
-    if (PermissionHelper.hasPermission('driver_reviews.manage')) {
-      items.add(NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasAnyPermission([
-      'financial.view_summary',
-      'financial.view_ledger',
-      'financial.manage_withdrawals',
-      'financial.manage_recharges',
-      'financial.release_escrows',
-      'financial.resolve_disputes',
-      'financial.manage_settlements',
-    ])) {
-      items.add(NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0));
-    }
-    if (PermissionHelper.hasPermission('reports.view')) {
-      items.add(NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0));
-    }
-
-    _navItems = items;
+    _navItems = _buildNavItems();
+    _ensureSessionFresh();
   }
 
-  /// استجابة تسجيل الدخول لا تحمل صورة الحساب، فتُجلب مرة واحدة من
-  /// `/admin/profile` عند أول دخول وتُخزَّن في الجلسة. بعدها يحدّثها
-  /// [ProfileCubit] عند كل تعديل، فلا يتكرّر الطلب.
-  Future<void> _ensureAvatarLoaded() async {
-    if (StorageService.getAvatarUrl() != null) return;
+  /// كل عنصر Sidebar مرتبط بالصلاحية التي يحدّدها الـ Backend (RBAC V2).
+  /// `profile` و `notifications` بلا شرط لأن العقد الحالي لم يحدّد لهما
+  /// صلاحية مستقلة.
+  List<NavigationItem> _buildNavItems() {
+    final can = AuthorizationService.hasPermission;
+    return [
+      NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
+      if (can('dashboard.view_stats'))
+        NavigationItem('dashboard', 'الرئيسية والمتابعة الحية', Icons.dashboard_rounded, badge: 0),
+      NavigationItem('notifications', 'إشعارات النظام', Icons.notifications_rounded, badge: 0),
+      if (can('drivers.view'))
+        NavigationItem('drivers', 'إدارة السائقين', Icons.directions_bus_rounded, badge: 0),
+      if (can('drivers.review_changes'))
+        NavigationItem('updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded, badge: 3),
+      if (can('admins.manage'))
+        NavigationItem('admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded, badge: 0),
+      if (can('schools.manage'))
+        NavigationItem('schools', 'إدارة المدارس', Icons.school_rounded, badge: 0),
+      if (can('geography.manage'))
+        NavigationItem('zones', 'المناطق الجغرافية', Icons.map_rounded, badge: 0),
+      if (can('complaints.view'))
+        NavigationItem('complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded, badge: 2),
+      if (can('driver_reviews.manage'))
+        NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded, badge: 0),
+      // لا صلاحية معتمدة لها بعد في عقد الـ Backend الحالي — متاحة لكل
+      // مستخدم إداري مصادَق عليه، كـ profile/notifications.
+      NavigationItem('ai_alerts', 'تنبيهات الذكاء الاصطناعي', Icons.smart_toy_outlined, badge: 0),
+      if (can('financial.view_summary'))
+        NavigationItem('financial', 'الإدارة المالية والخزينة', Icons.account_balance_wallet_rounded, badge: 0),
+      if (can('reports.view'))
+        NavigationItem('reports', 'التقارير والتحليلات', Icons.analytics_rounded, badge: 0),
+    ];
+  }
 
+  /// استجابة تسجيل الدخول لا تحمل صورة الحساب، فتُجلب من `/admin/profile`
+  /// عند أول دخول وتُخزَّن في الجلسة. نستغل نفس الطلب لتحديث `permissions[]`
+  /// بأحدث ما أرسله الخادم (مثلاً بعد تغيير دور المستخدم من لوحة أخرى)
+  /// وإعادة بناء الشريط الجانبي وفقها.
+  Future<void> _ensureSessionFresh() async {
+    final needsAvatar = StorageService.getAvatarUrl() == null;
     try {
       final profile = await sl<AdminProfileRepository>().getProfile();
-      await StorageService.saveAvatarUrl(profile.avatarUrl);
+      if (needsAvatar) {
+        await StorageService.saveAvatarUrl(profile.avatarUrl);
+      }
+      await StorageService.savePermissions(
+        profile.permissions,
+        roleKey: profile.roleKey,
+      );
+      if (mounted) {
+        final selectedId = _navItems[_selectedTabIndex].id;
+        setState(() {
+          _navItems = _buildNavItems();
+          final newIndex = _navItems.indexWhere((item) => item.id == selectedId);
+          _selectedTabIndex = newIndex >= 0 ? newIndex : 0;
+        });
+      }
     } catch (_) {
-      // تعذّر الجلب لا يمنع عرض اللوحة — تبقى الأحرف الأولى بديلاً.
+      // تعذّر الجلب لا يمنع عرض اللوحة — تُستخدم الصلاحيات المخزَّنة سابقاً.
     }
   }
 
@@ -461,6 +463,8 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         return const ComplaintsSupportView();
       case 'reviews':
         return const DriverReviewsScreen();
+      case 'ai_alerts':
+        return const AiAlertsScreen();
       case 'financial':
         return const FinancialDashboardScreen();
       case 'reports':
@@ -529,4 +533,4 @@ class NavigationItem {
   final int badge;
 
   NavigationItem(this.id, this.title, this.icon, {this.badge = 0});
-}
+}

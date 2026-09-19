@@ -7,16 +7,12 @@ import '../../logic/cubit/financial_cubit.dart';
 import '../../logic/state/financial_state.dart';
 import '../widget/financial_summary_grid.dart';
 import '../../../../core/widgets/admin_ui.dart';
-import 'disputes_screen.dart';
 import 'escrows_screen.dart';
-import 'financial_audit_logs_screen.dart';
 import 'financial_ledger_screen.dart';
 import 'invoices_screen.dart';
 import 'payment_methods_screen.dart';
 import 'pricing_settings_screen.dart';
 import 'recharges_screen.dart';
-import 'settlements_screen.dart';
-import 'solvency_check_screen.dart';
 import 'withdrawals_screen.dart';
 
 /// الشاشة الرئيسية للإدارة المالية.
@@ -122,9 +118,10 @@ class FinancialDashboardView extends StatelessWidget {
         summary: state.summary,
         onWithdrawalsTap: () =>
             _openAndRefresh(context, const WithdrawalsScreen()),
-        onRechargesTap: () => _openAndRefresh(context, const RechargesScreen()),
-        onDisputesTap: () => _openAndRefresh(context, const DisputesScreen()),
-        onEscrowsTap: () => _openAndRefresh(context, const EscrowsScreen()),
+        onRechargesTap: () =>
+            _openAndRefresh(context, const RechargesScreen()),
+        onEscrowsTap: () =>
+            _openAndRefresh(context, const EscrowsScreen()),
       );
     }
 
@@ -133,7 +130,7 @@ class FinancialDashboardView extends StatelessWidget {
 
   Widget _buildSectionsGrid(BuildContext context) {
     final sections = <_FinancialSection>[
-      // طلبات السحب والشحن والنزاعات والأمانات تُفتح من بطاقات الملخّص أعلاه،
+      // طلبات السحب والشحن والأمانات تُفتح من بطاقات الملخّص أعلاه،
       // لأنها تعرض العدد المعلّق أيضاً؛ فلا تتكرر هنا بمدخل ثانٍ.
       _FinancialSection(
         title: 'سجل الحركات المالية',
@@ -141,27 +138,6 @@ class FinancialDashboardView extends StatelessWidget {
         icon: Icons.swap_horiz_rounded,
         color: context.primaryColor,
         onTap: () => _open(context, const FinancialLedgerScreen()),
-      ),
-      _FinancialSection(
-        title: 'سجل عمليات المشرفين',
-        description: 'تدقيق إجراءات المشرفين المالية',
-        icon: Icons.fact_check_rounded,
-        color: context.infoColor,
-        onTap: () => _open(context, const FinancialAuditLogsScreen()),
-      ),
-      _FinancialSection(
-        title: 'التسويات الشهرية',
-        description: 'العقود الجاهزة للتسوية ومعاينة الإنهاء',
-        icon: Icons.assignment_turned_in_rounded,
-        color: context.primaryColor,
-        onTap: () => _openAndRefresh(context, const SettlementsScreen()),
-      ),
-      _FinancialSection(
-        title: 'فحص الملاءة المالية',
-        description: 'التحقق من اتساق أرصدة المنظومة',
-        icon: Icons.health_and_safety_rounded,
-        color: context.successColor,
-        onTap: () => _open(context, const SolvencyCheckScreen()),
       ),
       _FinancialSection(
         title: 'الفواتير',

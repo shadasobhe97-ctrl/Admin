@@ -43,6 +43,9 @@ import '../../features/complaints/logic/cubit/complaints_cubit.dart';
 import '../../features/admin_notifications/data/datasources/admin_notifications_remote_datasource.dart';
 import '../../features/admin_notifications/data/repositories/admin_notifications_repository.dart';
 import '../../features/admin_notifications/logic/cubit/admin_notifications_cubit.dart';
+import '../../features/ai_alerts/data/datasources/ai_alerts_remote_datasource.dart';
+import '../../features/ai_alerts/data/repositories/ai_alerts_repository.dart';
+import '../../features/ai_alerts/logic/cubit/ai_alerts_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -186,6 +189,17 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory<ComplaintsCubit>(
     () => ComplaintsCubit(sl<ComplaintsRepository>()),
+  );
+
+  // ── AI Alerts Feature ────────────────────────────────────────────────────────
+  sl.registerLazySingleton<AiAlertsRemoteDataSource>(
+    () => AiAlertsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AiAlertsRepository>(
+    () => AiAlertsRepositoryImpl(sl<AiAlertsRemoteDataSource>()),
+  );
+  sl.registerFactory<AiAlertsCubit>(
+    () => AiAlertsCubit(sl<AiAlertsRepository>()),
   );
 
   // ── Admin Audit Logs Feature (سجل إجراءات المشرفين) ───────────────────────

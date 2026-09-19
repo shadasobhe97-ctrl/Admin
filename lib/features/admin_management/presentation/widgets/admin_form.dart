@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/widgets/remote_circle_avatar.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../data/models/admin_model.dart';
@@ -145,8 +147,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (widget.isLoading) return;
 
-    final currentRoleId = StorageService.getRoleId();
-    final isCurrentMainAdmin = currentRoleId == 1;
+    final isCurrentMainAdmin =
+        AuthorizationService.hasPermission('admins.manage');
     final passwordText = _passwordController.text.trim();
 
     if (_isEditMode) {
@@ -181,8 +183,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currentRoleId = StorageService.getRoleId();
-    final isCurrentMainAdmin = currentRoleId == 1;
+    final isCurrentMainAdmin =
+        AuthorizationService.hasPermission('admins.manage');
 
     return BlocBuilder<AdminManagementCubit, AdminManagementState>(
       builder: (context, state) {

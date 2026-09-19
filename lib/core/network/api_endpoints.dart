@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://witty-otter-10.loca.lt/api';
+  static const String baseUrl = 'https://darby-app-api.loca.lt/api';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -179,4 +179,8 @@ class ApiEndpoints {
       '/admin/notifications/$id/read';
   static const String adminNotificationsReadAll =
       '/admin/notifications/read-all';
+
+  // ── AI Alerts (تنبيهات الذكاء الاصطناعي عن سلوك السائقين) ──────────────────
+  static const String aiAlerts = '/v1/admin/ai-alerts';
+  static String aiAlertDetails(dynamic id) => '/v1/admin/ai-alerts/$id';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/admin_colors.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 
 class DriverStatusBadge extends StatelessWidget {
@@ -58,7 +59,7 @@ class DriverStatusBadge extends StatelessWidget {
       case 'pending':
       default:
         bgColor = isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFFFBEB);
-        textColor = isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+        textColor = isDark ? AdminColors.warningFgDark : AdminColors.warningFgLight;
         icon = Icons.pending_rounded;
         label = 'قيد المراجعة';
         break;

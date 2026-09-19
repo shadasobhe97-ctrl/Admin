@@ -11,10 +11,16 @@ class ApiException implements Exception {
   /// تفاصيل أخطاء التحقق كما أرسلها الخادم في `errors`.
   final Map<String, List<String>> errors;
 
+  /// الصلاحية المطلوبة كما أرسلها الخادم عند 403 (`required_permission`)،
+  /// إن وُجدت. لا تُستخدم لأي حجب في الـ Frontend — الخادم هو المرجع
+  /// الحقيقي؛ متاحة فقط لعرض رسالة أدق للمستخدم إن احتاجتها واجهة ما.
+  final String? requiredPermission;
+
   const ApiException(
     this.message, {
     this.statusCode,
     this.errors = const {},
+    this.requiredPermission,
   });
 
   bool get isUnauthorized => statusCode == 401;
@@ -58,12 +64,14 @@ class ApiErrorMapper {
 
       final parsedErrors = _parseErrors(data);
       final serverMessage = _parseMessage(data);
+      final requiredPermission = _parseRequiredPermission(data);
 
       if (serverMessage != null) {
         return ApiException(
           serverMessage,
           statusCode: statusCode,
           errors: parsedErrors,
+          requiredPermission: requiredPermission,
         );
       }
 
@@ -72,6 +80,7 @@ class ApiErrorMapper {
           parsedErrors.values.first.first,
           statusCode: statusCode,
           errors: parsedErrors,
+          requiredPermission: requiredPermission,
         );
       }
 
@@ -80,6 +89,7 @@ class ApiErrorMapper {
             _messageForDioType(error.type) ??
             fallbackMessage,
         statusCode: statusCode,
+        requiredPermission: requiredPermission,
       );
     }
 
@@ -88,6 +98,16 @@ class ApiErrorMapper {
           ? fallbackMessage
           : error.toString().replaceAll('Exception: ', ''),
     );
+  }
+
+  static String? _parseRequiredPermission(dynamic data) {
+    if (data is Map) {
+      final value = data['required_permission'];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return null;
   }
 
   static String? _parseMessage(dynamic data) {

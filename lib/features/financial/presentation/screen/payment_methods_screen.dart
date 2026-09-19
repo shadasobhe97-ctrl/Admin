@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/widgets/admin_ui.dart';
+import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/payment_method_model.dart';
 import '../../logic/cubit/financial_cubit.dart';
 import '../../logic/state/financial_state.dart';
-import '../../../../core/widgets/admin_ui.dart';
 import '../widget/payment_method_form_dialog.dart';
 
 /// شاشة إدارة طرق الدفع للإدارة المالية.
@@ -37,7 +39,7 @@ class _PaymentMethodsView extends StatelessWidget {
         onSubmit: (method) {
           final cubit = context.read<FinancialCubit>();
           if (methodToEdit != null && methodToEdit.id != null) {
-            cubit.updatePaymentMethod(methodToEdit.id!, method);
+            cubit.updatePaymentMethod(methodToEdit.id!, method, methodToEdit);
           } else {
             cubit.createPaymentMethod(method);
           }
@@ -96,7 +98,7 @@ class _PaymentMethodsView extends StatelessWidget {
             IconButton(
               tooltip: 'تحديث القائمة',
               onPressed: () =>
-                  context.read<FinancialCubit>().loadPaymentMethods(),
+                  context.read<FinancialCubit>().loadPaymentMethods(page: 1),
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
@@ -120,16 +122,17 @@ class _PaymentMethodsView extends StatelessWidget {
               return AdminErrorView(
                 message: state.message,
                 onRetry: () =>
-                    context.read<FinancialCubit>().loadPaymentMethods(),
+                    context.read<FinancialCubit>().loadPaymentMethods(page: 1),
               );
             }
 
-            final methods = state is PaymentMethodsLoaded
-                ? state.methods
-                : <PaymentMethodModel>[];
-            final actionId = state is PaymentMethodsLoaded
-                ? state.actionMethodId
-                : null;
+            final loaded =
+                state is PaymentMethodsLoaded ? state : null;
+            final methods = loaded?.methods ?? const <PaymentMethodModel>[];
+            final actionId = loaded?.actionMethodId;
+            final meta = loaded?.meta;
+            final canManage =
+                AuthorizationService.hasPermission('financial.manage_payment_methods');
 
             return ListView(
               padding: const EdgeInsets.all(20),
@@ -146,11 +149,12 @@ class _PaymentMethodsView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _openFormDialog(context),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('إضافة طريقة دفع'),
-                    ),
+                    if (canManage)
+                      ElevatedButton.icon(
+                        onPressed: () => _openFormDialog(context),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('إضافة طريقة دفع'),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -170,12 +174,13 @@ class _PaymentMethodsView extends StatelessWidget {
                         ),
                         child: DataTable(
                           headingRowHeight: 44,
-                          dataRowMaxHeight: 56,
+                          dataRowMaxHeight: 64,
                           columns: const [
+                            DataColumn(label: Text('الأيقونة')),
                             DataColumn(label: Text('اسم الطريقة')),
                             DataColumn(label: Text('الكود (Code)')),
-                            DataColumn(label: Text('الجمهور')),
-                            DataColumn(label: Text('نوع المعالجة')),
+                            DataColumn(label: Text('الحد الأدنى')),
+                            DataColumn(label: Text('الحد الأقصى')),
                             DataColumn(label: Text('الترتيب')),
                             DataColumn(label: Text('الحالة')),
                             DataColumn(label: Text('الإجراءات')),
@@ -184,31 +189,15 @@ class _PaymentMethodsView extends StatelessWidget {
                             for (final item in methods)
                               DataRow(
                                 cells: [
+                                  DataCell(_buildIconCell(context, item)),
                                   DataCell(
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.nameAr,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: context.textPrimary,
-                                          ),
-                                        ),
-                                        if (item.nameEn != null &&
-                                            item.nameEn!.isNotEmpty)
-                                          Text(
-                                            item.nameEn!,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: context.textMuted,
-                                            ),
-                                          ),
-                                      ],
+                                    Text(
+                                      item.nameAr,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.textPrimary,
+                                      ),
                                     ),
                                   ),
                                   DataCell(
@@ -221,14 +210,22 @@ class _PaymentMethodsView extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  DataCell(Text(item.targetAudienceLabel)),
-                                  DataCell(Text(item.processingTypeLabel)),
+                                  DataCell(
+                                    Text(item.minAmount?.toString() ?? '—'),
+                                  ),
+                                  DataCell(
+                                    Text(item.maxAmount?.toString() ?? '—'),
+                                  ),
                                   DataCell(Text('${item.sortOrder}')),
                                   DataCell(
                                     _buildStatusChip(context, item.isActive),
                                   ),
                                   DataCell(
-                                    Row(
+                                    !canManage
+                                        ? Text('—',
+                                            style: TextStyle(
+                                                color: context.textMuted))
+                                        : Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         IconButton(
@@ -301,11 +298,70 @@ class _PaymentMethodsView extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (meta != null && meta.lastPage > 1) ...[
+                  const SizedBox(height: 16),
+                  _buildPaginationBar(context, meta),
+                ],
               ],
             );
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildIconCell(BuildContext context, PaymentMethodModel item) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: context.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: context.borderSoft),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: (item.iconUrl != null && item.iconUrl!.isNotEmpty)
+          ? RemoteImage(
+              rawUrl: item.iconUrl,
+              fit: BoxFit.cover,
+              fallback: Icon(Icons.image_outlined,
+                  size: 20, color: context.textMuted),
+            )
+          : Icon(Icons.image_outlined, size: 20, color: context.textMuted),
+    );
+  }
+
+  Widget _buildPaginationBar(BuildContext context, meta) {
+    final canPrev = meta.currentPage > 1;
+    final canNext = meta.hasMore;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          'الإجمالي: ${meta.total} — صفحة ${meta.currentPage} من ${meta.lastPage}',
+          style: TextStyle(fontSize: 12, color: context.textMuted),
+        ),
+        const SizedBox(width: 16),
+        OutlinedButton.icon(
+          onPressed: canPrev
+              ? () => context
+                  .read<FinancialCubit>()
+                  .loadPaymentMethods(page: meta.currentPage - 1)
+              : null,
+          icon: const Icon(Icons.chevron_right_rounded, size: 16),
+          label: const Text('السابق'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: canNext
+              ? () => context
+                  .read<FinancialCubit>()
+                  .loadPaymentMethods(page: meta.currentPage + 1)
+              : null,
+          icon: const Icon(Icons.chevron_left_rounded, size: 16),
+          label: const Text('التالي'),
+        ),
+      ],
     );
   }
 

@@ -12,18 +12,19 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
 
   // ── Splash: فحص الجلسة المحفوظة ────────────────────────────────────────────
   Future<bool> checkAuthStatus() async {
-    final token  = StorageService.getToken();
-    final roleId = StorageService.getRoleId();
+    final token = StorageService.getToken();
 
-    if (token != null && token.isNotEmpty && (roleId == 1 || roleId == 2)) {
+    if (token != null && token.isNotEmpty) {
       emit(state.copyWith(
         currentUser: AdminUserModel(
           id:          StorageService.getUserId()    ?? 0,
           fullName:    StorageService.getUserName()  ?? 'الآدمن الرئيسي',
           phoneNumber: StorageService.getUserPhone() ?? '',
           email:       StorageService.getUserEmail() ?? 'admin@darby.ly',
-          roleId:      roleId ?? 1,
+          roleId:      StorageService.getRoleId()    ?? 0,
           roleName:    StorageService.getRoleName()  ?? 'مدير النظام',
+          roleKey:     StorageService.getRoleKey(),
+          permissions: StorageService.getPermissions(),
           isActive:    true,
           accessToken: token,
         ),
@@ -52,25 +53,17 @@ class AdminAuthCubit extends Cubit<AdminAuthState> {
 
       final user = await _repository.login(request);
 
-      if (user.roleId != 1 && user.roleId != 2) {
-        emit(state.copyWith(
-          isLoading:    false,
-          errorMessage: 'هذا الحساب لا يمتلك صلاحية الوصول للوحة التحكم.',
-        ));
-        return false;
-      }
-
-      await StorageService.saveSession(
-        token:     user.accessToken,
-        roleId:    user.roleId,
-        roleName:  user.roleName,
-        userId:    user.id,
-        userName:  user.fullName,
-        userPhone: user.phoneNumber,
-        userEmail: user.email,
-        roleKey:   user.roleKey,
+      await StorageService.saveUserSession(
+        token: user.accessToken,
+        roleId: user.roleId,
+        roleName: user.roleName,
+        roleKey: user.roleKey,
         permissions: user.permissions,
         customPermissions: user.customPermissions,
+        userId: user.id,
+        userName: user.fullName,
+        userPhone: user.phoneNumber,
+        userEmail: user.email,
       );
 
       emit(state.copyWith(

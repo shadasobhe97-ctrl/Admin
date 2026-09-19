@@ -1,16 +1,12 @@
 import '../../data/models/escrow_summary_model.dart';
-import '../../data/models/financial_audit_log_model.dart';
-import '../../data/models/financial_dispute_model.dart';
 import '../../data/models/financial_invoice_model.dart';
 import '../../data/models/financial_summary_model.dart';
 import '../../data/models/ledger_entry_model.dart';
 import '../../../../core/models/paginated_result.dart';
+import '../../../../core/models/pagination_meta_model.dart';
 import '../../data/models/payment_method_model.dart';
 import '../../data/models/pricing_settings_model.dart';
 import '../../data/models/recharge_model.dart';
-import '../../data/models/settlement_contract_model.dart';
-import '../../data/models/solvency_check_model.dart';
-import '../../data/models/termination_preview_model.dart';
 import '../../data/models/trip_cancellation_preview_model.dart';
 import '../../data/models/withdrawal_model.dart';
 
@@ -58,28 +54,6 @@ class LedgerEmpty extends FinancialState {
 class LedgerError extends FinancialState {
   final String message;
   const LedgerError(this.message);
-}
-
-// ── Audit Logs ───────────────────────────────────────────────────────────────
-
-class AuditLogsLoading extends FinancialState {
-  const AuditLogsLoading();
-}
-
-class AuditLogsLoaded extends FinancialState {
-  final PaginatedResult<FinancialAuditLogModel> result;
-  final String? search;
-  const AuditLogsLoaded(this.result, {this.search});
-}
-
-class AuditLogsEmpty extends FinancialState {
-  final String? search;
-  const AuditLogsEmpty({this.search});
-}
-
-class AuditLogsError extends FinancialState {
-  final String message;
-  const AuditLogsError(this.message);
 }
 
 // ── Withdrawals ──────────────────────────────────────────────────────────────
@@ -199,117 +173,10 @@ class EscrowError extends FinancialState {
   const EscrowError(this.message);
 }
 
-// ── Disputes ─────────────────────────────────────────────────────────────────
-
-class DisputesLoading extends FinancialState {
-  const DisputesLoading();
-}
-
-class DisputesLoaded extends FinancialState {
-  final PaginatedResult<FinancialDisputeModel> result;
-  final String? status;
-  const DisputesLoaded(this.result, {this.status});
-}
-
-class DisputesEmpty extends FinancialState {
-  final String? status;
-  const DisputesEmpty({this.status});
-}
-
-class DisputeDetailsLoading extends FinancialState {
-  const DisputeDetailsLoading();
-}
-
-class DisputeDetailsLoaded extends FinancialState {
-  final FinancialDisputeModel dispute;
-  final bool isResolving;
-  const DisputeDetailsLoaded(this.dispute, {this.isResolving = false});
-}
-
-class DisputeResolved extends FinancialState {
-  final String message;
-  const DisputeResolved(this.message);
-}
-
-class DisputeError extends FinancialState {
-  final String message;
-  const DisputeError(this.message);
-}
-
-// ── Settlements ──────────────────────────────────────────────────────────────
-
-class SettlementsLoading extends FinancialState {
-  const SettlementsLoading();
-}
-
-class SettlementsLoaded extends FinancialState {
-  final PaginatedResult<SettlementContractModel> result;
-
-  /// معرّف العقد الجاري تسويته حالياً (لتعطيل زره فقط دون بقية الصفحة).
-  final int? processingContractId;
-
-  const SettlementsLoaded(this.result, {this.processingContractId});
-
-  SettlementsLoaded copyWith({
-    PaginatedResult<SettlementContractModel>? result,
-    int? processingContractId,
-    bool clearProcessing = false,
-  }) {
-    return SettlementsLoaded(
-      result ?? this.result,
-      processingContractId:
-          clearProcessing ? null : (processingContractId ?? this.processingContractId),
-    );
-  }
-}
-
-class SettlementsEmpty extends FinancialState {
-  const SettlementsEmpty();
-}
-
-class SettlementSuccess extends FinancialState {
-  final String message;
-  final MonthlySettlementResultModel result;
-  const SettlementSuccess(this.message, this.result);
-}
-
-class SettlementError extends FinancialState {
-  final String message;
-  const SettlementError(this.message);
-}
-
-// ── Previews (Termination / Trip Cancellation) ───────────────────────────────
+// ── Previews (Trip Cancellation) ─────────────────────────────────────────────
 
 class PreviewLoading extends FinancialState {
   const PreviewLoading();
-}
-
-class TerminationPreviewLoaded extends FinancialState {
-  final TerminationPreviewModel preview;
-  final String terminatedBy;
-  final bool isArbitraryParent;
-  final bool isExecuting;
-
-  const TerminationPreviewLoaded(
-    this.preview, {
-    required this.terminatedBy,
-    required this.isArbitraryParent,
-    this.isExecuting = false,
-  });
-
-  TerminationPreviewLoaded copyWith({bool? isExecuting}) {
-    return TerminationPreviewLoaded(
-      preview,
-      terminatedBy: terminatedBy,
-      isArbitraryParent: isArbitraryParent,
-      isExecuting: isExecuting ?? this.isExecuting,
-    );
-  }
-}
-
-class TerminationExecuted extends FinancialState {
-  final String message;
-  const TerminationExecuted(this.message);
 }
 
 class TripCancellationPreviewLoaded extends FinancialState {
@@ -340,22 +207,6 @@ class TripCancellationExecuted extends FinancialState {
 class PreviewError extends FinancialState {
   final String message;
   const PreviewError(this.message);
-}
-
-// ── Solvency ─────────────────────────────────────────────────────────────────
-
-class SolvencyLoading extends FinancialState {
-  const SolvencyLoading();
-}
-
-class SolvencyLoaded extends FinancialState {
-  final SolvencyCheckModel solvency;
-  const SolvencyLoaded(this.solvency);
-}
-
-class SolvencyError extends FinancialState {
-  final String message;
-  const SolvencyError(this.message);
 }
 
 // ── Invoices ─────────────────────────────────────────────────────────────────
@@ -437,17 +288,24 @@ class PaymentMethodsLoading extends FinancialState {
 
 class PaymentMethodsLoaded extends FinancialState {
   final List<PaymentMethodModel> methods;
+  final PaginationMetaModel meta;
   final int? actionMethodId;
 
-  const PaymentMethodsLoaded(this.methods, {this.actionMethodId});
+  const PaymentMethodsLoaded(
+    this.methods, {
+    this.meta = const PaginationMetaModel(),
+    this.actionMethodId,
+  });
 
   PaymentMethodsLoaded copyWith({
     List<PaymentMethodModel>? methods,
+    PaginationMetaModel? meta,
     int? actionMethodId,
     bool clearAction = false,
   }) {
     return PaymentMethodsLoaded(
       methods ?? this.methods,
+      meta: meta ?? this.meta,
       actionMethodId:
           clearAction ? null : (actionMethodId ?? this.actionMethodId),
     );

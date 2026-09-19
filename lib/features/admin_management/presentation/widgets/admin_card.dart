@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/admin_model.dart';
 import '../../logic/admin_management_cubit.dart';
@@ -78,8 +78,8 @@ class AdminCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isTargetMainAdmin = admin.roleId == 1;
-    final currentRoleId = StorageService.getRoleId();
-    final isCurrentMainAdmin = currentRoleId == 1;
+    final isCurrentMainAdmin =
+        AuthorizationService.hasPermission('admins.manage');
 
     return Card(
       color: theme.cardColor,
@@ -216,7 +216,7 @@ class AdminCard extends StatelessWidget {
                     Tooltip(
                       message: isCurrentMainAdmin
                           ? (admin.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب')
-                          : 'تغيير حالة تفعيل حسابات المشرفين متاح للمدير الرئيسي فقط',
+                          : 'لا تملك صلاحية تغيير حالة تفعيل حسابات المشرفين',
                       child: Switch(
                         value: admin.isActive,
                         onChanged: isCurrentMainAdmin ? onToggleStatus : null,
