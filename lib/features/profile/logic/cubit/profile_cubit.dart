@@ -30,8 +30,9 @@ class ProfileCubit extends Cubit<ProfileState> {
       await StorageService.saveAvatarUrl(profile.avatarUrl);
       // تحديث الصلاحيات من أحدث استجابة للبروفايل (RBAC V2).
       await StorageService.savePermissions(
-        profile.permissions,
+        permissions: profile.permissions,
         roleKey: profile.roleKey,
+        customPermissions: profile.customPermissions,
       );
 
       emit(ProfileLoaded(

@@ -77,7 +77,47 @@ class StorageService {
     if (avatarUrl != null) await saveAvatarUrl(avatarUrl);
   }
 
-  static Future<void> saveAvatarUrl(String? url) async {
+  static Future<void> saveSession({
+    required String token,
+    int? roleId,
+    String? roleName,
+    String? roleKey,
+    List<String> permissions = const [],
+    List<String> customPermissions = const [],
+    int? userId,
+    String? userName,
+    String? userPhone,
+    String? userEmail,
+    String? avatarUrl,
+  }) async {
+    await saveUserSession(
+      token: token,
+      roleId: roleId,
+      roleName: roleName,
+      roleKey: roleKey,
+      permissions: permissions,
+      customPermissions: customPermissions,
+      userId: userId,
+      userName: userName,
+      userPhone: userPhone,
+      userEmail: userEmail,
+      avatarUrl: avatarUrl,
+    );
+  }
+
+  static Future<void> savePermissions({
+    String? roleKey,
+    List<String> permissions = const [],
+    List<String> customPermissions = const [],
+  }) async {
+    if (roleKey != null) {
+      await _prefs?.setString(_roleKeyKey, roleKey);
+    }
+    await _prefs?.setStringList(_permissionsKey, permissions);
+    await _prefs?.setStringList(_customPermissionsKey, customPermissions);
+  }
+
+  static Future<void> saveAvatarUrl(String? url, {bool? bustCache}) async {
     if (url != null && url.isNotEmpty) {
       await _prefs?.setString(_avatarUrlKey, url);
       avatarUrlListenable.value = url;

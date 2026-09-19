@@ -95,8 +95,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         await StorageService.saveAvatarUrl(profile.avatarUrl);
       }
       await StorageService.savePermissions(
-        profile.permissions,
+        permissions: profile.permissions,
         roleKey: profile.roleKey,
+        customPermissions: profile.customPermissions,
       );
       if (mounted) {
         final selectedId = _navItems[_selectedTabIndex].id;

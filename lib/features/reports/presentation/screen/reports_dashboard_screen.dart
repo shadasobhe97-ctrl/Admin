@@ -40,7 +40,7 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!PermissionHelper.hasPermission('reports.view')) {
+    if (!AuthorizationService.hasPermission('reports.view')) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

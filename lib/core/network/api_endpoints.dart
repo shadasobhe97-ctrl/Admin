@@ -4,6 +4,7 @@ class ApiEndpoints {
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
   static const String logout = '/auth/logout';
+  static const String deviceToken = '/user/device-token';
 
   // Password Reset Flow (3-step)
   static const String passwordSendOtp = '/auth/password/send-otp';
