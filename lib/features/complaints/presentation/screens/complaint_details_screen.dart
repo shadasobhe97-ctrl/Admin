@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../logic/cubit/complaints_cubit.dart';
 import '../../logic/state/complaints_state.dart';
@@ -150,16 +151,7 @@ class ComplaintDetailsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          complaint.title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textPrimary,
-                          ),
-                        ),
                         if (complaint.createdAt != null) ...[
-                          const SizedBox(height: 4),
                           Text(
                             'تاريخ التقديم: ${complaint.createdAt}',
                             style: TextStyle(
@@ -167,8 +159,8 @@ class ComplaintDetailsScreen extends StatelessWidget {
                               color: context.textMuted,
                             ),
                           ),
+                          const SizedBox(height: 12),
                         ],
-                        const SizedBox(height: 12),
                         Divider(color: context.borderSoft),
                         const SizedBox(height: 12),
                         Text(
@@ -261,12 +253,25 @@ class ComplaintDetailsScreen extends StatelessWidget {
                                 ? '#${complaint.trip!.id}'
                                 : 'لا تتبع رحلة',
                           ),
-                          if (complaint.trip != null)
+                          if (complaint.trip != null) ...[
+                            if (complaint.trip!.tripDate != null)
+                              _buildDetailRow(
+                                context,
+                                'تاريخ الرحلة',
+                                complaint.trip!.tripDate!,
+                              ),
+                            if (complaint.trip!.tripType != null)
+                              _buildDetailRow(
+                                context,
+                                'نوع الرحلة',
+                                complaint.trip!.tripType!,
+                              ),
                             _buildDetailRow(
                               context,
                               'حالة الرحلة',
                               complaint.trip!.status,
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -315,7 +320,16 @@ class ComplaintDetailsScreen extends StatelessWidget {
                         Divider(color: context.borderSoft),
                         const SizedBox(height: 12),
 
-                        if (complaint.status == 'pending') ...[
+                        if (complaint.status == 'pending' &&
+                            !AuthorizationService.hasPermission('complaints.resolve')) ...[
+                          Text(
+                            'هذه الشكوى قيد الانتظار لم يتم اتخاذ قرار فيها بعد. لا تملك صلاحية اتخاذ قرار بشأنها.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.textMuted,
+                            ),
+                          ),
+                        ] else if (complaint.status == 'pending') ...[
                           Text(
                             'هذه الشكوى قيد الانتظار لم يتم اتخاذ قرار فيها بعد. يرجى اختيار أحد القرارات التالية:',
                             style: TextStyle(
@@ -443,6 +457,24 @@ class ComplaintDetailsScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ],
+                          if (complaint.resolvedAt != null ||
+                              complaint.resolvedBy != null) ...[
+                            const SizedBox(height: 12),
+                            Divider(color: context.borderSoft),
+                            const SizedBox(height: 12),
+                            if (complaint.resolvedBy != null)
+                              _buildDetailRow(
+                                context,
+                                'تم الحل بواسطة',
+                                complaint.resolvedBy!.name,
+                              ),
+                            if (complaint.resolvedAt != null)
+                              _buildDetailRow(
+                                context,
+                                'تاريخ الحل',
+                                complaint.resolvedAt!,
+                              ),
                           ],
                         ],
                       ],

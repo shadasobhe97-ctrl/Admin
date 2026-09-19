@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/services/storage_service.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../admin_audit_logs/presentation/screen/audit_logs_screen.dart';
 import '../../data/models/admin_model.dart';
@@ -19,7 +19,7 @@ class AdminsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (StorageService.getRoleId() != 1) {
+    if (!AuthorizationService.hasPermission('admins.manage')) {
       return Scaffold(
         backgroundColor: context.scaffoldBackgroundColor,
         body: Directionality(
@@ -160,9 +160,9 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // سجل الإجراءات للأدمن العام فقط؛ الحماية الفعلية
-                            // على الخادم (403) وهذا الإخفاء لتجربة المستخدم.
-                            if (canViewAuditLogs()) ...[
+                            // الحماية الفعلية على الخادم (403)، وهذا الإخفاء
+                            // لتجربة المستخدم فقط.
+                            if (AuthorizationService.hasPermission('audit_logs.view')) ...[
                               OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../../../core/widgets/admin_pagination.dart';
@@ -70,11 +71,13 @@ class _DriversPerformanceContentState
               subtitle: 'الترتيب وحالة وثائق المركبات',
               isBusy: isBusy,
               onRefresh: cubit.loadDriversPerformance,
-              onExport: () => openReportExportDialog(
-                context,
-                initialType: ReportType.drivers,
-                filters: filters,
-              ),
+              onExport: AuthorizationService.hasPermission('reports.export')
+                  ? () => openReportExportDialog(
+                        context,
+                        initialType: ReportType.drivers,
+                        filters: filters,
+                      )
+                  : null,
               filters: Row(
                 children: [
                   Expanded(

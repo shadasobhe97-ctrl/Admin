@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../data/models/location_change_fee_tier_model.dart';
@@ -479,6 +480,7 @@ class _PricingSettingsViewState extends State<_PricingSettingsView> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    if (AuthorizationService.hasPermission('financial.manage_pricing'))
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ElevatedButton.icon(

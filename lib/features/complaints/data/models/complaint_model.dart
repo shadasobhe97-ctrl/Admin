@@ -52,10 +52,14 @@ class ComplaintDriverModel {
 
 class ComplaintTripModel {
   final int id;
+  final String? tripDate;
+  final String? tripType;
   final String status;
 
   const ComplaintTripModel({
     required this.id,
+    this.tripDate,
+    this.tripType,
     required this.status,
   });
 
@@ -67,14 +71,37 @@ class ComplaintTripModel {
       id: json['id'] is int
           ? json['id']
           : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      tripDate: json['trip_date']?.toString(),
+      tripType: json['trip_type']?.toString(),
       status: json['status']?.toString() ?? 'غير محدد',
+    );
+  }
+}
+
+class ComplaintResolvedByModel {
+  final int id;
+  final String name;
+
+  const ComplaintResolvedByModel({
+    required this.id,
+    required this.name,
+  });
+
+  factory ComplaintResolvedByModel.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return const ComplaintResolvedByModel(id: 0, name: 'غير معروف');
+    }
+    return ComplaintResolvedByModel(
+      id: json['id'] is int
+          ? json['id']
+          : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
+      name: json['name']?.toString() ?? 'غير معروف',
     );
   }
 }
 
 class ComplaintModel {
   final int id;
-  final String title;
   final String description;
   final String status; // 'pending' | 'completed' | 'dismissed'
   final String actionTaken; // 'none' | 'warning' | 'suspension' | 'dismiss'
@@ -83,10 +110,11 @@ class ComplaintModel {
   final ComplaintDriverModel? driver;
   final ComplaintTripModel? trip;
   final String? createdAt;
+  final String? resolvedAt;
+  final ComplaintResolvedByModel? resolvedBy;
 
   const ComplaintModel({
     required this.id,
-    required this.title,
     required this.description,
     required this.status,
     required this.actionTaken,
@@ -95,13 +123,14 @@ class ComplaintModel {
     this.driver,
     this.trip,
     this.createdAt,
+    this.resolvedAt,
+    this.resolvedBy,
   });
 
   factory ComplaintModel.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return const ComplaintModel(
         id: 0,
-        title: '',
         description: '',
         status: 'pending',
         actionTaken: 'none',
@@ -111,7 +140,6 @@ class ComplaintModel {
       id: json['id'] is int
           ? json['id']
           : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
-      title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       status: json['status']?.toString() ?? 'pending',
       actionTaken: json['action_taken']?.toString() ?? 'none',
@@ -128,6 +156,11 @@ class ComplaintModel {
           ? ComplaintTripModel.fromJson(json['trip'] as Map<String, dynamic>?)
           : null,
       createdAt: json['created_at']?.toString(),
+      resolvedAt: json['resolved_at']?.toString(),
+      resolvedBy: json['resolved_by'] != null
+          ? ComplaintResolvedByModel.fromJson(
+              json['resolved_by'] as Map<String, dynamic>?)
+          : null,
     );
   }
 }

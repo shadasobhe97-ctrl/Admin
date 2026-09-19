@@ -31,6 +31,16 @@ class ApiClient {
           }
           return handler.next(options);
         },
+        // 401 يعني أن الجلسة/التوكن غير صالحة على الخادم — نمسح الجلسة
+        // المحلية فوراً بدل أن تبقى واجهة قديمة تستخدم توكن مرفوض. لا يوجد
+        // تنقّل تلقائي إلى شاشة الدخول هنا لعدم وجود navigatorKey عام في
+        // المشروع؛ الشاشة التالية التي تفحص الجلسة (splash) ستجدها فارغة.
+        onError: (error, handler) {
+          if (error.response?.statusCode == 401) {
+            StorageService.clearSession();
+          }
+          return handler.next(error);
+        },
       ),
     );
   }

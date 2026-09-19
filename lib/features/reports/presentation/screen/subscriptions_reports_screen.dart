@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../data/models/report_filters.dart';
 import '../../logic/cubit/reports_cubit.dart';
@@ -47,11 +48,13 @@ class _SubscriptionsReportsContent extends StatelessWidget {
               subtitle: 'الأنواع والحالات والعقود القريبة من الانتهاء',
               isBusy: isBusy,
               onRefresh: cubit.loadSubscriptionsReport,
-              onExport: () => openReportExportDialog(
-                context,
-                initialType: ReportType.subscriptions,
-                filters: filters,
-              ),
+              onExport: AuthorizationService.hasPermission('reports.export')
+                  ? () => openReportExportDialog(
+                        context,
+                        initialType: ReportType.subscriptions,
+                        filters: filters,
+                      )
+                  : null,
               filters: Wrap(
                 spacing: 16,
                 runSpacing: 12,

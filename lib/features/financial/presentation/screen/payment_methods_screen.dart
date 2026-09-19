@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../../../core/widgets/remote_image.dart';
@@ -130,6 +131,8 @@ class _PaymentMethodsView extends StatelessWidget {
             final methods = loaded?.methods ?? const <PaymentMethodModel>[];
             final actionId = loaded?.actionMethodId;
             final meta = loaded?.meta;
+            final canManage =
+                AuthorizationService.hasPermission('financial.manage_payment_methods');
 
             return ListView(
               padding: const EdgeInsets.all(20),
@@ -146,11 +149,12 @@ class _PaymentMethodsView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _openFormDialog(context),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('إضافة طريقة دفع'),
-                    ),
+                    if (canManage)
+                      ElevatedButton.icon(
+                        onPressed: () => _openFormDialog(context),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('إضافة طريقة دفع'),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -217,7 +221,11 @@ class _PaymentMethodsView extends StatelessWidget {
                                     _buildStatusChip(context, item.isActive),
                                   ),
                                   DataCell(
-                                    Row(
+                                    !canManage
+                                        ? Text('—',
+                                            style: TextStyle(
+                                                color: context.textMuted))
+                                        : Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         IconButton(

@@ -118,8 +118,10 @@ class FinancialDashboardView extends StatelessWidget {
         summary: state.summary,
         onWithdrawalsTap: () =>
             _openAndRefresh(context, const WithdrawalsScreen()),
-        onRechargesTap: () => _openAndRefresh(context, const RechargesScreen()),
-        onEscrowsTap: () => _openAndRefresh(context, const EscrowsScreen()),
+        onRechargesTap: () =>
+            _openAndRefresh(context, const RechargesScreen()),
+        onEscrowsTap: () =>
+            _openAndRefresh(context, const EscrowsScreen()),
       );
     }
 

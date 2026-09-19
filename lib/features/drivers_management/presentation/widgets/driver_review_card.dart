@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../data/models/driver_review_model.dart';
 
 class DriverReviewCard extends StatelessWidget {
@@ -144,11 +145,12 @@ class DriverReviewCard extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              tooltip: 'الحذف النهائي للتقييم من السيرفر',
-              icon: const Icon(Icons.delete_forever_rounded, color: Color(0xFFE11D48), size: 20),
-              onPressed: () => _showDeleteConfirmation(context),
-            ),
+            if (AuthorizationService.hasPermission('driver_reviews.manage'))
+              IconButton(
+                tooltip: 'الحذف النهائي للتقييم من السيرفر',
+                icon: const Icon(Icons.delete_forever_rounded, color: Color(0xFFE11D48), size: 20),
+                onPressed: () => _showDeleteConfirmation(context),
+              ),
           ],
         ),
       ),

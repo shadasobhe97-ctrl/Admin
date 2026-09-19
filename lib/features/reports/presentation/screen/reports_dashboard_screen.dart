@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../data/models/report_filters.dart';
@@ -101,11 +102,13 @@ class _KpiOverviewContent extends StatelessWidget {
               subtitle: 'نظرة عامة على المستخدمين والرحلات والإيرادات',
               isBusy: isBusy,
               onRefresh: cubit.loadKpiSummary,
-              onExport: () => openReportExportDialog(
-                context,
-                initialType: ReportType.kpi,
-                filters: cubit.filters,
-              ),
+              onExport: AuthorizationService.hasPermission('reports.export')
+                  ? () => openReportExportDialog(
+                        context,
+                        initialType: ReportType.kpi,
+                        filters: cubit.filters,
+                      )
+                  : null,
             ),
             const SizedBox(height: 18),
             Expanded(child: _buildBody(context, state)),

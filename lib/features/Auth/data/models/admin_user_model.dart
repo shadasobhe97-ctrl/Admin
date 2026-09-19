@@ -5,6 +5,8 @@ class AdminUserModel {
   final String email;
   final int roleId;
   final String roleName;
+  final String? roleKey;
+  final List<String> permissions;
   final bool isActive;
   final String accessToken;
   final String tokenType;
@@ -16,6 +18,8 @@ class AdminUserModel {
     this.email = '',
     required this.roleId,
     this.roleName = 'مدير النظام',
+    this.roleKey,
+    this.permissions = const [],
     required this.isActive,
     required this.accessToken,
     this.tokenType = 'Bearer',
@@ -36,6 +40,11 @@ class AdminUserModel {
       parsedRoleId = userData['role_id'] is int ? userData['role_id'] : (int.tryParse(userData['role_id'].toString()) ?? 1);
     }
 
+    final rawPermissions = userData['permissions'];
+    final parsedPermissions = rawPermissions is List
+        ? rawPermissions.map((e) => e.toString()).toList()
+        : <String>[];
+
     return AdminUserModel(
       id: parsedId,
       fullName: userData['full_name'] ?? json['full_name'] ?? userData['name'] ?? 'الآدمن الرئيسي',
@@ -43,6 +52,8 @@ class AdminUserModel {
       email: userData['email'] ?? json['email'] ?? '',
       roleId: parsedRoleId,
       roleName: json['role_name'] ?? userData['role_name'] ?? 'مدير النظام',
+      roleKey: userData['role_key']?.toString(),
+      permissions: parsedPermissions,
       isActive: userData['is_active'] == true || userData['is_active'] == 1 || userData['is_active'] == null,
       accessToken: json['access_token'] ?? json['token'] ?? '',
       tokenType: json['token_type'] ?? 'Bearer',
@@ -57,6 +68,8 @@ class AdminUserModel {
       'email': email,
       'role_id': roleId,
       'role_name': roleName,
+      if (roleKey != null) 'role_key': roleKey,
+      'permissions': permissions,
       'is_active': isActive,
       'access_token': accessToken,
       'token_type': tokenType,

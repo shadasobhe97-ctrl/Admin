@@ -8,6 +8,8 @@ class AdminProfileModel {
   final bool? isActive;
   final int? roleId;
   final String? roleName;
+  final String? roleKey;
+  final List<String> permissions;
   final int? createdBy;
   final String? creatorName;
   final String? createdAt;
@@ -25,6 +27,8 @@ class AdminProfileModel {
     this.isActive,
     this.roleId,
     this.roleName,
+    this.roleKey,
+    this.permissions = const [],
     this.createdBy,
     this.creatorName,
     this.createdAt,
@@ -52,6 +56,18 @@ class AdminProfileModel {
       return str == '1' || str == 'true';
     }
 
+    // بعض استجابات الـ backend قد تضع role_key/permissions على مستوى الجذر
+    // مباشرة (نفس نمط بقية حقول هذا الموديل)، وبعضها ضمن كائن `user` متداخل
+    // (كما في استجابة تسجيل الدخول) — نتحقق من الاحتمالين دون افتراض واحد قاطع.
+    final nestedUser = json['user'] is Map<String, dynamic>
+        ? json['user'] as Map<String, dynamic>
+        : null;
+
+    final rawPermissions = json['permissions'] ?? nestedUser?['permissions'];
+    final parsedPermissions = rawPermissions is List
+        ? rawPermissions.map((e) => e.toString()).toList()
+        : <String>[];
+
     return AdminProfileModel(
       id: parseId(json['id']),
       userId: parseNullableId(json['user_id']),
@@ -65,6 +81,8 @@ class AdminProfileModel {
       isActive: parseBool(json['is_active']),
       roleId: parseNullableId(json['role_id']),
       roleName: json['role_name']?.toString() ?? json['role']?.toString(),
+      roleKey: (json['role_key'] ?? nestedUser?['role_key'])?.toString(),
+      permissions: parsedPermissions,
       createdBy: parseNullableId(json['created_by']),
       creatorName: json['creator_name']?.toString(),
       createdAt: json['created_at']?.toString(),
@@ -85,6 +103,8 @@ class AdminProfileModel {
       if (isActive != null) 'is_active': isActive,
       if (roleId != null) 'role_id': roleId,
       if (roleName != null) 'role_name': roleName,
+      if (roleKey != null) 'role_key': roleKey,
+      'permissions': permissions,
       if (createdBy != null) 'created_by': createdBy,
       if (creatorName != null) 'creator_name': creatorName,
       if (createdAt != null) 'created_at': createdAt,
@@ -104,6 +124,8 @@ class AdminProfileModel {
     bool? isActive,
     int? roleId,
     String? roleName,
+    String? roleKey,
+    List<String>? permissions,
     int? createdBy,
     String? creatorName,
     String? createdAt,
@@ -121,6 +143,8 @@ class AdminProfileModel {
       isActive: isActive ?? this.isActive,
       roleId: roleId ?? this.roleId,
       roleName: roleName ?? this.roleName,
+      roleKey: roleKey ?? this.roleKey,
+      permissions: permissions ?? this.permissions,
       createdBy: createdBy ?? this.createdBy,
       creatorName: creatorName ?? this.creatorName,
       createdAt: createdAt ?? this.createdAt,

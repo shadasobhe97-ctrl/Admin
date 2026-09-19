@@ -13,6 +13,8 @@ class StorageService {
   static const String _tokenKey = 'auth_token';
   static const String _roleIdKey = 'role_id';
   static const String _roleNameKey = 'role_name';
+  static const String _roleKeyKey = 'role_key';
+  static const String _permissionsKey = 'permissions';
   static const String _userIdKey = 'user_id';
   static const String _userNameKey = 'user_name';
   static const String _userPhoneKey = 'user_phone';
@@ -35,6 +37,9 @@ class StorageService {
   static String? getToken() => _prefs?.getString(_tokenKey);
   static int? getRoleId() => _prefs?.getInt(_roleIdKey);
   static String? getRoleName() => _prefs?.getString(_roleNameKey);
+  static String? getRoleKey() => _prefs?.getString(_roleKeyKey);
+  static List<String> getPermissions() =>
+      _prefs?.getStringList(_permissionsKey) ?? const [];
   static int? getUserId() => _prefs?.getInt(_userIdKey);
   static String? getUserName() => _prefs?.getString(_userNameKey);
   static String? getUserPhone() => _prefs?.getString(_userPhoneKey);
@@ -77,6 +82,8 @@ class StorageService {
     required String token,
     required int roleId,
     String roleName = 'مدير النظام',
+    String? roleKey,
+    List<String> permissions = const [],
     required int userId,
     required String userName,
     required String userPhone,
@@ -86,6 +93,7 @@ class StorageService {
     await _prefs?.setString(_tokenKey, token);
     await _prefs?.setInt(_roleIdKey, roleId);
     await _prefs?.setString(_roleNameKey, roleName);
+    await savePermissions(permissions, roleKey: roleKey);
     await _prefs?.setInt(_userIdKey, userId);
     await _prefs?.setString(_userNameKey, userName);
     await _prefs?.setString(_userPhoneKey, userPhone);
@@ -93,10 +101,24 @@ class StorageService {
     return await _prefs?.setString(_userEmailKey, userEmail) ?? false;
   }
 
+  /// يحفظ `role_key` و `permissions[]` كما وردا من الخادم (Login أو
+  /// `/admin/profile`)، دون إعادة كتابة بقية بيانات الجلسة.
+  static Future<void> savePermissions(
+    List<String> permissions, {
+    String? roleKey,
+  }) async {
+    if (roleKey != null) {
+      await _prefs?.setString(_roleKeyKey, roleKey);
+    }
+    await _prefs?.setStringList(_permissionsKey, permissions);
+  }
+
   static Future<void> clearSession() async {
     await _prefs?.remove(_tokenKey);
     await _prefs?.remove(_roleIdKey);
     await _prefs?.remove(_roleNameKey);
+    await _prefs?.remove(_roleKeyKey);
+    await _prefs?.remove(_permissionsKey);
     await _prefs?.remove(_userIdKey);
     await _prefs?.remove(_userNameKey);
     await _prefs?.remove(_userPhoneKey);

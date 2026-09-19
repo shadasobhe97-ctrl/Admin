@@ -10,8 +10,7 @@ class DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userName = StorageService.getUserName() ?? 'المسؤول';
-    final roleId = StorageService.getRoleId();
-    final roleName = roleId == 1 ? 'أدمن' : (roleId == 2 ? 'مشرف' : 'مستخدم');
+    final roleName = StorageService.getRoleName() ?? 'مستخدم';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
