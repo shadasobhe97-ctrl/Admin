@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'admin_colors.dart';
 
 class AdminTheme {
-  static const String fontFamily = 'Cairo';
+  static String get fontFamily => GoogleFonts.cairo().fontFamily ?? 'Cairo';
 
   static const double radiusSmall = 12;
   static const double radiusMedium = 16;
@@ -126,7 +127,7 @@ class AdminTheme {
 
   static ThemeData get darkTheme => _build(Brightness.dark);
 
-  /// يبني الثيم من رموز [AdminColors] فقط — مصدر واحد للألوان في التطبيق كله.
+  /// يبني الثيم من رموز [AdminColors] فقط بفرشاة خط Cairo الشاملة للويب والمنصات.
   static ThemeData _build(Brightness brightness) {
     final bool isDark = brightness == Brightness.dark;
 
@@ -149,9 +150,12 @@ class AdminTheme {
     final Color textMuted =
         pick(AdminColors.textMutedLight, AdminColors.textMutedDark);
 
+    final baseTextTheme = ThemeData(brightness: brightness).textTheme;
+    final cairoTextTheme = GoogleFonts.cairoTextTheme(baseTextTheme);
+
     return ThemeData(
       useMaterial3: true,
-      fontFamily: fontFamily,
+      fontFamily: GoogleFonts.cairo().fontFamily,
       brightness: brightness,
       primaryColor: AdminColors.brandPrimary,
       scaffoldBackgroundColor: background,
@@ -162,7 +166,7 @@ class AdminTheme {
         brightness: brightness,
         primary: AdminColors.brandPrimary,
         onPrimary: AdminColors.onBrand,
-        secondary: AdminColors.secondary, // تم تعديلها لتطابق اللون الليموني
+        secondary: AdminColors.secondary,
         onSecondary: AdminColors.onBrand,
         surface: card,
         onSurface: textPrimary,
@@ -179,8 +183,7 @@ class AdminTheme {
           AdminColors.textPrimaryLight,
           AdminColors.cardDark,
         ),
-        contentTextStyle: const TextStyle(
-          fontFamily: fontFamily,
+        contentTextStyle: GoogleFonts.cairo(
           color: AdminColors.onBrand,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -189,14 +192,12 @@ class AdminTheme {
         backgroundColor: card,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: TextStyle(
-          fontFamily: fontFamily,
+        titleTextStyle: GoogleFonts.cairo(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
-        contentTextStyle: TextStyle(
-          fontFamily: fontFamily,
+        contentTextStyle: GoogleFonts.cairo(
           fontSize: 14,
           color: textSecondary,
         ),
@@ -210,7 +211,7 @@ class AdminTheme {
         elevation: isDark ? 0 : 2,
         shadowColor: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24), // تم التعديل إلى 24
+          borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: borderSoft, width: 1),
         ),
       ),
@@ -223,54 +224,46 @@ class AdminTheme {
         fillColor: surfaceVariant,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        labelStyle: TextStyle(color: textTertiary, fontFamily: fontFamily),
-        hintStyle: TextStyle(color: textMuted, fontFamily: fontFamily),
+        labelStyle: GoogleFonts.cairo(color: textTertiary),
+        hintStyle: GoogleFonts.cairo(color: textMuted),
         prefixIconColor: AdminColors.brandPrimary,
         suffixIconColor: textMuted,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(color: borderStrong, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
+          borderRadius: BorderRadius.circular(30),
           borderSide:
               const BorderSide(color: AdminColors.brandPrimary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
+          borderRadius: BorderRadius.circular(30),
           borderSide:
               const BorderSide(color: AdminColors.statusDanger, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // تم التعديل إلى 30
+          borderRadius: BorderRadius.circular(30),
           borderSide:
               const BorderSide(color: AdminColors.statusDanger, width: 2),
         ),
       ),
-      textTheme: TextTheme(
-        headlineLarge: TextStyle(
-            fontFamily: fontFamily,
-            color: textPrimary,
-            fontWeight: FontWeight.bold),
-        headlineMedium: TextStyle(
-            fontFamily: fontFamily,
-            color: textPrimary,
-            fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(
-            fontFamily: fontFamily,
-            color: textPrimary,
-            fontWeight: FontWeight.bold),
-        titleMedium: TextStyle(
-            fontFamily: fontFamily,
-            color: textPrimary,
-            fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(fontFamily: fontFamily, color: textPrimary),
-        bodyMedium: TextStyle(fontFamily: fontFamily, color: textSecondary),
-        bodySmall: TextStyle(fontFamily: fontFamily, color: textTertiary),
+      textTheme: cairoTextTheme.copyWith(
+        headlineLarge: GoogleFonts.cairo(
+            color: textPrimary, fontWeight: FontWeight.bold),
+        headlineMedium: GoogleFonts.cairo(
+            color: textPrimary, fontWeight: FontWeight.bold),
+        titleLarge: GoogleFonts.cairo(
+            color: textPrimary, fontWeight: FontWeight.bold),
+        titleMedium: GoogleFonts.cairo(
+            color: textPrimary, fontWeight: FontWeight.w600),
+        bodyLarge: GoogleFonts.cairo(color: textPrimary),
+        bodyMedium: GoogleFonts.cairo(color: textSecondary),
+        bodySmall: GoogleFonts.cairo(color: textTertiary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -280,11 +273,10 @@ class AdminTheme {
           disabledForegroundColor: textMuted,
           elevation: 0,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30)), // تم التعديل إلى 30
+              borderRadius: BorderRadius.circular(30)),
           padding: const EdgeInsets.symmetric(
-              horizontal: 20, vertical: 14), // ترك الحجم كما هو
-          textStyle: const TextStyle(
-              fontFamily: fontFamily, fontWeight: FontWeight.bold),
+              horizontal: 20, vertical: 14),
+          textStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -292,17 +284,16 @@ class AdminTheme {
           foregroundColor: AdminColors.brandPrimary,
           side: BorderSide(color: borderStrong),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30)), // تم التعديل إلى 30
+              borderRadius: BorderRadius.circular(30)),
           padding: const EdgeInsets.symmetric(
-              horizontal: 20, vertical: 14), // ترك الحجم كما هو
-          textStyle: const TextStyle(
-              fontFamily: fontFamily, fontWeight: FontWeight.bold),
+              horizontal: 20, vertical: 14),
+          textStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AdminColors.brandPrimary,
-          textStyle: const TextStyle(fontFamily: fontFamily),
+          textStyle: GoogleFonts.cairo(),
         ),
       ),
     );
