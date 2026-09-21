@@ -10,7 +10,8 @@ class AdminSplashScreen extends StatefulWidget {
   State<AdminSplashScreen> createState() => _AdminSplashScreenState();
 }
 
-class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTickerProviderStateMixin {
+class _AdminSplashScreenState extends State<AdminSplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnim;
 
@@ -69,7 +70,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                   decoration: BoxDecoration(
                     color: context.primaryColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: context.primaryColor.withValues(alpha: 0.3), width: 2),
+                    border: Border.all(
+                        color: context.primaryColor.withValues(alpha: 0.3),
+                        width: 2),
                   ),
                   child: Icon(
                     Icons.admin_panel_settings_rounded,
@@ -79,16 +82,6 @@ class _AdminSplashScreenState extends State<AdminSplashScreen> with SingleTicker
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'دَربِي Derbi',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: context.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
               Text(
                 'منظومة الربط والنقل الذكي طرابلس',
                 style: TextStyle(

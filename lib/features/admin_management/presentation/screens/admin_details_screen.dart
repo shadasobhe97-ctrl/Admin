@@ -23,14 +23,17 @@ class AdminDetailsScreen extends StatelessWidget {
   static void show(BuildContext context, int adminId) {
     showDialog(
       context: context,
-      builder: (context) => BlocProvider(
+      builder: (dialogCtx) => BlocProvider(
         create: (context) =>
             sl<AdminManagementCubit>()..fetchAdminDetails(adminId),
         child: Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: BoxConstraints(
+              maxWidth: 600,
+              maxHeight: MediaQuery.of(dialogCtx).size.height * 0.85,
+            ),
             child: AdminDetailsScreen(adminId: adminId),
           ),
         ),
@@ -189,133 +192,141 @@ class AdminDetailsScreen extends StatelessWidget {
                     ),
                   )
                 else
-                  Column(
-                    children: [
-                      // Header Card
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: context.surfaceVariant,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: theme.dividerColor),
-                        ),
-                        child: Row(
-                          children: [
-                            AdminAvatar(
-                              avatarUrl: admin.avatarUrl,
-                              fullName: admin.fullName,
-                              radius: 36,
-                              onTap: () => ImageViewerDialog.show(
-                                context,
-                                title: 'الصورة الشخصية',
-                                subtitle: admin.fullName,
-                                rawUrl: admin.avatarUrl,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    admin.fullName,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'معرّف المشرف (ID): #${admin.id}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: context.textTertiary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            AdminStatusBadge(isActive: admin.isActive),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Details List
-                      _buildDetailRow(context, Icons.email_outlined,
-                          'البريد الإلكتروني', admin.email),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(context, Icons.phone_android_rounded,
-                          'رقم الهاتف', admin.phoneNumber),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(
-                          context,
-                          Icons.admin_panel_settings_outlined,
-                          'الدور والصلاحية',
-                          admin.roleName),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(
-                        context,
-                        Icons.calendar_today_rounded,
-                        'تاريخ الإنشاء',
-                        admin.createdAt != null && admin.createdAt!.isNotEmpty
-                            ? admin.createdAt!
-                            : 'غير محدد في Backend',
-                      ),
-                      if (admin.permissions.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        _buildPermissionsSection(
-                          context,
-                          'صلاحيات الدور الأساسية (${admin.roleName}):',
-                          admin.permissions,
-                          context.primaryColor,
-                        ),
-                      ],
-                      if (admin.customPermissions.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        _buildPermissionsSection(
-                          context,
-                          'الصلاحيات المخصصة الإضافية للمشرف:',
-                          admin.customPermissions,
-                          context.warningColor,
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
                         children: [
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              side: BorderSide(color: theme.dividerColor),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                          // Header Card
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: context.surfaceVariant,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: theme.dividerColor),
                             ),
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back, size: 16),
-                            label: const Text('إغلاق'),
+                            child: Row(
+                              children: [
+                                AdminAvatar(
+                                  avatarUrl: admin.avatarUrl,
+                                  fullName: admin.fullName,
+                                  radius: 36,
+                                  onTap: () => ImageViewerDialog.show(
+                                    context,
+                                    title: 'الصورة الشخصية',
+                                    subtitle: admin.fullName,
+                                    rawUrl: admin.avatarUrl,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        admin.fullName,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: context.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'معرّف المشرف (ID): #${admin.id}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: context.textTertiary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                AdminStatusBadge(isActive: admin.isActive),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.primaryColor,
-                              foregroundColor: context.onPrimary,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                          const SizedBox(height: 20),
+
+                          // Details List
+                          _buildDetailRow(context, Icons.email_outlined,
+                              'البريد الإلكتروني', admin.email),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(context, Icons.phone_android_rounded,
+                              'رقم الهاتف', admin.phoneNumber),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                              context,
+                              Icons.admin_panel_settings_outlined,
+                              'الدور والصلاحية',
+                              admin.roleName),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            context,
+                            Icons.calendar_today_rounded,
+                            'تاريخ الإنشاء',
+                            admin.createdAt != null &&
+                                    admin.createdAt!.isNotEmpty
+                                ? admin.createdAt!
+                                : 'غير محدد في Backend',
+                          ),
+                          if (admin.permissions.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _buildPermissionsSection(
+                              context,
+                              'صلاحيات الدور الأساسية (${admin.roleName}):',
+                              admin.permissions,
+                              context.primaryColor,
                             ),
-                            onPressed: () => _openEditDialog(context, admin),
-                            icon: const Icon(Icons.edit_outlined, size: 16),
-                            label: const Text('تعديل البيانات',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                          if (admin.customPermissions.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _buildPermissionsSection(
+                              context,
+                              'الصلاحيات المخصصة الإضافية للمشرف:',
+                              admin.customPermissions,
+                              context.warningColor,
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  side: BorderSide(color: theme.dividerColor),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(Icons.arrow_back, size: 16),
+                                label: const Text('إغلاق'),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: context.primaryColor,
+                                  foregroundColor: context.onPrimary,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                onPressed: () =>
+                                    _openEditDialog(context, admin),
+                                icon: const Icon(Icons.edit_outlined, size: 16),
+                                label: const Text('تعديل البيانات',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
               ],
             ),

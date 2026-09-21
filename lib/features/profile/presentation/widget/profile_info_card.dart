@@ -22,10 +22,6 @@ class ProfileInfoCard extends StatelessWidget {
         ? profile.lastLoginAt!
         : 'غير متوفر / لم يسجل من قبل';
 
-    final creatorStr = profile.creatorName != null && profile.creatorName!.isNotEmpty
-        ? profile.creatorName!
-        : 'غير محدد';
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -65,12 +61,6 @@ class ProfileInfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(color: theme.colorScheme.outlineVariant),
           const SizedBox(height: 8),
-          if (profile.userId != null)
-            _infoRow(
-              context,
-              label: 'معرّف المستخدم (User ID)',
-              value: '#${profile.userId}',
-            ),
           _infoRow(
             context,
             label: 'الاسم الكامل',
@@ -92,11 +82,6 @@ class ProfileInfoCard extends StatelessWidget {
             value: (profile.roleName != null && profile.roleName!.isNotEmpty)
                 ? profile.roleName!
                 : 'مشرف',
-          ),
-          _infoRow(
-            context,
-            label: 'أنشئ بواسطة',
-            value: creatorStr,
           ),
           _infoRow(
             context,

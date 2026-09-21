@@ -74,7 +74,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   height: 400,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: context.primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+                    color: context.primaryColor
+                        .withValues(alpha: isDark ? 0.12 : 0.06),
                   ),
                 ),
               ),
@@ -86,7 +87,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   height: 500,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: context.primaryColor.withValues(alpha: isDark ? 0.08 : 0.04),
+                    color: context.primaryColor
+                        .withValues(alpha: isDark ? 0.08 : 0.04),
                   ),
                 ),
               ),
@@ -94,7 +96,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               // Theme Toggle Button at top corner
               Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 32.0),
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 460),
                     child: Card(
@@ -119,7 +122,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Image.asset(
-                                  isDark ? 'assets/images/admindark_logo.png' : 'assets/images/adminligth_logo.png',
+                                  isDark
+                                      ? 'assets/images/admindark_logo.png'
+                                      : 'assets/images/adminligth_logo.png',
                                   height: 70,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.admin_panel_settings_rounded,
@@ -129,15 +134,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              Text(
-                                'دَربِي Derbi',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: context.textPrimary,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+
                               const SizedBox(height: 6),
                               Text(
                                 'لوحة التحكم الإدارية للمسؤولين والمشرفين',
@@ -152,12 +149,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               // Email Field
                               TextFormField(
                                 controller: _emailController,
-                                style: TextStyle(color: context.textPrimary, fontSize: 14),
+                                style: TextStyle(
+                                    color: context.textPrimary, fontSize: 14),
                                 keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
                                   labelText: 'البريد الإلكتروني',
                                   hintText: 'admin@darby.ly',
-                                  prefixIcon: Icon(Icons.email_outlined, color: context.primaryColor),
+                                  prefixIcon: Icon(Icons.email_outlined,
+                                      color: context.primaryColor),
                                 ),
                                 validator: Validators.validateEmail,
                               ),
@@ -167,19 +166,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: !_isPasswordVisible,
-                                style: TextStyle(color: context.textPrimary, fontSize: 14),
+                                style: TextStyle(
+                                    color: context.textPrimary, fontSize: 14),
                                 decoration: InputDecoration(
                                   labelText: 'كلمة المرور',
                                   hintText: '••••••••',
-                                  prefixIcon: Icon(Icons.lock_outline_rounded, color: context.primaryColor),
+                                  prefixIcon: Icon(Icons.lock_outline_rounded,
+                                      color: context.primaryColor),
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _isPasswordVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                                      _isPasswordVisible
+                                          ? Icons.visibility_rounded
+                                          : Icons.visibility_off_rounded,
                                       color: context.textTertiary,
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
                                       });
                                     },
                                   ),
@@ -195,7 +199,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                   onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ResetPasswordScreen()),
                                     );
                                   },
                                   child: Text(
@@ -221,17 +227,22 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                         backgroundColor: context.primaryColor,
                                         foregroundColor: context.onPrimary,
                                         elevation: 4,
-                                        shadowColor: context.primaryColor.withValues(alpha: 0.4),
+                                        shadowColor: context.primaryColor
+                                            .withValues(alpha: 0.4),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
                                         ),
                                       ),
-                                      onPressed: state.isLoading ? null : _handleLogin,
+                                      onPressed:
+                                          state.isLoading ? null : _handleLogin,
                                       child: state.isLoading
                                           ? SizedBox(
                                               width: 24,
                                               height: 24,
-                                              child: CircularProgressIndicator(color: context.onPrimary, strokeWidth: 2.5),
+                                              child: CircularProgressIndicator(
+                                                  color: context.onPrimary,
+                                                  strokeWidth: 2.5),
                                             )
                                           : const Text(
                                               'تسجيل الدخول',

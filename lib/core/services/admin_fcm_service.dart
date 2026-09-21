@@ -20,6 +20,23 @@ class AdminFcmService {
 
   String? get fcmToken => _currentFcmToken;
 
+  final _foregroundMessageController =
+      StreamController<RemoteMessage>.broadcast();
+  final _notificationClickController =
+      StreamController<RemoteMessage>.broadcast();
+
+  /// بث مباشر للإشعارات القادمة أثناء تصفح اللوحة (Foreground)
+  Stream<RemoteMessage> get onForegroundMessage =>
+      _foregroundMessageController.stream;
+
+  /// بث مباشر عند النقر على إشعار من الخلفية
+  Stream<RemoteMessage> get onNotificationClick =>
+      _notificationClickController.stream;
+
+  /// VAPID Key المخصص لمشروع Firebase Web Push
+  static const String defaultVapidKey =
+      'BBBeM2xZOJNzmuTPNhhh75G_b9ShGKGenZafutQ6AVbR2JTug5fzTBIWvCKIaVbPDpw_vB9OCw8GqSz_CIMj5E0';
+
   /// تهيئة الفايربيز وتفعيل إشعارات الأدمن للويب
   Future<void> initAdminWebNotifications({String? vapidKey}) async {
     try {
@@ -42,23 +59,26 @@ class AdminFcmService {
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
-        debugPrint('🔔 notification permission granted');
+        debugPrint('🔔 Admin Notification permission granted');
 
         // 2. استخراج FCM Token مفتاح الويب
-        final token = await messaging.getToken(
-          vapidKey: vapidKey ??
-              'BD72q-wL8vN-PlaceholderVapidKey-ReplaceIfCustomRequired',
-        );
+        try {
+          final token = await messaging.getToken(
+            vapidKey: vapidKey ?? defaultVapidKey,
+          );
 
-        if (token != null) {
-          _currentFcmToken = token;
-          debugPrint('✅ Admin FCM Web Token: $token');
+          if (token != null) {
+            _currentFcmToken = token;
+            debugPrint('✅ Admin FCM Web Token: $token');
 
-          // أ) تسجيل التوكن لدى الـ Backend API
-          await registerTokenToBackend(token);
+            // أ) تسجيل التوكن لدى الـ Backend API
+            await registerTokenToBackend(token);
 
-          // ب) حفظ التوكن في الفايرستور ليصله إشعارات النظام والمحادثات
-          await saveTokenToFirestore(token);
+            // ب) حفظ التوكن في الفايرستور ليصله إشعارات النظام والمحادثات
+            await saveTokenToFirestore(token);
+          }
+        } catch (e) {
+          debugPrint('⚠️ FCM getToken error (VAPID key might be required): $e');
         }
 
         // 3. تجديد التوكن تلقائياً عند تغيّره
@@ -71,8 +91,16 @@ class AdminFcmService {
 
         // 4. الاستماع للإشعارات في الوقت الفعلي أثناء فتح اللوحة (Foreground)
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-          debugPrint('🔔 Foreground Notification Received: ${message.notification?.title}');
+          debugPrint(
+              '🔔 Foreground Notification Received: ${message.notification?.title}');
           _handleForegroundNotification(message);
+        });
+
+        // 5. الاستماع لفتح الإشعار أثناء تواجد اللوحة بالخلفية
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+          debugPrint(
+              '🖱️ Notification Opened from Background: ${message.notification?.title}');
+          _notificationClickController.add(message);
         });
       } else {
         debugPrint('⚠️ Notification permission declined by user');
@@ -121,7 +149,8 @@ class AdminFcmService {
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      debugPrint('✅ FCM Token successfully saved to Firestore (users/admin_$userId)');
+      debugPrint(
+          '✅ FCM Token successfully saved to Firestore (users/admin_$userId)');
     } catch (e) {
       debugPrint('⚠️ Failed to save FCM token to Firestore: $e');
     }
@@ -129,6 +158,6 @@ class AdminFcmService {
 
   /// معالجة الإشعار الفوري أثناء التواجد بالشاشة
   void _handleForegroundNotification(RemoteMessage message) {
-    // يمكن هنا إرسال الإشعار لـ Stream Controller أو البلوك لتحديث العدد وتنبيه المستخدم
+    _foregroundMessageController.add(message);
   }
 }

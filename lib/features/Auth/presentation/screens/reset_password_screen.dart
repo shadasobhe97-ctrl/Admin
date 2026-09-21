@@ -189,13 +189,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text(
+                            TextButton.icon(
+                              onPressed: () {
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                } else {
+                                  Navigator.pushReplacementNamed(context, '/login');
+                                }
+                              },
+                              icon: Icon(Icons.arrow_back_rounded, size: 16, color: context.primaryColor),
+                              label: Text(
                                 'العودة لتسجيل الدخول',
                                 style: TextStyle(
-                                  color: context.textTertiary,
+                                  color: context.primaryColor,
                                   fontSize: 13,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),

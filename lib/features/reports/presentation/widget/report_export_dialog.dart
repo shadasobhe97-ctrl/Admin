@@ -360,16 +360,14 @@ class ReportExportResultDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: context.borderSoft),
                 ),
-                child: Scrollbar(
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      preview,
-                      textDirection: TextDirection.ltr,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        color: context.textSecondary,
-                      ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    preview,
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      color: context.textSecondary,
                     ),
                   ),
                 ),

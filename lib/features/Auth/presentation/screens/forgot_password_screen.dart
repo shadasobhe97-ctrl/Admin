@@ -192,11 +192,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
             const SizedBox(height: 20),
             TextButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: Icon(Icons.arrow_back_rounded, size: 16, color: context.textTertiary),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
+              },
+              icon: Icon(Icons.arrow_back_rounded, size: 16, color: context.primaryColor),
               label: Text(
                 'العودة لتسجيل الدخول',
-                style: TextStyle(color: context.textTertiary, fontSize: 13),
+                style: TextStyle(color: context.primaryColor, fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
           ],

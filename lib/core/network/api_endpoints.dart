@@ -44,6 +44,11 @@ class ApiEndpoints {
   static String pendingChangeReview(dynamic id) =>
       '/admin/drivers/pending-changes/$id/review';
 
+  // ── 2.1 Parents ─────────────────────────────────────────────────────────────
+  static const String parents = '/admin/parents';
+  static String parentDetails(dynamic id) => '/admin/parents/$id';
+  static String parentActivate(dynamic id) => '/admin/parents/$id/activate';
+
   // Driver Reviews
   static const String driverReviewsAll = '/admin/driver-reviews/all';
   static String driverReviewsForDriver(dynamic id) =>

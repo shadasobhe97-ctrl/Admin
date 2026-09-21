@@ -233,7 +233,7 @@ class AdminColors {
   static const Color sidebarBorderDark = Color(0xFF303841);
   static const Color sidebarItemTextLight = Color(0xFF667085);
   static const Color sidebarItemTextDark = Color(0xFFB8C1CC);
-  static const Color sidebarActiveBgLight = Color(0xFFD6E8F5);
+  static const Color sidebarActiveBgLight = Color(0xFFE8F2FA);
   static const Color sidebarActiveBgDark = Color(0xFF173B5E);
   static const Color onSidebarActiveLight = Color(0xFF1D5997);
   static const Color onSidebarActiveDark = Color(0xFF2B70B5);

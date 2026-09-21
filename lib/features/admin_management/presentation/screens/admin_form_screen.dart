@@ -38,17 +38,27 @@ class AdminFormScreen extends StatelessWidget {
     ).then((result) {
       if (onSuccess != null) onSuccess();
 
-      if (result != null &&
-          result['email_verification'] != null &&
-          callerContext.mounted) {
-        EmailVerificationWaitingDialog.show(
-          callerContext,
-          adminId: result['admin_id'] as int,
-          newEmail: result['email_verification']['new_email'].toString(),
-          onRefresh: () {
-            if (onSuccess != null) onSuccess();
-          },
-        );
+      if (result != null && callerContext.mounted) {
+        if (result['success_message'] != null &&
+            result['success_message'].toString().isNotEmpty) {
+          ScaffoldMessenger.of(callerContext).showSnackBar(
+            SnackBar(
+              content: Text(result['success_message'].toString()),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        if (result['email_verification'] != null) {
+          EmailVerificationWaitingDialog.show(
+            callerContext,
+            adminId: result['admin_id'] as int,
+            newEmail: result['email_verification']['new_email'].toString(),
+            onRefresh: () {
+              if (onSuccess != null) onSuccess();
+            },
+          );
+        }
       }
     });
   }
@@ -64,11 +74,12 @@ class AdminFormScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: BlocConsumer<AdminManagementCubit, AdminManagementState>(
         listener: (context, state) {
-          if (state.successMessage != null) {
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.successMessage!),
-                  backgroundColor: Colors.green),
+                content: Text(state.errorMessage!),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
@@ -113,6 +124,7 @@ class AdminFormScreen extends StatelessWidget {
 
                       Navigator.pop(context, {
                         'admin_id': result['admin_id'],
+                        'success_message': result['message'] ?? 'تم إضافة المشرف بنجاح',
                         'email_verification':
                             hasPendingEmail ? emailVerification : null,
                       });
@@ -132,6 +144,7 @@ class AdminFormScreen extends StatelessWidget {
                       // pops, so it runs on a cubit that outlives this form.
                       Navigator.pop(context, {
                         'admin_id': initialAdmin!.id,
+                        'success_message': result['message'] ?? 'تم تعديل بيانات المشرف بنجاح',
                         'email_verification':
                             hasPendingEmail ? emailVerification : null,
                       });

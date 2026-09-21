@@ -18,6 +18,10 @@ import '../../features/drivers_management/data/datasources/drivers_management_re
 import '../../features/drivers_management/data/repositories/drivers_management_repository.dart';
 import '../../features/drivers_management/logic/drivers_management_cubit.dart';
 
+import '../../features/parents_management/data/datasources/parents_remote_datasource.dart';
+import '../../features/parents_management/data/repositories/parents_repository.dart';
+import '../../features/parents_management/logic/cubit/parents_cubit.dart';
+
 import '../../features/profile/data/datasources/admin_profile_remote_data_source.dart';
 import '../../features/profile/data/repositories/admin_profile_repository.dart';
 import '../../features/profile/logic/cubit/profile_cubit.dart';
@@ -115,6 +119,19 @@ Future<void> setupServiceLocator() async {
 
   sl.registerFactory<DriversManagementCubit>(
     () => DriversManagementCubit(sl<DriversManagementRepository>()),
+  );
+
+  // ── Parents Management Feature ─────────────────────────────────────────────
+  sl.registerLazySingleton<ParentsRemoteDataSource>(
+    () => ParentsRemoteDataSourceImpl(sl<ApiClient>()),
+  );
+
+  sl.registerLazySingleton<ParentsRepository>(
+    () => ParentsRepositoryImpl(sl<ParentsRemoteDataSource>()),
+  );
+
+  sl.registerFactory<ParentsCubit>(
+    () => ParentsCubit(sl<ParentsRepository>()),
   );
 
   // ── Profile Feature ───────────────────────────────────────────────────────

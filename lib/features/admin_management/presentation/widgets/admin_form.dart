@@ -41,6 +41,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
+  late final ScrollController _permissionsScrollController;
 
   late bool _isActive;
   bool _isPasswordVisible = false;
@@ -49,13 +50,41 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
 
   Uint8List? _avatarBytes;
   String? _avatarFileName;
+
+  String? _serverNameError;
   String? _serverEmailError;
+  String? _serverPhoneError;
+  String? _serverPasswordError;
 
   bool get _isEditMode => widget.initialAdmin != null;
+
+  void _clearServerErrors() {
+    _serverNameError = null;
+    _serverEmailError = null;
+    _serverPhoneError = null;
+    _serverPasswordError = null;
+  }
+
+  void _parseAndSetServerErrorMessage(String? msg) {
+    _clearServerErrors();
+    if (msg == null || msg.trim().isEmpty) return;
+
+    final lower = msg.toLowerCase();
+    if (msg.contains('الاسم') || lower.contains('name')) {
+      _serverNameError = msg;
+    } else if (msg.contains('البريد') || msg.contains('إيميل') || lower.contains('email')) {
+      _serverEmailError = msg;
+    } else if (msg.contains('الهاتف') || msg.contains('جوال') || lower.contains('phone') || lower.contains('mobile')) {
+      _serverPhoneError = msg;
+    } else if (msg.contains('مرور') || lower.contains('password')) {
+      _serverPasswordError = msg;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _permissionsScrollController = ScrollController();
     _nameController =
         TextEditingController(text: widget.initialAdmin?.fullName ?? '');
     _emailController =
@@ -72,9 +101,22 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           .addAll(widget.initialAdmin!.customPermissions);
     }
 
+    _nameController.addListener(_onNameChanged);
     _emailController.addListener(_onEmailChanged);
+    _phoneController.addListener(_onPhoneChanged);
+    _passwordController.addListener(_onPasswordChanged);
+
     if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) {
-      _serverEmailError = widget.errorMessage;
+      _parseAndSetServerErrorMessage(widget.errorMessage);
+    }
+  }
+
+  void _onNameChanged() {
+    if (_serverNameError != null) {
+      setState(() {
+        _serverNameError = null;
+      });
+      _formKey.currentState?.validate();
     }
   }
 
@@ -87,6 +129,24 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     }
   }
 
+  void _onPhoneChanged() {
+    if (_serverPhoneError != null) {
+      setState(() {
+        _serverPhoneError = null;
+      });
+      _formKey.currentState?.validate();
+    }
+  }
+
+  void _onPasswordChanged() {
+    if (_serverPasswordError != null) {
+      setState(() {
+        _serverPasswordError = null;
+      });
+      _formKey.currentState?.validate();
+    }
+  }
+
   @override
   void didUpdateWidget(covariant AdminFormWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -94,7 +154,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         widget.errorMessage != null &&
         widget.errorMessage!.isNotEmpty) {
       setState(() {
-        _serverEmailError = widget.errorMessage;
+        _parseAndSetServerErrorMessage(widget.errorMessage);
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _formKey.currentState?.validate();
@@ -104,7 +164,11 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _emailController.removeListener(_onEmailChanged);
+    _phoneController.removeListener(_onPhoneChanged);
+    _passwordController.removeListener(_onPasswordChanged);
+    _permissionsScrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -140,7 +204,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
 
   void _handleSubmit() {
     setState(() {
-      _serverEmailError = null;
+      _clearServerErrors();
     });
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (widget.isLoading) return;
@@ -253,6 +317,10 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   if (words.length < 3) {
                     return 'الرجاء إدخال الاسم الثلاثي للمشرف بالكامل لتوثيق الحساب.';
                   }
+                  if (_serverNameError != null &&
+                      _serverNameError!.isNotEmpty) {
+                    return _serverNameError;
+                  }
                   return null;
                 },
               ),
@@ -310,6 +378,10 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   if (!trimmed.startsWith('09')) {
                     return 'رقم الهاتف غير صحيح، يجب أن يبدأ بـ 09.';
                   }
+                  if (_serverPhoneError != null &&
+                      _serverPhoneError!.isNotEmpty) {
+                    return _serverPhoneError;
+                  }
                   return null;
                 },
               ),
@@ -345,6 +417,10 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     if (val.length < 6) {
                       return 'كلمة المرور يجب أن لا تقل عن 6 خانات وتتضمن أحرفاً إنجليزية.';
                     }
+                  }
+                  if (_serverPasswordError != null &&
+                      _serverPasswordError!.isNotEmpty) {
+                    return _serverPasswordError;
                   }
                   return null;
                 },
@@ -487,7 +563,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     border: Border.all(color: theme.dividerColor),
                   ),
                   child: Scrollbar(
+                    controller: _permissionsScrollController,
                     child: ListView.separated(
+                      controller: _permissionsScrollController,
                       padding: const EdgeInsets.all(12),
                       shrinkWrap: true,
                       itemCount: permissionsTree.length,
@@ -636,6 +714,36 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   ),
                 ),
                 const SizedBox(height: 20),
+              ],
+
+              // Error Alert Banner (Backend validation or server error)
+              if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: context.dangerBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: context.dangerColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline_rounded, color: context.dangerColor, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.errorMessage!,
+                          style: TextStyle(
+                            color: context.dangerColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
 
               // Submit Button

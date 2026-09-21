@@ -42,7 +42,7 @@ class DerbiApp extends StatelessWidget {
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
           return MaterialApp(
-            title: 'دَربِي Derbi - لوحة التحكم الإدارية',
+            title: 'دَربِي - لوحة التحكم الإدارية',
             debugShowCheckedModeBanner: false,
             themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             theme: AdminTheme.lightTheme,
