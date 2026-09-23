@@ -4,17 +4,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/utils/media_url.dart';
+import '../../../../core/widgets/image_viewer_dialog.dart';
+import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/driver_details_model.dart';
-import '../../data/models/driver_document_model.dart';
 import '../../data/models/driver_model.dart';
 import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
-import '../widgets/driver_document_tile.dart';
 import '../widgets/driver_edit_dialog.dart';
 import '../widgets/driver_identity_card.dart';
 import '../widgets/driver_review_dialog.dart';
-import '../widgets/driver_reviews_section.dart';
 import '../widgets/driver_statistics_row.dart';
 import '../widgets/driver_vehicle_card.dart';
 
@@ -90,6 +90,82 @@ class DriverDetailsScreen extends StatelessWidget {
     // بعد الحفظ يعود المشرف إلى قرار الاعتماد بالبيانات المصحّحة.
     final updated = cubit.state.selectedDriverDetails?.driver ?? driver;
     if (context.mounted) _openReviewDialog(context, updated);
+  }
+
+  void _openSuspendDialog(BuildContext context, DriverModel driver) {
+    final cubit = context.read<DriversManagementCubit>();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.block_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('إيقاف حساب السائق', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'هل أنت تأكد من إيقاف حساب السائق "${driver.fullName}"؟\nسيتم تعطيل دخول السائق واستقبال الرحلات.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              cubit.suspendDriver(driver.id);
+            },
+            child: const Text('تأكيد الإيقاف', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openActivateDialog(BuildContext context, DriverModel driver) {
+    final cubit = context.read<DriversManagementCubit>();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded, color: Colors.green),
+            SizedBox(width: 8),
+            Text('إعادة تفعيل حساب السائق', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'هل أنت تأكد من إعادة تفعيل حساب السائق "${driver.fullName}"؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              cubit.activateDriver(driver.id);
+            },
+            child: const Text('تأكيد التفعيل', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -173,6 +249,8 @@ class DriverDetailsScreen extends StatelessWidget {
                       state: state,
                       onEdit: () => _openEditDialog(context, driver),
                       onReview: () => _openReviewDialog(context, driver),
+                      onSuspend: () => _openSuspendDialog(context, driver),
+                      onActivate: () => _openActivateDialog(context, driver),
                     ),
                 ],
               ),
@@ -189,12 +267,16 @@ class _DriverBody extends StatelessWidget {
   final DriversManagementState state;
   final VoidCallback onEdit;
   final VoidCallback onReview;
+  final VoidCallback onSuspend;
+  final VoidCallback onActivate;
 
   const _DriverBody({
     required this.details,
     required this.state,
     required this.onEdit,
     required this.onReview,
+    required this.onSuspend,
+    required this.onActivate,
   });
 
   /// التعديل الكامل متاح ما دام السائق لم يُعتمد بعد.
@@ -206,89 +288,35 @@ class _DriverBody extends StatelessWidget {
       details.driver.status.toLowerCase() == 'approved' ||
       details.driver.approvalStatus?.toLowerCase() == 'approved';
 
-  List<DriverDocumentModel> _getAllDocuments() {
-    final existingDocs = details.documents;
-
-    String normalizeKey(String rawType) {
-      final upper = rawType.toUpperCase().replaceAll('-', '_');
-      if (upper.contains('LICENSE')) return DriverDocumentField.license;
-      if (upper.contains('LOGBOOK') || upper.contains('REGISTRATION')) {
-        return DriverDocumentField.logbook;
-      }
-      if (upper.contains('INSURANCE')) return DriverDocumentField.insurance;
-      if (upper.contains('BOOKLET')) return DriverDocumentField.bookletPage;
-      if (upper.contains('STAMP')) return DriverDocumentField.stamp;
-      if (upper.contains('TECHNICAL') || upper.contains('INSPECTION')) {
-        return DriverDocumentField.technicalInspection;
-      }
-      return rawType;
-    }
-
-    final Map<String, DriverDocumentModel> docMap = {};
-    final List<DriverDocumentModel> extraDocs = [];
-
-    for (final doc in existingDocs) {
-      final key = normalizeKey(doc.docType);
-      if (DriverDocumentField.all.contains(key)) {
-        docMap[key] = doc;
-      } else {
-        extraDocs.add(doc);
-      }
-    }
-
-    String? findExpiry(String? Function(DriverDocumentModel doc) pick) {
-      for (final doc in existingDocs) {
-        final val = pick(doc);
-        if (val != null && val.isNotEmpty) return val;
-      }
-      return null;
-    }
-
-    final List<DriverDocumentModel> result = [];
-
-    for (final field in DriverDocumentField.all) {
-      if (docMap.containsKey(field)) {
-        result.add(docMap[field]!);
-      } else {
-        String? expiry;
-        if (field == DriverDocumentField.license) {
-          expiry = details.driver.licenseExpiry;
-        } else if (field == DriverDocumentField.insurance) {
-          expiry = findExpiry((d) => d.insuranceExpiry);
-        } else if (field == DriverDocumentField.stamp) {
-          expiry = findExpiry((d) => d.stampExpiry);
-        } else if (field == DriverDocumentField.technicalInspection) {
-          expiry = findExpiry((d) => d.technicalInspectionExpiry);
-        }
-
-        result.add(
-          DriverDocumentModel(
-            docType: field,
-            fileUrl: '',
-            status: 'not_uploaded',
-            genericExpiry: expiry,
-          ),
-        );
-      }
-    }
-
-    result.addAll(extraDocs);
-    return result;
-  }
+  bool get _isSuspended =>
+      details.driver.status.toLowerCase() == 'suspended' ||
+      !details.driver.isActive;
 
   @override
   Widget build(BuildContext context) {
     final driver = details.driver;
-    final docs = _getAllDocuments();
-    final busy = state.isUpdatingDriver || state.isSubmittingReview;
+    final licenseImage = driver.resolvedLicenseImage;
+    final busy = state.isUpdatingDriver || state.isSubmittingReview || state.isSuspendingOrActivating;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── 1. بطاقة بيانات السائق والحساب الشخصي ────────────────────────
         DriverIdentityCard(driver: driver),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        if (_isApproved && details.statistics != null) ...[
+        // ── 2. وثيقة رخصة القيادة الرسمية ─────────────────────────────────
+        if (licenseImage != null && licenseImage.isNotEmpty)
+          _LicenseImageTile(
+            imageUrl: licenseImage,
+            driverName: driver.fullName,
+          ),
+
+        // ── 3. الإحصاءات والأداء والموقع ─────────────────────────────────
+        if (details.statistics != null) ...[
+          const _SectionHeader(
+            title: '📊 إحصاءات أداء السائق والموقع الجغرافي',
+          ),
           DriverStatisticsRow(
             statistics: details.statistics!,
             location: details.location,
@@ -296,9 +324,18 @@ class _DriverBody extends StatelessWidget {
           const SizedBox(height: 20),
         ],
 
-        // ── المركبات ────────────────────────────────────────────────────
+        // ── 4. حالة الذكاء الاصطناعي والمراقبة ────────────────────────────
+        if (details.aiStatus != null) ...[
+          const _SectionHeader(
+            title: '🤖 حالة مراقبة الذكاء الاصطناعي والتنبيهات',
+          ),
+          _AiStatusCard(aiStatus: details.aiStatus!),
+          const SizedBox(height: 20),
+        ],
+
+        // ── 5. المركبات المسجلة ──────────────────────────────────────────
         _SectionHeader(
-          title: 'بيانات المركبة المسجلة',
+          title: '🚘 بيانات المركبة المسجلة',
           hint: details.vehicles.length > 1
               ? '${details.vehicles.length} مركبات'
               : null,
@@ -310,40 +347,6 @@ class _DriverBody extends StatelessWidget {
             (vehicle) => DriverVehicleCard(vehicle: vehicle),
           ),
         const SizedBox(height: 20),
-
-        // ── الوثائق ─────────────────────────────────────────────────────
-        const _SectionHeader(
-          title: 'الوثائق الرسمية المستندة',
-          hint: 'اضغط على الوثيقة لعرض الصورة',
-        ),
-        if (docs.isEmpty)
-          const _EmptyBox(message: 'لا توجد وثائق رسمية مرفوعة حالياً.')
-        else
-          ...docs.map(
-            (doc) => DriverDocumentTile(
-              document: doc,
-              driverName: driver.fullName,
-            ),
-          ),
-        const SizedBox(height: 20),
-
-        // ── سجل الاعتماد ────────────────────────────────────────────────
-        if (details.approvalHistory.isNotEmpty) ...[
-          const _SectionHeader(title: 'سجل قرارات الاعتماد'),
-          ...details.approvalHistory.map(
-            (entry) => _ApprovalHistoryTile(entry: entry),
-          ),
-          const SizedBox(height: 20),
-        ],
-
-        // ── التقييمات ───────────────────────────────────────────────────
-        if (_isApproved && driver.isActive) ...[
-          const _SectionHeader(
-            title: '⭐ تقييمات وتعليقات أولياء الأمور والركاب',
-          ),
-          DriverReviewsSection(driverId: driver.id),
-          const SizedBox(height: 24),
-        ],
 
         // ── الإجراءات ───────────────────────────────────────────────────
         Wrap(
@@ -417,6 +420,61 @@ class _DriverBody extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
+            // زر إيقاف أو تفعيل حساب السائق
+            if (_isSuspended)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: busy ? null : onActivate,
+                icon: state.isSuspendingOrActivating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.check_circle_outline_rounded, size: 16),
+                label: const Text(
+                  'إعادة تفعيل الحساب',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              )
+            else if (_isApproved)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: busy ? null : onSuspend,
+                icon: state.isSuspendingOrActivating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.block_rounded, size: 16),
+                label: const Text(
+                  'إيقاف حساب السائق',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
           ],
         ),
       ],
@@ -484,72 +542,221 @@ class _EmptyBox extends StatelessWidget {
   }
 }
 
-/// عنصر واحد من `approval_history` — شكله يختلف بين الإصدارات،
-/// لذلك تُقرأ المفاتيح المتوقعة مع بديل نصي آمن.
-class _ApprovalHistoryTile extends StatelessWidget {
-  final Map<String, dynamic> entry;
+class _LicenseImageTile extends StatelessWidget {
+  final String imageUrl;
+  final String driverName;
 
-  const _ApprovalHistoryTile({required this.entry});
+  const _LicenseImageTile({required this.imageUrl, required this.driverName});
 
   @override
   Widget build(BuildContext context) {
-    final action = entry['action'] ?? entry['status'] ?? entry['decision'];
-    final by = entry['admin_name'] ?? entry['reviewed_by'] ?? entry['by'];
-    final at = entry['created_at'] ?? entry['reviewed_at'] ?? entry['date'];
-    final note = entry['reason'] ?? entry['note'] ?? entry['feedback'];
+    final link = MediaUrl.resolve(imageUrl);
+    if (link == null || link.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.isDarkMode
-            ? const Color(0xFF0F172A)
+            ? const Color(0xFF1E293B)
             : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: context.dividerLine),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.history_rounded, size: 17, color: context.primaryColor),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  action == null
-                      ? 'إجراء مراجعة'
-                      : DriverStatusValue.label(action.toString()),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
-                  ),
+          Row(
+            children: [
+              Icon(Icons.card_membership_rounded,
+                  color: context.primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'صورة رخصة القيادة الرسمية',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
                 ),
-                if (by != null || at != null)
-                  Text(
-                    [if (by != null) '$by', if (at != null) '$at'].join(' • '),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: context.textTertiary,
-                    ),
-                  ),
-                if (note != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      '$note',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.textSecondary,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
+              const Spacer(),
+              Text(
+                'اضغط لعرض الوثيقة بالحجم الكامل',
+                style: TextStyle(fontSize: 11.5, color: context.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          InkWell(
+            onTap: () => ImageViewerDialog.show(
+              context,
+              title: 'صورة رخصة القيادة',
+              subtitle: driverName,
+              rawUrl: link,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.dividerLine),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: RemoteImage(
+                rawUrl: link,
+                fallback: const Center(
+                  child: Text('تعذر عرض صورة رخصة القيادة'),
+                ),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AiStatusCard extends StatelessWidget {
+  final DriverAiStatus aiStatus;
+
+  const _AiStatusCard({required this.aiStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.isDarkMode
+            ? const Color(0xFF1E293B)
+            : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: aiStatus.isSuspended
+              ? Colors.red.withValues(alpha: 0.5)
+              : context.dividerLine,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                aiStatus.isSuspended
+                    ? Icons.report_problem_rounded
+                    : Icons.smart_toy_outlined,
+                color: aiStatus.isSuspended ? Colors.red : context.primaryColor,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                aiStatus.isSuspended
+                    ? 'حساب السائق موقوف بواسطة نظام الذكاء الاصطناعي'
+                    : 'مستقر - حالة السائق سليمة في نظام الذكاء الاصطناعي',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color:
+                      aiStatus.isSuspended ? Colors.red : context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _AiStatChip(
+                label: 'متوسط التقييم',
+                value: aiStatus.ratingAvg != null
+                    ? '⭐ ${aiStatus.ratingAvg}'
+                    : 'لا يوجد',
+              ),
+              const SizedBox(width: 10),
+              _AiStatChip(
+                label: 'التنبيهات النشطة',
+                value: '${aiStatus.activeWarningsCount}',
+                color: aiStatus.activeWarningsCount > 0 ? Colors.orange : null,
+              ),
+              const SizedBox(width: 10),
+              _AiStatChip(
+                label: 'مرات الإيقاف',
+                value: '${aiStatus.suspensionCount}',
+                color: aiStatus.suspensionCount > 0 ? Colors.red : null,
+              ),
+            ],
+          ),
+          if (aiStatus.isSuspended &&
+              aiStatus.suspendedUntil != null &&
+              aiStatus.suspendedUntil!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'موقوف حتى تاريخ: ${aiStatus.suspendedUntil}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          ],
+          if (aiStatus.lastIncidentAt != null &&
+              aiStatus.lastIncidentAt!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'آخر حادثة مسجلة: ${aiStatus.lastIncidentAt}',
+              style: TextStyle(fontSize: 12, color: context.textTertiary),
+            ),
+          ],
+          if (aiStatus.aiLastResetAt != null &&
+              aiStatus.aiLastResetAt!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'آخر إعادة ضبط للنظام: ${aiStatus.aiLastResetAt}',
+              style: TextStyle(fontSize: 12, color: context.textTertiary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AiStatChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _AiStatChip({required this.label, required this.value, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+              color: (color ?? context.textTertiary).withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, color: context.textTertiary),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: color ?? context.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -33,6 +33,8 @@ class ApiEndpoints {
   // ── 2. Drivers ──────────────────────────────────────────────────────────────
   static const String drivers = '/admin/drivers';
   static String driverDetails(dynamic id) => '/admin/drivers/$id';
+  static String driverSuspend(dynamic id) => '/admin/drivers/$id/suspend';
+  static String driverActivate(dynamic id) => '/admin/drivers/$id/activate';
 
   /// PUT — تعديل بيانات السائق مباشرة (يُسجَّل في سجل إجراءات المشرفين).
   static String driverUpdate(dynamic id) => '/admin/drivers/$id';
@@ -186,7 +188,11 @@ class ApiEndpoints {
   static const String adminNotificationsReadAll =
       '/admin/notifications/read-all';
 
-  // ── AI Alerts (تنبيهات الذكاء الاصطناعي عن سلوك السائقين) ──────────────────
-  static const String aiAlerts = '/v1/admin/ai-alerts';
-  static String aiAlertDetails(dynamic id) => '/v1/admin/ai-alerts/$id';
+  // ── AI Control Center & Alerts (مركز تحكّم الذكاء الاصطناعي) ─────────────
+  static const String aiAlerts = '/admin/ai-alerts';
+  static String aiAlertDetails(dynamic id) => '/admin/ai-alerts/$id';
+  static String aiAlertResolve(dynamic id) => '/admin/ai-alerts/$id/resolve';
+  static String driverAiReset(dynamic driverId) =>
+      '/admin/drivers/$driverId/ai-reset';
+  static const String aiAudits = '/admin/ai-audits';
 }

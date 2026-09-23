@@ -13,83 +13,142 @@ class DriverVehicleCard extends StatelessWidget {
 
   const DriverVehicleCard({super.key, required this.vehicle});
 
-  /// السطر الثانوي: اللوحة والسنة والسعة والتكييف — بلا حقول فارغة.
-  String _describe() {
-    final parts = <String>[
-      'رقم اللوحة: ${vehicle.plateNumber}',
-      if (vehicle.year != null) 'سنة: ${vehicle.year}',
-      if (vehicle.capacity != null) 'السعة: ${vehicle.capacity} راكب',
-      if (vehicle.color != null) 'اللون: ${vehicle.color}',
-      if (vehicle.type != null) 'النوع: ${vehicle.type}',
-      if (vehicle.hasAc != null)
-        vehicle.hasAc! ? 'مكيّفة' : 'بدون تكييف',
-    ];
-    return parts.join(' | ');
-  }
-
   @override
   Widget build(BuildContext context) {
     final imageUrl = MediaUrl.resolve(vehicle.imageUrl);
     final title = '${vehicle.brand} ${vehicle.model}'.trim();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.isDarkMode ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: context.dividerLine),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _VehicleImage(url: imageUrl, title: title),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _describe(),
-                  style: TextStyle(fontSize: 12.5, color: context.textTertiary),
-                ),
-                if (vehicle.isVerified)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified_rounded,
-                          size: 14,
-                          color: context.successColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'مركبة موثّقة',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            color: context.successColor,
-                          ),
-                        ),
-                      ],
+          Row(
+            children: [
+              _VehicleImage(url: imageUrl, title: title),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'رقم اللوحة: ${vehicle.plateNumber}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: context.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (vehicle.status != null) DriverStatusBadge(status: vehicle.status!),
+            ],
           ),
-          if (vehicle.status != null) DriverStatusBadge(status: vehicle.status!),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: context.dividerLine),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 480;
+              return GridView.count(
+                crossAxisCount: isWide ? 4 : 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: isWide ? 2.6 : 3.5,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 12,
+                children: [
+                  _PropTile(
+                    label: 'الماركة',
+                    value: vehicle.brand,
+                  ),
+                  _PropTile(
+                    label: 'الطراز / الموديل',
+                    value: vehicle.model,
+                  ),
+                  _PropTile(
+                    label: 'سنة الصنع',
+                    value: vehicle.year ?? 'غير محدد',
+                  ),
+                  _PropTile(
+                    label: 'رقم اللوحة',
+                    value: vehicle.plateNumber,
+                  ),
+                  _PropTile(
+                    label: 'اللون',
+                    value: vehicle.color ?? 'غير محدد',
+                  ),
+                  _PropTile(
+                    label: 'نوع المركبة',
+                    value: vehicle.type ?? 'غير محدد',
+                  ),
+                  _PropTile(
+                    label: 'سعة الركاب',
+                    value: vehicle.capacity != null
+                        ? '${vehicle.capacity} ركاب'
+                        : 'غير محدد',
+                  ),
+                  _PropTile(
+                    label: 'التكييف',
+                    value: vehicle.hasAc != null
+                        ? (vehicle.hasAc! ? 'مكيّفة' : 'بدون تكييف')
+                        : 'غير محدد',
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _PropTile extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _PropTile({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            color: context.textTertiary,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }

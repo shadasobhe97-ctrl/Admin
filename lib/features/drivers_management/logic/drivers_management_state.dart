@@ -19,6 +19,10 @@ class DriversManagementState {
 
   /// جارٍ حفظ تعديل بيانات السائق — يمنع الضغط المتكرر.
   final bool isUpdatingDriver;
+
+  /// جارٍ إيقاف أو تفعيل حساب السائق.
+  final bool isSuspendingOrActivating;
+
   final String selectedStatus; // 'all', 'pending', 'Approved', 'Rejected'
   final String? searchQuery;
   final String? errorMessage;
@@ -36,6 +40,7 @@ class DriversManagementState {
     this.isLoadingReviews = false,
     this.isSubmittingReview = false,
     this.isUpdatingDriver = false,
+    this.isSuspendingOrActivating = false,
     this.selectedStatus = 'all',
     this.searchQuery,
     this.errorMessage,
@@ -60,6 +65,7 @@ class DriversManagementState {
     bool? isLoadingReviews,
     bool? isSubmittingReview,
     bool? isUpdatingDriver,
+    bool? isSuspendingOrActivating,
     String? selectedStatus,
     String? searchQuery,
     String? errorMessage,
@@ -79,6 +85,7 @@ class DriversManagementState {
       isLoadingReviews: isLoadingReviews ?? this.isLoadingReviews,
       isSubmittingReview: isSubmittingReview ?? this.isSubmittingReview,
       isUpdatingDriver: isUpdatingDriver ?? this.isUpdatingDriver,
+      isSuspendingOrActivating: isSuspendingOrActivating ?? this.isSuspendingOrActivating,
       selectedStatus: selectedStatus ?? this.selectedStatus,
       searchQuery: searchQuery ?? this.searchQuery,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),

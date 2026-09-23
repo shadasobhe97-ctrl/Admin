@@ -331,4 +331,38 @@ class DriversManagementRemoteDataSource {
       rethrow;
     }
   }
+
+  /// 10. POST /api/admin/drivers/{id}/suspend
+  Future<String> suspendDriver(int id) async {
+    final endpoint = ApiEndpoints.driverSuspend(id);
+    try {
+      final response = await _apiClient.post(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return response.data['message']?.toString() ??
+            'تم إيقاف حساب السائق بنجاح.';
+      }
+      return 'تم إيقاف حساب السائق بنجاح.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 11. POST /api/admin/drivers/{id}/activate
+  Future<String> activateDriver(int id) async {
+    final endpoint = ApiEndpoints.driverActivate(id);
+    try {
+      final response = await _apiClient.post(endpoint);
+      if (response.data is Map<String, dynamic>) {
+        return response.data['message']?.toString() ??
+            'تم إعادة تفعيل حساب السائق بنجاح.';
+      }
+      return 'تم إعادة تفعيل حساب السائق بنجاح.';
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'POST', endpoint);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

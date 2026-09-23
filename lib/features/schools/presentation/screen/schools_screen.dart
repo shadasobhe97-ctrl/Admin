@@ -167,12 +167,6 @@ class SchoolsViewContent extends StatelessWidget {
           _ => null,
         };
 
-        final statusFilter = switch (state) {
-          SchoolsLoaded() => state.statusFilter,
-          SchoolsEmpty() => state.statusFilter,
-          _ => null,
-        };
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -186,12 +180,6 @@ class SchoolsViewContent extends StatelessWidget {
               initialQuery: searchQuery,
               onSearch: cubit.search,
               onClear: () => cubit.search(null),
-            ),
-            const SizedBox(height: 10),
-
-            _StatusFilterBar(
-              selected: statusFilter,
-              onSelect: cubit.filterByStatus,
             ),
             const SizedBox(height: 14),
 
@@ -233,8 +221,8 @@ class SchoolsViewContent extends StatelessWidget {
           icon: Icons.search_off_rounded,
           color: context.textMuted,
           title: 'لا توجد نتائج مطابقة',
-          body: 'جرّب تعديل كلمة البحث أو إلغاء فلتر الحالة.',
-          actionLabel: 'إلغاء الفلاتر',
+          body: 'جرّب تعديل كلمة البحث.',
+          actionLabel: 'إعادة البحث',
           onAction: cubit.clearFilters,
         );
       }
@@ -345,73 +333,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// فلتر حالة الاعتماد، بالقيم المسموح بها من الخادم فقط.
-class _StatusFilterBar extends StatelessWidget {
-  final String? selected;
-  final void Function(String? status) onSelect;
 
-  const _StatusFilterBar({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _FilterChip(
-          label: 'الكل',
-          isSelected: selected == null,
-          onTap: () => onSelect(null),
-        ),
-        const SizedBox(width: 8),
-        for (final status in SchoolStatus.all) ...[
-          _FilterChip(
-            label: SchoolStatus.label(status),
-            isSelected: selected == status,
-            onTap: () => onSelect(status),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ],
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? context.primaryColor : context.surfaceVariant,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? context.primaryColor : context.borderSoft,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? context.onPrimary : context.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _SchoolsMessage extends StatelessWidget {
   final IconData icon;

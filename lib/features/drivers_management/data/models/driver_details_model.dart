@@ -56,6 +56,49 @@ class DriverLocation {
   }
 }
 
+/// حالة مراقبة الذكاء الاصطناعي للسائق (`ai_status`).
+class DriverAiStatus {
+  final double? ratingAvg;
+  final bool isSuspended;
+  final String? suspendedUntil;
+  final int activeWarningsCount;
+  final int suspensionCount;
+  final String? lastIncidentAt;
+  final String? aiLastResetAt;
+
+  const DriverAiStatus({
+    this.ratingAvg,
+    this.isSuspended = false,
+    this.suspendedUntil,
+    this.activeWarningsCount = 0,
+    this.suspensionCount = 0,
+    this.lastIncidentAt,
+    this.aiLastResetAt,
+  });
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  factory DriverAiStatus.fromJson(Map<String, dynamic> json) {
+    return DriverAiStatus(
+      ratingAvg: _toDouble(json['rating_avg']),
+      isSuspended: json['is_suspended'] == true || json['is_suspended'] == 1,
+      suspendedUntil: json['suspended_until']?.toString(),
+      activeWarningsCount: json['active_warnings_count'] is int
+          ? json['active_warnings_count']
+          : int.tryParse('${json['active_warnings_count'] ?? 0}') ?? 0,
+      suspensionCount: json['suspension_count'] is int
+          ? json['suspension_count']
+          : int.tryParse('${json['suspension_count'] ?? 0}') ?? 0,
+      lastIncidentAt: json['last_incident_at']?.toString(),
+      aiLastResetAt: json['ai_last_reset_at']?.toString(),
+    );
+  }
+}
+
 class DriverDetailsModel {
   final DriverModel driver;
   final List<DriverDocumentModel> documents;
@@ -65,6 +108,7 @@ class DriverDetailsModel {
 
   final DriverStatistics? statistics;
   final DriverLocation? location;
+  final DriverAiStatus? aiStatus;
   final List<Map<String, dynamic>> approvalHistory;
   final Map<String, dynamic>? extraData;
 
@@ -74,6 +118,7 @@ class DriverDetailsModel {
     this.vehicles = const [],
     this.statistics,
     this.location,
+    this.aiStatus,
     this.approvalHistory = const [],
     this.extraData,
   });
@@ -113,6 +158,7 @@ class DriverDetailsModel {
 
     final statsRaw = driverJson['statistics'] ?? json['statistics'];
     final locationRaw = driverJson['location'] ?? json['location'];
+    final aiRaw = driverJson['ai_status'] ?? json['ai_status'];
 
     return DriverDetailsModel(
       driver: DriverModel.fromJson(driverJson),
@@ -123,6 +169,9 @@ class DriverDetailsModel {
           : null,
       location: locationRaw is Map<String, dynamic>
           ? DriverLocation.fromJson(locationRaw)
+          : null,
+      aiStatus: aiRaw is Map<String, dynamic>
+          ? DriverAiStatus.fromJson(aiRaw)
           : null,
       approvalHistory:
           mapList(driverJson['approval_history'] ?? json['approval_history']),

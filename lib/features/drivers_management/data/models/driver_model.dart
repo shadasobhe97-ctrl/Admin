@@ -12,6 +12,9 @@ class DriverModel {
   final int? userId;
   final String fullName;
   final String phoneNumber;
+  final String? alternativePhone;
+  final String? email;
+  final String? gender;
   final String status;
   final String? approvalStatus;
   final String? nationalId;
@@ -19,7 +22,15 @@ class DriverModel {
 
   /// تاريخ انتهاء الرخصة بصيغة YYYY-MM-DD كما يرسله الخادم.
   final String? licenseExpiry;
+
+  /// رابط أو بايتات base64 لصورة الرخصة.
+  final String? licenseImageUrl;
+  final String? licenseImageDataUrl;
+
+  /// رابط أو بايتات base64 للصورة الشخصية.
   final String? avatarUrl;
+  final String? avatarDataUrl;
+
   final String? createdAt;
   final bool isActive;
 
@@ -28,15 +39,29 @@ class DriverModel {
     this.userId,
     required this.fullName,
     required this.phoneNumber,
+    this.alternativePhone,
+    this.email,
+    this.gender,
     required this.status,
     this.approvalStatus,
     this.nationalId,
     this.licenseNumber,
     this.licenseExpiry,
+    this.licenseImageUrl,
+    this.licenseImageDataUrl,
     this.avatarUrl,
+    this.avatarDataUrl,
     this.createdAt,
     this.isActive = true,
   });
+
+  /// يعيد أفضل صورة رخصة متاحة (رابط مفسَّر أو data_url).
+  String? get resolvedLicenseImage =>
+      licenseImageUrl ?? licenseImageDataUrl;
+
+  /// يعيد أفضل صورة شخصية متاحة (رابط مفسَّر أو data_url).
+  String? get resolvedAvatarImage =>
+      avatarUrl ?? avatarDataUrl;
 
   static int? _toInt(dynamic value) {
     if (value == null) return null;
@@ -80,38 +105,42 @@ class DriverModel {
     final rawStatus = _toStringOrNull(pick(['status', 'approval_status']));
     final rawApproval = _toStringOrNull(pick(['approval_status', 'status']));
 
+    final avatarPath = _toStringOrNull(pick([
+      'avatar_url',
+      'avatar_data_url',
+      'avatar',
+      'profile_photo_url',
+      'photo_url',
+      'image_url',
+    ]));
+
+    final avatarDataPath = _toStringOrNull(pick(['avatar_data_url']));
+
+    final licenseUrlPath = _toStringOrNull(pick(['license_image_url', 'license_image']));
+    final licenseDataPath = _toStringOrNull(pick(['license_image_data_url']));
+
     return DriverModel(
       id: _toInt(json['id']) ?? 0,
       userId: _toInt(pick(['user_id', 'id_user'])) ??
           (account.isEmpty ? null : _toInt(account['id'])),
       fullName: _toStringOrNull(pick(['full_name', 'name'])) ?? 'سائق بدون اسم',
       phoneNumber: _toStringOrNull(pick(['phone_number', 'phone'])) ?? '',
+      alternativePhone: _toStringOrNull(pick(['alternative_phone', 'second_phone'])),
+      email: _toStringOrNull(pick(['email'])),
+      gender: _toStringOrNull(pick(['gender'])),
       status: rawStatus ?? 'Pending',
       approvalStatus: rawApproval,
       nationalId: _toStringOrNull(pick(['national_id'])),
       licenseNumber: _toStringOrNull(pick(['license_number'])),
       licenseExpiry: _toStringOrNull(pick(['license_expiry'])),
-      avatarUrl: _toStringOrNull(pick([
-        'avatar_url',
-        'avatar',
-        'profile_photo_url',
-        'profile_photo',
-        'photo_url',
-        'photo',
-        'image_url',
-        'image',
-        'personal_photo',
-        'avatar_path',
-        'profile_photo_path',
-        'driver_photo',
-        'user_photo',
-        'picture',
-        'profile_picture',
-        'profile_image',
-      ])),
+      licenseImageUrl: licenseUrlPath,
+      licenseImageDataUrl: licenseDataPath,
+      avatarUrl: avatarPath,
+      avatarDataUrl: avatarDataPath,
       createdAt: _toStringOrNull(pick(['created_at'])),
-      // `is_active` يأتي من حساب المستخدم في التفاصيل.
-      isActive: _toBool(pick(['is_active'])),
+      isActive: rawStatus?.toLowerCase() == 'suspended'
+          ? false
+          : _toBool(pick(['is_active'])),
     );
   }
 
@@ -121,12 +150,18 @@ class DriverModel {
       'user_id': userId,
       'full_name': fullName,
       'phone_number': phoneNumber,
+      'alternative_phone': alternativePhone,
+      'email': email,
+      'gender': gender,
       'status': status,
       'approval_status': approvalStatus,
       'national_id': nationalId,
       'license_number': licenseNumber,
       'license_expiry': licenseExpiry,
+      'license_image_url': licenseImageUrl,
+      'license_image_data_url': licenseImageDataUrl,
       'avatar_url': avatarUrl,
+      'avatar_data_url': avatarDataUrl,
       'created_at': createdAt,
       'is_active': isActive,
     };

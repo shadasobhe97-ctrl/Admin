@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -77,6 +78,21 @@ class ImageLoaderService {
     // 1. الفحص من ذاكرة الرام (RAM Cache) للعرض الفوري اللحظي
     if (_imageCache.containsKey(url)) {
       return _imageCache[url];
+    }
+
+    // معالجة روابط الصور المضمنة بنمط base64 (data:image/...) فوراً
+    if (url.startsWith('data:')) {
+      try {
+        final commaIndex = url.indexOf(',');
+        final base64Str = commaIndex != -1 ? url.substring(commaIndex + 1) : url;
+        final bytes = base64Decode(base64Str.replaceAll(RegExp(r'\s+'), ''));
+        if (bytes.isNotEmpty) {
+          _imageCache[url] = bytes;
+          return bytes;
+        }
+      } catch (_) {
+        // في حال تعثر فك الترميز التلقائي
+      }
     }
 
     // 2. معالجة روابط الاختبارات الوهمية فوراً لتفادي إنشاء مؤقتات شبكية غير ضرورية

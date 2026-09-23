@@ -32,10 +32,10 @@ class DriverStatusBadge extends StatelessWidget {
         label = 'مرفوض';
         break;
       case 'suspended':
-        bgColor = isDark ? const Color(0xFF475569).withValues(alpha: 0.4) : const Color(0xFFF1F5F9);
-        textColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+        bgColor = isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEF2F2);
+        textColor = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626);
         icon = Icons.block_rounded;
-        label = 'موقوف';
+        label = 'حساب موقوف';
         break;
       case 'offline':
         bgColor = isDark ? const Color(0xFF334155).withValues(alpha: 0.4) : const Color(0xFFF8FAFC);

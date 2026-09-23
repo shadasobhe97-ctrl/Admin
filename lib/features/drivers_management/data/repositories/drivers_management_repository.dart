@@ -113,4 +113,20 @@ class DriversManagementRepository {
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
+
+  Future<String> suspendDriver(int id) async {
+    try {
+      return await _remoteDataSource.suspendDriver(id);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<String> activateDriver(int id) async {
+    try {
+      return await _remoteDataSource.activateDriver(id);
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
 }

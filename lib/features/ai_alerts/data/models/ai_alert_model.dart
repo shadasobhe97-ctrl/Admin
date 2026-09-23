@@ -118,23 +118,53 @@ class AiAlertModel {
     this.createdAt,
     this.updatedAt,
     this.driver,
+    this.driverName,
+    this.driverPhone,
   });
 
-  /// هل هذا تنبيه حرج؟ يُستدل عليه من `alert_type` (متوفر دائماً في
-  /// القائمة والتفاصيل)، وليس من `severity` (قد يغيب في استجابة التفاصيل).
-  bool get isCritical => alertType == 'ai_critical';
+  /// هل هذا تنبيه حرج؟ يُستدل عليه من `alert_type` أو `risk_level`.
+  bool get isCritical =>
+      alertType == 'ai_critical' ||
+      alertType == 'ai_admin_review_required' ||
+      riskLevel.toUpperCase() == 'CRITICAL';
+
+  String get displayDriverName =>
+      driver?.name ?? _toStringOrNull(driverName) ?? 'سائقغير معروف';
+
+  String get displayDriverPhone =>
+      driver?.phone ?? _toStringOrNull(driverPhone) ?? '';
+
+  String? get precautionaryTo =>
+      _toStringOrNull(metadata?['precautionary_to']) ??
+      _toStringOrNull(metadata?['suspended_until']);
+
+  final String? driverName;
+  final String? driverPhone;
 
   factory AiAlertModel.fromJson(Map<String, dynamic> json) {
-    // معرّف التنبيه: `id` في القائمة، `alert_id` في التفاصيل.
-    final id = _toInt(json['id']) ?? _toInt(json['alert_id']) ?? 0;
+    // معرّف التنبيه: `alert_id` في الاستجابة الجديدة، أو `id` في الاستجابة السابقة.
+    final id = _toInt(json['alert_id']) ?? _toInt(json['id']) ?? 0;
 
     final driverJson = _toMapOrNull(json['driver']);
     final driver =
         driverJson != null ? AiAlertDriverModel.fromJson(driverJson) : null;
 
+    final dName = _toStringOrNull(json['driver_name']) ?? driver?.name;
+    final dPhone = _toStringOrNull(json['driver_phone']) ?? driver?.phone;
+    final dId = _toInt(json['driver_id']) ?? driver?.id;
+
+    final effectiveDriver = driver ??
+        (dId != null || dName != null
+            ? AiAlertDriverModel(
+                id: dId ?? 0,
+                name: dName,
+                phone: dPhone,
+              )
+            : null);
+
     return AiAlertModel(
       id: id,
-      driverId: _toInt(json['driver_id']) ?? driver?.id,
+      driverId: dId,
       riskLevel: _toStringOrNull(json['risk_level']) ?? '',
       actionsTaken: _toStringOrNull(json['actions_taken']),
       adminMessage: _toStringOrNull(json['admin_message']),
@@ -144,13 +174,15 @@ class AiAlertModel {
       alertType: _toStringOrNull(json['alert_type']) ?? '',
       title: _toStringOrNull(json['title']) ?? '',
       message: _toStringOrNull(json['message']) ?? '',
-      severity: _toInt(json['severity']),
+      severity: _toInt(json['severity']) ?? _toInt(json['metadata']?['severity']),
       actionRequired: _toStringOrNull(json['action_required']),
       metadata: _toMapOrNull(json['metadata']),
       isRead: _toBoolOrNull(json['is_read']),
       createdAt: _toStringOrNull(json['created_at']),
       updatedAt: _toStringOrNull(json['updated_at']),
-      driver: driver,
+      driver: effectiveDriver,
+      driverName: dName,
+      driverPhone: dPhone,
     );
   }
 }

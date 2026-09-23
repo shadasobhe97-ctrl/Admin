@@ -171,60 +171,121 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: theme.dividerColor),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (val) =>
-                              context.read<ParentsCubit>().searchParents(val),
-                          style: TextStyle(fontSize: 13, color: context.textPrimary),
-                          decoration: InputDecoration(
-                            hintText: 'البحث باسم ولي الأمر، رقم الهاتف، الإيميل، أو المعرف...',
-                            prefixIcon: Icon(Icons.search_rounded,
-                                color: context.primaryColor),
-                            suffixIcon: _searchController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      context.read<ParentsCubit>().searchParents('');
-                                    },
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                  child: LayoutBuilder(
+                    builder: (context, barConstraints) {
+                      final isWideBar = barConstraints.maxWidth > 650;
+                      if (isWideBar) {
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (val) =>
+                                    context.read<ParentsCubit>().searchParents(val),
+                                style: TextStyle(fontSize: 13, color: context.textPrimary),
+                                decoration: InputDecoration(
+                                  hintText: 'البحث باسم ولي الأمر، رقم الهاتف، الإيميل، أو المعرف...',
+                                  prefixIcon: Icon(Icons.search_rounded,
+                                      color: context.primaryColor),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear_rounded, size: 18),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            context.read<ParentsCubit>().searchParents('');
+                                          },
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Wrap(
+                              spacing: 6,
+                              children: [
+                                _buildFilterPill(
+                                  context,
+                                  label: 'الكل ($totalCount)',
+                                  filterKey: 'all',
+                                  currentFilter: state.statusFilter,
+                                ),
+                                _buildFilterPill(
+                                  context,
+                                  label: 'النشطين ($activeCount)',
+                                  filterKey: 'active',
+                                  currentFilter: state.statusFilter,
+                                ),
+                                _buildFilterPill(
+                                  context,
+                                  label: 'المعطلين ($inactiveCount)',
+                                  filterKey: 'inactive',
+                                  currentFilter: state.statusFilter,
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
 
-                      // Filter Pills
-                      Wrap(
-                        spacing: 6,
+                      return Column(
                         children: [
-                          _buildFilterPill(
-                            context,
-                            label: 'الكل ($totalCount)',
-                            filterKey: 'all',
-                            currentFilter: state.statusFilter,
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (val) =>
+                                context.read<ParentsCubit>().searchParents(val),
+                            style: TextStyle(fontSize: 13, color: context.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: 'البحث باسم ولي الأمر، رقم الهاتف...',
+                              prefixIcon: Icon(Icons.search_rounded,
+                                  color: context.primaryColor),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        context.read<ParentsCubit>().searchParents('');
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                            ),
                           ),
-                          _buildFilterPill(
-                            context,
-                            label: 'النشطين ($activeCount)',
-                            filterKey: 'active',
-                            currentFilter: state.statusFilter,
-                          ),
-                          _buildFilterPill(
-                            context,
-                            label: 'المعطلين ($inactiveCount)',
-                            filterKey: 'inactive',
-                            currentFilter: state.statusFilter,
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildFilterPill(
+                                  context,
+                                  label: 'الكل ($totalCount)',
+                                  filterKey: 'all',
+                                  currentFilter: state.statusFilter,
+                                ),
+                                const SizedBox(width: 6),
+                                _buildFilterPill(
+                                  context,
+                                  label: 'النشطين ($activeCount)',
+                                  filterKey: 'active',
+                                  currentFilter: state.statusFilter,
+                                ),
+                                const SizedBox(width: 6),
+                                _buildFilterPill(
+                                  context,
+                                  label: 'المعطلين ($inactiveCount)',
+                                  filterKey: 'inactive',
+                                  currentFilter: state.statusFilter,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -267,13 +328,27 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
-                                child: ListView.separated(
-                                  itemCount: filteredParents.length,
-                                  separatorBuilder: (_, __) =>
-                                      Divider(height: 1, color: theme.dividerColor),
-                                  itemBuilder: (context, index) {
-                                    final parent = filteredParents[index];
-                                    return _buildParentRow(context, parent);
+                                child: LayoutBuilder(
+                                  builder: (context, listConstraints) {
+                                    final minWidth = listConstraints.maxWidth > 820
+                                        ? listConstraints.maxWidth
+                                        : 820.0;
+
+                                    return SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: SizedBox(
+                                        width: minWidth,
+                                        child: ListView.separated(
+                                          itemCount: filteredParents.length,
+                                          separatorBuilder: (_, __) =>
+                                              Divider(height: 1, color: theme.dividerColor),
+                                          itemBuilder: (context, index) {
+                                            final parent = filteredParents[index];
+                                            return _buildParentRow(context, parent);
+                                          },
+                                        ),
+                                      ),
+                                    );
                                   },
                                 ),
                               ),
@@ -393,12 +468,16 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      parent.fullName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
+                    Flexible(
+                      child: Text(
+                        parent.fullName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -435,12 +514,13 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                       Icon(Icons.email_outlined,
                           size: 14, color: context.textTertiary),
                       const SizedBox(width: 4),
-                      Expanded(
+                      Flexible(
                         child: Text(
                           parent.email!,
                           style:
                               TextStyle(fontSize: 12, color: context.textSecondary),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],

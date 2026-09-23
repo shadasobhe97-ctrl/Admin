@@ -402,6 +402,62 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
     }
   }
 
+  /// 10. POST /api/admin/drivers/{id}/suspend
+  Future<bool> suspendDriver(int id) async {
+    if (state.isSuspendingOrActivating) return false;
+    emit(state.copyWith(
+      isSuspendingOrActivating: true,
+      clearError: true,
+      clearSuccess: true,
+    ));
+
+    try {
+      final msg = await _repository.suspendDriver(id);
+      emit(state.copyWith(
+        isSuspendingOrActivating: false,
+        successMessage: msg,
+      ));
+
+      await fetchDriverDetails(id);
+      await fetchDrivers(page: state.meta.currentPage);
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isSuspendingOrActivating: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
+  /// 11. POST /api/admin/drivers/{id}/activate
+  Future<bool> activateDriver(int id) async {
+    if (state.isSuspendingOrActivating) return false;
+    emit(state.copyWith(
+      isSuspendingOrActivating: true,
+      clearError: true,
+      clearSuccess: true,
+    ));
+
+    try {
+      final msg = await _repository.activateDriver(id);
+      emit(state.copyWith(
+        isSuspendingOrActivating: false,
+        successMessage: msg,
+      ));
+
+      await fetchDriverDetails(id);
+      await fetchDrivers(page: state.meta.currentPage);
+      return true;
+    } catch (e) {
+      emit(state.copyWith(
+        isSuspendingOrActivating: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      ));
+      return false;
+    }
+  }
+
   void clearMessages() {
     emit(state.copyWith(clearError: true, clearSuccess: true));
   }
