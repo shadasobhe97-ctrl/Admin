@@ -1,10 +1,24 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/image_loader_service.dart';
 import '../../../core/utils/media_url.dart';
 import '../data/models/update_driver_payload.dart';
 import '../data/repositories/drivers_management_repository.dart';
 import 'drivers_management_state.dart';
+
+class DriversPendingCounters {
+  static final ValueNotifier<int> pendingDriversCount = ValueNotifier<int>(0);
+  static final ValueNotifier<int> pendingChangesCount = ValueNotifier<int>(0);
+
+  static void setPendingDrivers(int count) {
+    pendingDriversCount.value = count;
+  }
+
+  static void setPendingChanges(int count) {
+    pendingChangesCount.value = count;
+  }
+}
 
 class DriversManagementCubit extends Cubit<DriversManagementState> {
   final DriversManagementRepository _repository;
@@ -16,6 +30,20 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
   Future<void> close() {
     _debounceTimer?.cancel();
     return super.close();
+  }
+
+  /// تحديث العدادات المعلقة (طلبات التسجيل المعلقة + طلبات التعديل المعلقة) لتظهر في الهيدر والسايدبار
+  Future<void> refreshPendingCounts() async {
+    try {
+      final pendingDriversRes =
+          await _repository.getDrivers(status: 'Pending');
+      DriversPendingCounters.setPendingDrivers(pendingDriversRes.meta.total);
+    } catch (_) {}
+
+    try {
+      final pendingChanges = await _repository.getPendingDriverChanges();
+      DriversPendingCounters.setPendingChanges(pendingChanges.length);
+    } catch (_) {}
   }
 
   /// 1. GET /api/admin/drivers (with status, search, and pagination page)
@@ -41,6 +69,12 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
         search: activeSearch,
         page: page,
       );
+
+      if (activeStatus.toLowerCase() == 'pending') {
+        DriversPendingCounters.setPendingDrivers(result.meta.total);
+      } else {
+        unawaited(refreshPendingCounts());
+      }
 
       emit(state.copyWith(
         isLoading: false,
@@ -201,6 +235,7 @@ class DriversManagementCubit extends Cubit<DriversManagementState> {
 
     try {
       final changes = await _repository.getPendingDriverChanges();
+      DriversPendingCounters.setPendingChanges(changes.length);
       emit(state.copyWith(
         isLoading: false,
         pendingChanges: changes,

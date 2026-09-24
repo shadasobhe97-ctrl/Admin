@@ -7,12 +7,10 @@ import '../../logic/cubit/financial_cubit.dart';
 import '../../logic/state/financial_state.dart';
 import '../widget/financial_summary_grid.dart';
 import '../../../../core/widgets/admin_ui.dart';
-import 'escrows_screen.dart';
 import 'financial_ledger_screen.dart';
 import 'invoices_screen.dart';
 import 'payment_methods_screen.dart';
 import 'pricing_settings_screen.dart';
-import 'recharges_screen.dart';
 import 'withdrawals_screen.dart';
 
 /// الشاشة الرئيسية للإدارة المالية.
@@ -118,10 +116,6 @@ class FinancialDashboardView extends StatelessWidget {
         summary: state.summary,
         onWithdrawalsTap: () =>
             _openAndRefresh(context, const WithdrawalsScreen()),
-        onRechargesTap: () =>
-            _openAndRefresh(context, const RechargesScreen()),
-        onEscrowsTap: () =>
-            _openAndRefresh(context, const EscrowsScreen()),
       );
     }
 

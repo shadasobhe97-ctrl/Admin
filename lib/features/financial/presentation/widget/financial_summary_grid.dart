@@ -10,27 +10,16 @@ import '../../../../core/widgets/admin_ui.dart';
 class FinancialSummaryGrid extends StatelessWidget {
   final FinancialSummaryModel summary;
   final VoidCallback? onWithdrawalsTap;
-  final VoidCallback? onRechargesTap;
-  final VoidCallback? onEscrowsTap;
 
   const FinancialSummaryGrid({
     super.key,
     required this.summary,
     this.onWithdrawalsTap,
-    this.onRechargesTap,
-    this.onEscrowsTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cards = <Widget>[
-      FinancialSummaryCard(
-        title: 'أمانات أولياء الأمور',
-        value: AdminFormat.money(summary.parentsEscrowPool),
-        icon: Icons.savings_rounded,
-        accentColor: context.infoColor,
-        subtitle: 'PARENTS_ESCROW_POOL',
-      ),
       FinancialSummaryCard(
         title: 'أرباح السائقين المعلّقة',
         value: AdminFormat.money(summary.driverPendingPool),
@@ -59,22 +48,6 @@ class FinancialSummaryGrid extends StatelessWidget {
         accentColor: context.warningColor,
         subtitle: 'بانتظار معالجة المشرف',
         onTap: onWithdrawalsTap,
-      ),
-      FinancialSummaryCard(
-        title: 'طلبات الشحن المعلّقة',
-        value: AdminFormat.count(summary.pendingRechargesCount),
-        icon: Icons.move_to_inbox_rounded,
-        accentColor: context.infoColor,
-        subtitle: 'محافظ أولياء الأمور',
-        onTap: onRechargesTap,
-      ),
-      FinancialSummaryCard(
-        title: 'الأمانات المعلّقة',
-        value: AdminFormat.count(summary.pendingEscrowsCount),
-        icon: Icons.lock_clock_rounded,
-        accentColor: context.warningColor,
-        subtitle: 'بانتظار التحرير',
-        onTap: onEscrowsTap,
       ),
     ];
 

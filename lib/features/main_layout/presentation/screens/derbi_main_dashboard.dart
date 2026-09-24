@@ -31,6 +31,7 @@ import '../../../admin_notifications/logic/cubit/admin_notifications_state.dart'
 import '../../../admin_notifications/presentation/screens/admin_notifications_screen.dart';
 import '../../../admin_notifications/presentation/widgets/in_app_notification_banner.dart';
 import '../../../ai_alerts/presentation/screens/ai_alerts_screen.dart';
+import '../../../drivers_management/logic/drivers_management_cubit.dart';
 
 class DerbiMainDashboard extends StatefulWidget {
   const DerbiMainDashboard({super.key});
@@ -59,6 +60,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     _navItems = _buildNavItems();
     _ensureSessionFresh();
     _initNotificationsAndFcm();
+    sl<DriversManagementCubit>().refreshPendingCounts();
   }
 
   void _initNotificationsAndFcm() {
@@ -69,8 +71,19 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     _fcmForegroundSubscription =
         AdminFcmService().onForegroundMessage.listen((message) {
       if (!mounted) return;
-      final title = message.notification?.title ?? 'إشعار جديد من نظام دَربِي';
-      final body = message.notification?.body ?? 'وصلك إشعار جديد في لوحة التحكم';
+      final title = message.notification?.title ??
+          message.data['title'] ??
+          'إشعار جديد من نظام دَربِي';
+      final body = message.notification?.body ??
+          message.data['body'] ??
+          message.data['message'] ??
+          'وصلك إشعار جديد في لوحة التحكم';
+
+      // تحديث العدادات اللحظية للإشعارات غير المقروءة وطلبات السائقين في الهيدر والـ Sidebar
+      try {
+        context.read<AdminNotificationsCubit>().fetchUnreadCount();
+        sl<DriversManagementCubit>().refreshPendingCounts();
+      } catch (_) {}
 
       // إظهار تنبيه فوري منبثق أعلى الشاشة
       InAppNotificationBanner.show(
@@ -113,11 +126,11 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       if (can('drivers.view'))
         NavigationItem(
             'drivers', 'إدارة السائقين', Icons.directions_bus_rounded,
-            badge: 0),
+            badge: DriversPendingCounters.pendingDriversCount.value),
       if (can('drivers.review_changes'))
         NavigationItem(
             'updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded,
-            badge: 3),
+            badge: DriversPendingCounters.pendingChangesCount.value),
       if (can('admins.manage'))
         NavigationItem(
             'admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded,
@@ -397,7 +410,13 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
                       // Navigation Items List
                       Expanded(
-                        child: _buildSidebarContent(context),
+                        child: ListenableBuilder(
+                          listenable: Listenable.merge([
+                            DriversPendingCounters.pendingDriversCount,
+                            DriversPendingCounters.pendingChangesCount,
+                          ]),
+                          builder: (context, _) => _buildSidebarContent(context),
+                        ),
                       ),
 
                       // Admin Footer (Logout only)

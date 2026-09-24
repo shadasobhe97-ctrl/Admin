@@ -12,6 +12,7 @@ import '../../data/models/driver_model.dart';
 import '../../data/models/update_driver_payload.dart';
 import '../../logic/drivers_management_cubit.dart';
 import '../../logic/drivers_management_state.dart';
+import '../widgets/driver_document_tile.dart';
 import '../widgets/driver_edit_dialog.dart';
 import '../widgets/driver_identity_card.dart';
 import '../widgets/driver_review_dialog.dart';
@@ -333,7 +334,25 @@ class _DriverBody extends StatelessWidget {
           const SizedBox(height: 20),
         ],
 
-        // ── 5. المركبات المسجلة ──────────────────────────────────────────
+        // ── 5. الوثائق والمستندات الرسمية ─────────────────────────────────
+        _SectionHeader(
+          title: '📜 الوثائق والمستندات الرسمية',
+          hint: details.documents.isNotEmpty
+              ? '${details.documents.length} وثائق مرفوعة'
+              : null,
+        ),
+        if (details.documents.isEmpty)
+          const _EmptyBox(message: 'لا توجد وثائق أو مستندات مسجلة حالياً.')
+        else
+          ...details.documents.map(
+            (doc) => DriverDocumentTile(
+              document: doc,
+              driverName: driver.fullName,
+            ),
+          ),
+        const SizedBox(height: 20),
+
+        // ── 6. المركبات المسجلة ──────────────────────────────────────────
         _SectionHeader(
           title: '🚘 بيانات المركبة المسجلة',
           hint: details.vehicles.length > 1

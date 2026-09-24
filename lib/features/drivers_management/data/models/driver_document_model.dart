@@ -67,15 +67,15 @@ class DriverDocumentModel {
     return !upper.contains('LOGBOOK') && !upper.contains('REGISTRATION');
   }
 
-  /// تاريخ الانتهاء المعروض — أول تاريخ متوفّر من التواريخ الأربعة.
-  /// الخادم يملأ التاريخ المناسب لنوع الوثيقة ويترك البقية `null`.
-  /// كتيب المركبة (بيانات مالك المركبة) لا يملك تاريخ انتهاء.
+  /// تاريخ الانتهاء المعروض — يعيد أول تاريخ متوفر من التواريخ المرسلة من الخادم.
+  /// الخادم يملأ تاريخ الانتهاء العام `expiry_date` لكل الوثائق.
   String? get expiryDate {
-    if (!hasExpiry) return null;
-    return genericExpiry ??
+    final date = genericExpiry ??
         insuranceExpiry ??
         stampExpiry ??
         technicalInspectionExpiry;
+    if (date != null && date.isNotEmpty) return date;
+    return null;
   }
 
   String get translatedType {
@@ -100,8 +100,14 @@ class DriverDocumentModel {
       case 'DOC_STAMP':
         return 'الدمغ (إذن تجول)';
       case 'TECHNICAL_INSPECTION':
+      case 'INSPECTION':
       case 'DOC_TECHNICAL_INSPECTION':
+      case 'DOC_INSPECTION':
         return 'الفحص الفني';
+      case 'OPERATING_PERMIT':
+      case 'DOC_OPERATING_PERMIT':
+      case 'PERMIT':
+        return 'إذن/تصريح التشغيل';
       case 'NATIONAL_ID':
         return 'الرقم الوطني / الهوية';
       case 'BACKGROUND_CHECK':

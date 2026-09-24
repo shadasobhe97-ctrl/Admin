@@ -11,11 +11,15 @@ class DriversTable extends StatelessWidget {
   /// تعديل سريع لبيانات السائق — يظهر للسائقين قيد الانتظار فقط.
   final ValueChanged<DriverModel>? onTapEdit;
 
+  /// إيقاف أو إعادة تفعيل حساب السائق مباشرة من القائمة.
+  final ValueChanged<DriverModel>? onTapToggleStatus;
+
   const DriversTable({
     super.key,
     required this.drivers,
     required this.onTapInspect,
     this.onTapEdit,
+    this.onTapToggleStatus,
   });
 
   static bool isPending(DriverModel driver) =>
@@ -106,6 +110,9 @@ class DriversTable extends StatelessWidget {
               ),
             ],
             rows: drivers.map((driver) {
+              final isSuspended = driver.status.toLowerCase() == 'suspended' || !driver.isActive;
+              final isApproved = driver.status.toLowerCase() == 'approved' || driver.status.toLowerCase() == 'verified';
+
               return DataRow(
                 cells: [
                   DataCell(
@@ -165,6 +172,26 @@ class DriversTable extends StatelessWidget {
                           icon: const Icon(Icons.badge_outlined, size: 16),
                           label: const Text('فحص الوثائق والتفعيل', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
+                        if (onTapToggleStatus != null && (isSuspended || isApproved)) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isSuspended ? Colors.green : Colors.red,
+                              side: BorderSide(color: isSuspended ? Colors.green : Colors.red),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () => onTapToggleStatus!(driver),
+                            icon: Icon(
+                              isSuspended ? Icons.check_circle_outline_rounded : Icons.block_rounded,
+                              size: 15,
+                            ),
+                            label: Text(
+                              isSuspended ? 'تفعيل' : 'إيقاف',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                         if (onTapEdit != null && isPending(driver)) ...[
                           const SizedBox(width: 6),
                           IconButton(

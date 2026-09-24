@@ -12,16 +12,38 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// استقبال ومعالجة الإشعار عندما تكون اللوحة في الخلفية أو مغلقة
+// استقبال ومعالجة الإشعار عندما تكون اللوحة في الخلفية أو مغلقة (Background / Closed)
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message: ', payload);
   
-  const notificationTitle = payload.notification?.title || 'إشعار من نظام دربي';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'إشعار من نظام دَربِي';
+  const notificationBody = payload.notification?.body || payload.data?.body || payload.data?.message || '';
+
   const notificationOptions = {
-    body: payload.notification?.body || '',
+    body: notificationBody,
     icon: '/favicon.png',
+    badge: '/favicon.png',
     data: payload.data,
+    vibrate: [200, 100, 200],
+    requireInteraction: false
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// فتح وتركيز نافذة لوحة تحكم دَربِي فور النقر على الإشعار من الخلفية
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
 });

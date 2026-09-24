@@ -199,8 +199,11 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     const SizedBox(height: 32),
 
                     // 4. قسم تفاصيل رحلات السائقين النشطين
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
                       children: [
                         Text(
                           'تفاصيل الرحلات النشطة الآن في الميدان',
@@ -257,8 +260,11 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   }
 
   Widget _buildHeader(BuildContext context, DashboardState state) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 10,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,60 +632,69 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         children: [
           Padding(
             padding: const EdgeInsets.all(18.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'رادار التتبع الحي لرحلات الحافلات (OpenStreetMap)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                context.textPrimary,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 580),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 10,
+                        runSpacing: 6,
+                        children: [
+                          Text(
+                            'رادار التتبع الحي لرحلات الحافلات (OpenStreetMap)',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  context.textPrimary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AdminColors.successBgLight,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: AdminColors.statusSuccess
-                                    .withValues(alpha: 0.2)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AdminColors.successBgLight,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: AdminColors.statusSuccess
+                                      .withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.circle,
+                                    size: 8, color: AdminColors.statusSuccess),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${validTrips.length} رحلة مباشرة على الخريطة',
+                                  style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AdminColors.successFgLight,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.circle,
-                                  size: 8, color: AdminColors.statusSuccess),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${validTrips.length} رحلة مباشرة على الخريطة',
-                                style: const TextStyle(
-                                    fontSize: 10,
-                                    color: AdminColors.successFgLight,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'تتحول الإحداثيات الواردة من Backend (current_lat, current_lng) فوراً إلى حافلات نشطة',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.textTertiary,
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'تتحول الإحداثيات الواردة من Backend (current_lat, current_lng) فوراً إلى حافلات نشطة',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 // زر قفل/تفعيل سحب الخريطة لمنع احتجاز سحب الشاشة
                 OutlinedButton.icon(

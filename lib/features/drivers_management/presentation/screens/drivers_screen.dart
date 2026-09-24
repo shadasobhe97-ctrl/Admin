@@ -98,6 +98,65 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
     await cubit.updateDriver(id: driver.id, payload: payload);
   }
 
+  void _toggleDriverStatus(BuildContext context, DriverModel driver) {
+    final cubit = context.read<DriversManagementCubit>();
+    final isSuspended =
+        driver.status.toLowerCase() == 'suspended' || !driver.isActive;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isSuspended
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.block_rounded,
+              color: isSuspended ? Colors.green : Colors.red,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isSuspended ? 'إعادة تفعيل حساب السائق' : 'إيقاف حساب السائق',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          isSuspended
+              ? 'هل أنت تأكد من إعادة تفعيل حساب السائق "${driver.fullName}"؟'
+              : 'هل أنت تأكد من إيقاف حساب السائق "${driver.fullName}"؟\nسيتم تعطيل دخول السائق واستقبال الرحلات.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSuspended ? Colors.green : Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (isSuspended) {
+                cubit.activateDriver(driver.id);
+              } else {
+                cubit.suspendDriver(driver.id);
+              }
+            },
+            child: Text(
+              isSuspended ? 'تأكيد التفعيل' : 'تأكيد الإيقاف',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -227,6 +286,8 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                               onTapInspect: (driver) =>
                                   _openInspectModal(context, driver.id),
                               onTapEdit: _openEditDialog,
+                              onTapToggleStatus: (driver) =>
+                                  _toggleDriverStatus(context, driver),
                             );
                           }
 
@@ -241,6 +302,8 @@ class _DriversScreenContentState extends State<_DriversScreenContent> {
                                 onTapInspect: () =>
                                     _openInspectModal(context, driver.id),
                                 onTapEdit: () => _openEditDialog(driver),
+                                onTapToggleStatus: () =>
+                                    _toggleDriverStatus(context, driver),
                               );
                             },
                           );

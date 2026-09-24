@@ -73,225 +73,244 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
             final totalChildren = allParents.fold<int>(
                 0, (sum, p) => sum + (p.childrenCount > 0 ? p.childrenCount : p.children.length));
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── 1. Screen Header & Actions ──────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.family_restroom_rounded,
-                                color: context.primaryColor, size: 28),
-                            const SizedBox(width: 10),
-                            Text(
-                              'عرض وإدارة أولياء الأمور',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'استعراض كامل قائمة أولياء الأمور وحساباتهم والأبناء المسجلين في المنظومة',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: context.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton.filledTonal(
-                      onPressed: () => context.read<ParentsCubit>().fetchParents(),
-                      icon: const Icon(Icons.refresh_rounded, size: 20),
-                      tooltip: 'تحديث البيانات',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // ── 2. KPI Summary Cards ────────────────────────────────────────
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth > 700;
-                    return GridView.count(
-                      crossAxisCount: isWide ? 4 : 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: isWide ? 2.5 : 2.2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      children: [
-                        _buildKpiCard(
-                          context,
-                          title: 'إجمالي أولياء الأمور',
-                          value: '$totalCount',
-                          icon: Icons.people_alt_rounded,
-                          color: context.primaryColor,
-                        ),
-                        _buildKpiCard(
-                          context,
-                          title: 'الحسابات النشطة',
-                          value: '$activeCount',
-                          icon: Icons.check_circle_rounded,
-                          color: context.successColor,
-                        ),
-                        _buildKpiCard(
-                          context,
-                          title: 'الحسابات المعطلة',
-                          value: '$inactiveCount',
-                          icon: Icons.pause_circle_rounded,
-                          color: context.dangerColor,
-                        ),
-                        _buildKpiCard(
-                          context,
-                          title: 'إجمالي الأطفال',
-                          value: '$totalChildren',
-                          icon: Icons.child_care_rounded,
-                          color: Colors.amber.shade700,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // ── 3. Search & Filter Bar ─────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.cardColor,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, barConstraints) {
-                      final isWideBar = barConstraints.maxWidth > 650;
-                      if (isWideBar) {
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: (val) =>
-                                    context.read<ParentsCubit>().searchParents(val),
-                                style: TextStyle(fontSize: 13, color: context.textPrimary),
-                                decoration: InputDecoration(
-                                  hintText: 'البحث باسم ولي الأمر، رقم الهاتف، الإيميل، أو المعرف...',
-                                  prefixIcon: Icon(Icons.search_rounded,
-                                      color: context.primaryColor),
-                                  suffixIcon: _searchController.text.isNotEmpty
-                                      ? IconButton(
-                                          icon: const Icon(Icons.clear_rounded, size: 18),
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            context.read<ParentsCubit>().searchParents('');
-                                          },
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Wrap(
-                              spacing: 6,
-                              children: [
-                                _buildFilterPill(
-                                  context,
-                                  label: 'الكل ($totalCount)',
-                                  filterKey: 'all',
-                                  currentFilter: state.statusFilter,
-                                ),
-                                _buildFilterPill(
-                                  context,
-                                  label: 'النشطين ($activeCount)',
-                                  filterKey: 'active',
-                                  currentFilter: state.statusFilter,
-                                ),
-                                _buildFilterPill(
-                                  context,
-                                  label: 'المعطلين ($inactiveCount)',
-                                  filterKey: 'inactive',
-                                  currentFilter: state.statusFilter,
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Column(
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── 1. Screen Header & Actions ──────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextField(
-                            controller: _searchController,
-                            onChanged: (val) =>
-                                context.read<ParentsCubit>().searchParents(val),
-                            style: TextStyle(fontSize: 13, color: context.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: 'البحث باسم ولي الأمر، رقم الهاتف...',
-                              prefixIcon: Icon(Icons.search_rounded,
-                                  color: context.primaryColor),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded, size: 18),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        context.read<ParentsCubit>().searchParents('');
-                                      },
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildFilterPill(
-                                  context,
-                                  label: 'الكل ($totalCount)',
-                                  filterKey: 'all',
-                                  currentFilter: state.statusFilter,
+                                Row(
+                                  children: [
+                                    Icon(Icons.family_restroom_rounded,
+                                        color: context.primaryColor, size: 26),
+                                    const SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        'عرض وإدارة أولياء الأمور',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: context.textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                _buildFilterPill(
-                                  context,
-                                  label: 'النشطين ($activeCount)',
-                                  filterKey: 'active',
-                                  currentFilter: state.statusFilter,
-                                ),
-                                const SizedBox(width: 6),
-                                _buildFilterPill(
-                                  context,
-                                  label: 'المعطلين ($inactiveCount)',
-                                  filterKey: 'inactive',
-                                  currentFilter: state.statusFilter,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'استعراض كامل قائمة أولياء الأمور وحساباتهم والأبناء المسجلين في المنظومة',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.textTertiary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(width: 10),
+                          IconButton.filledTonal(
+                            onPressed: () => context.read<ParentsCubit>().fetchParents(),
+                            icon: const Icon(Icons.refresh_rounded, size: 20),
+                            tooltip: 'تحديث البيانات',
                           ),
                         ],
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── 2. KPI Summary Cards ────────────────────────────────────
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 700;
+                          return GridView(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: isWide ? 4 : 2,
+                              mainAxisExtent: 68,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                            ),
+                            children: [
+                              _buildKpiCard(
+                                context,
+                                title: 'إجمالي أولياء الأمور',
+                                value: '$totalCount',
+                                icon: Icons.people_alt_rounded,
+                                color: context.primaryColor,
+                              ),
+                              _buildKpiCard(
+                                context,
+                                title: 'الحسابات النشطة',
+                                value: '$activeCount',
+                                icon: Icons.check_circle_rounded,
+                                color: context.successColor,
+                              ),
+                              _buildKpiCard(
+                                context,
+                                title: 'الحسابات المعطلة',
+                                value: '$inactiveCount',
+                                icon: Icons.pause_circle_rounded,
+                                color: context.dangerColor,
+                              ),
+                              _buildKpiCard(
+                                context,
+                                title: 'إجمالي الأطفال',
+                                value: '$totalChildren',
+                                icon: Icons.child_care_rounded,
+                                color: Colors.amber.shade700,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── 3. Search & Filter Bar ─────────────────────────────────
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: context.cardColor,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: theme.dividerColor),
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, barConstraints) {
+                            final isWideBar = barConstraints.maxWidth > 650;
+                            if (isWideBar) {
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      onChanged: (val) =>
+                                          context.read<ParentsCubit>().searchParents(val),
+                                      style: TextStyle(fontSize: 13, color: context.textPrimary),
+                                      decoration: InputDecoration(
+                                        hintText: 'البحث باسم ولي الأمر، رقم الهاتف، الإيميل، أو المعرف...',
+                                        prefixIcon: Icon(Icons.search_rounded,
+                                            color: context.primaryColor, size: 20),
+                                        suffixIcon: _searchController.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                                onPressed: () {
+                                                  _searchController.clear();
+                                                  context.read<ParentsCubit>().searchParents('');
+                                                },
+                                              )
+                                            : null,
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 10),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'الكل ($totalCount)',
+                                        filterKey: 'all',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'النشطين ($activeCount)',
+                                        filterKey: 'active',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'المعطلين ($inactiveCount)',
+                                        filterKey: 'inactive',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: _searchController,
+                                  onChanged: (val) =>
+                                      context.read<ParentsCubit>().searchParents(val),
+                                  style: TextStyle(fontSize: 13, color: context.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: 'البحث باسم ولي الأمر، رقم الهاتف...',
+                                    prefixIcon: Icon(Icons.search_rounded,
+                                        color: context.primaryColor, size: 20),
+                                    suffixIcon: _searchController.text.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear_rounded, size: 18),
+                                            onPressed: () {
+                                              _searchController.clear();
+                                              context.read<ParentsCubit>().searchParents('');
+                                            },
+                                          )
+                                        : null,
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 10),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'الكل ($totalCount)',
+                                        filterKey: 'all',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'النشطين ($activeCount)',
+                                        filterKey: 'active',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      _buildFilterPill(
+                                        context,
+                                        label: 'المعطلين ($inactiveCount)',
+                                        filterKey: 'inactive',
+                                        currentFilter: state.statusFilter,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // ── 4. Main Table / List Body ──────────────────────────────────
-                Expanded(
+                SliverFillRemaining(
+                  hasScrollBody: true,
                   child: state.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : filteredParents.isEmpty
@@ -339,6 +358,7 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                                       child: SizedBox(
                                         width: minWidth,
                                         child: ListView.separated(
+                                          padding: EdgeInsets.zero,
                                           itemCount: filteredParents.length,
                                           separatorBuilder: (_, __) =>
                                               Divider(height: 1, color: theme.dividerColor),
@@ -370,7 +390,7 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(14),
@@ -379,32 +399,36 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
                   style: TextStyle(fontSize: 11, color: context.textTertiary),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: context.textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),

@@ -8,6 +8,7 @@ import '../di/service_locator.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
 import 'storage_service.dart';
+import 'web_notification_helper.dart';
 
 /// خدمة إدارة إشعارات الويب للأدمن (FCM Web Push Notifications)
 class AdminFcmService {
@@ -156,8 +157,26 @@ class AdminFcmService {
     }
   }
 
-  /// معالجة الإشعار الفوري أثناء التواجد بالشاشة
+  /// معالجة الإشعار الفوري أثناء التواجد بالشاشة (Foreground)
   void _handleForegroundNotification(RemoteMessage message) {
+    final title = message.notification?.title ??
+        message.data['title'] ??
+        'إشعار جديد من نظام دَربِي';
+    final body = message.notification?.body ??
+        message.data['body'] ??
+        message.data['message'] ??
+        'وصلك إشعار جديد في لوحة التحكم';
+
+    // 1. تشغيل صوت نغمة التنبيه
+    WebNotificationHelper.playNotificationSound();
+
+    // 2. إظهار إشعار سطح المكتب المنبثق من المتصفح (Browser Popup)
+    WebNotificationHelper.showWebDesktopNotification(
+      title: title,
+      body: body,
+    );
+
+    // 3. إرسال الإشعار للبث المباشر للشاشات
     _foregroundMessageController.add(message);
   }
 }

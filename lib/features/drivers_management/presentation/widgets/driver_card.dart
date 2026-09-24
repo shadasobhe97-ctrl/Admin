@@ -12,17 +12,28 @@ class DriverCard extends StatelessWidget {
   /// تعديل سريع لبيانات السائق — يظهر للسائقين قيد الانتظار فقط.
   final VoidCallback? onTapEdit;
 
+  /// إيقاف أو إعادة تفعيل حساب السائق مباشرة من القائمة.
+  final VoidCallback? onTapToggleStatus;
+
   const DriverCard({
     super.key,
     required this.driver,
     required this.onTapInspect,
     this.onReviewAction,
     this.onTapEdit,
+    this.onTapToggleStatus,
   });
 
   bool get _isPending =>
       driver.status.toLowerCase() == 'pending' ||
       driver.approvalStatus?.toLowerCase() == 'pending';
+
+  bool get _isSuspended =>
+      driver.status.toLowerCase() == 'suspended' || !driver.isActive;
+
+  bool get _isApproved =>
+      driver.status.toLowerCase() == 'approved' ||
+      driver.status.toLowerCase() == 'verified';
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +107,18 @@ class DriverCard extends StatelessWidget {
                         onPressed: onTapEdit,
                         icon: Icon(Icons.edit_outlined, size: 18, color: context.primaryColor),
                         tooltip: 'تعديل بيانات السائق',
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    if (onTapToggleStatus != null && (_isSuspended || _isApproved)) ...[
+                      IconButton(
+                        onPressed: onTapToggleStatus,
+                        icon: Icon(
+                          _isSuspended ? Icons.check_circle_outline_rounded : Icons.block_rounded,
+                          size: 19,
+                          color: _isSuspended ? Colors.green : Colors.red,
+                        ),
+                        tooltip: _isSuspended ? 'إعادة تفعيل الحساب' : 'إيقاف حساب السائق',
                       ),
                       const SizedBox(width: 4),
                     ],
