@@ -212,7 +212,7 @@ class AdminTheme {
         shadowColor: Colors.black.withValues(alpha: isDark ? 0.20 : 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: borderSoft, width: 1),
+          side: BorderSide(color: borderSoft, width: 1.25),
         ),
       ),
       iconTheme: IconThemeData(color: textTertiary),

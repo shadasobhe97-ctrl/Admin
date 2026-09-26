@@ -175,14 +175,14 @@ class AdminColors {
   static const Color surfaceVariantDark = Color(0xFF191E24);
 
   // Borders & Dividers
-  static const Color borderSoftLight = Color(0xFFE5E7EB);
-  static const Color borderSoftDark = Color(0xFF303841);
-  static const Color borderStrongLight = Color(0xFFCBD5E1);
-  static const Color borderStrongDark = Color(0xFF475569);
-  static const Color borderLight = Color(0xFFE5E7EB);
-  static const Color borderDark = Color(0xFF303841);
-  static const Color dividerLight = Color(0xFFE5E7EB);
-  static const Color dividerDark = Color(0xFF303841);
+  static const Color borderSoftLight = Color(0xFFCBD5E1);
+  static const Color borderSoftDark = Color(0xFF3E4C59);
+  static const Color borderStrongLight = Color(0xFF94A3B8);
+  static const Color borderStrongDark = Color(0xFF64748B);
+  static const Color borderLight = Color(0xFFCBD5E1);
+  static const Color borderDark = Color(0xFF3E4C59);
+  static const Color dividerLight = Color(0xFFCBD5E1);
+  static const Color dividerDark = Color(0xFF3E4C59);
 
   // Text Tokens
   static const Color textPrimaryLight = Color(0xFF231F20);
