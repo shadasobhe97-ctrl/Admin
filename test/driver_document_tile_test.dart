@@ -4,6 +4,7 @@ import 'package:admin_panel/features/drivers_management/data/models/driver_model
 import 'package:admin_panel/features/drivers_management/data/models/driver_vehicle_model.dart';
 import 'package:admin_panel/features/drivers_management/presentation/widgets/driver_document_tile.dart';
 import 'package:admin_panel/features/drivers_management/presentation/widgets/driver_identity_card.dart';
+import 'package:admin_panel/features/drivers_management/presentation/widgets/driver_status_badge.dart';
 import 'package:admin_panel/features/drivers_management/presentation/widgets/driver_vehicle_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,9 +110,9 @@ void main() {
       await tester.pumpWidget(_wrap(DriverIdentityCard(driver: driver)));
 
       expect(find.text('محمد الطرابلسي'), findsOneWidget);
-      expect(find.text('الرقم الوطني: 119880012345'), findsOneWidget);
-      expect(find.text('رقم الرخصة: LY-4421'), findsOneWidget);
-      expect(find.text('انتهاء الرخصة: 2027-12-31'), findsOneWidget);
+      expect(find.text('119880012345'), findsOneWidget);
+      expect(find.text('LY-4421'), findsOneWidget);
+      expect(find.text('2027-12-31'), findsOneWidget);
       expect(find.text('الحساب معطّل'), findsNothing);
     });
 
@@ -146,10 +147,10 @@ void main() {
       await tester.pumpWidget(_wrap(DriverVehicleCard(vehicle: vehicle)));
 
       expect(find.text('Toyota Coaster'), findsOneWidget);
-      expect(find.textContaining('رقم اللوحة: TR-9988'), findsOneWidget);
-      expect(find.textContaining('السعة: 14 راكب'), findsOneWidget);
+      expect(find.textContaining('TR-9988'), findsWidgets);
+      expect(find.textContaining('14 ركاب'), findsOneWidget);
       expect(find.textContaining('مكيّفة'), findsOneWidget);
-      expect(find.text('مركبة موثّقة'), findsOneWidget);
+      expect(find.byType(DriverStatusBadge), findsOneWidget);
     });
 
     testWidgets('النقر على صورة المركبة يفتح العارض', (tester) async {

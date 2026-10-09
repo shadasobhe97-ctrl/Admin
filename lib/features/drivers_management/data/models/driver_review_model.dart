@@ -38,8 +38,15 @@ class DriverReviewModel {
     return DriverReviewModel(
       id: parsedId,
       driverId: parsedDriverId,
-      driverName: json['driver_name']?.toString() ?? json['driver']?['full_name']?.toString() ?? 'سائق',
-      parentName: json['parent_name']?.toString() ?? json['user_name']?.toString() ?? json['parent']?['name']?.toString() ?? 'ولي أمر',
+      driverName: json['driver_name']?.toString()
+          ?? json['driver']?['name']?.toString()
+          ?? json['driver']?['full_name']?.toString()
+          ?? 'سائق',
+      parentName: json['parent_name']?.toString()
+          ?? json['user_name']?.toString()
+          ?? json['parent']?['full_name']?.toString()
+          ?? json['parent']?['name']?.toString()
+          ?? 'ولي أمر',
       rating: parsedRating,
       comment: json['comment']?.toString() ?? json['notes']?.toString() ?? '',
       createdAt: json['created_at']?.toString(),

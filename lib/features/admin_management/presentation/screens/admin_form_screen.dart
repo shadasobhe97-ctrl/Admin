@@ -24,7 +24,12 @@ class AdminFormScreen extends StatelessWidget {
     showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => BlocProvider(
-        create: (context) => sl<AdminManagementCubit>()..fetchRolesPermissions(),
+        create: (context) {
+          final cubit = sl<AdminManagementCubit>()..fetchRolesPermissions();
+          // بيانات الجدول قد لا تتضمن الصلاحيات المخصصة، فنجلب التفاصيل كاملة.
+          if (initialAdmin != null) cubit.fetchAdminDetails(initialAdmin.id);
+          return cubit;
+        },
         child: Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -84,6 +89,11 @@ class AdminFormScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
+          final isFetchingDetails =
+              isEditMode && state.selectedAdmin == null && state.isLoading;
+          final isFetchingRoles = state.roles.isEmpty && state.isRolesLoading;
+          final formAdmin = state.selectedAdmin?.admin ?? initialAdmin;
+
           return SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -92,14 +102,17 @@ class AdminFormScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isEditMode
-                          ? 'تعديل بيانات المشرف'
-                          : 'إضافة مشرف جديد للوحة التحكم',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    Expanded(
+                      child: Text(
+                        isEditMode
+                            ? 'تعديل بيانات المشرف'
+                            : 'إضافة مشرف جديد للوحة التحكم',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                       ),
                     ),
                     IconButton(
@@ -109,48 +122,56 @@ class AdminFormScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                AdminFormWidget(
-                  initialAdmin: initialAdmin,
-                  currentUserId: currentUserId,
-                  isLoading: state.isCreating || state.isUpdating,
-                  errorMessage: state.errorMessage,
-                  onCreate: (CreateAdminRequestModel createReq) async {
-                    final cubit = context.read<AdminManagementCubit>();
-                    final result = await cubit.createAdmin(createReq);
-                    if (result['success'] == true && context.mounted) {
-                      final emailVerification = result['email_verification'];
-                      final hasPendingEmail = emailVerification != null &&
-                          emailVerification['new_email'] != null;
+                if (isFetchingDetails || isFetchingRoles)
+                  const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  AdminFormWidget(
+                    initialAdmin: formAdmin,
+                    currentUserId: currentUserId,
+                    isLoading: state.isCreating || state.isUpdating,
+                    errorMessage: state.errorMessage,
+                    onCreate: (CreateAdminRequestModel createReq) async {
+                      final cubit = context.read<AdminManagementCubit>();
+                      final result = await cubit.createAdmin(createReq);
+                      if (result['success'] == true && context.mounted) {
+                        final emailVerification = result['email_verification'];
+                        final hasPendingEmail = emailVerification != null &&
+                            emailVerification['new_email'] != null;
 
-                      Navigator.pop(context, {
-                        'admin_id': result['admin_id'],
-                        'success_message': result['message'] ?? 'تم إضافة المشرف بنجاح',
-                        'email_verification':
-                            hasPendingEmail ? emailVerification : null,
-                      });
-                    }
-                  },
-                  onUpdate: (UpdateAdminRequestModel updateReq) async {
-                    if (initialAdmin == null) return;
-                    final cubit = context.read<AdminManagementCubit>();
-                    final result =
-                        await cubit.updateAdmin(initialAdmin!.id, updateReq);
-                    if (result['success'] == true && context.mounted) {
-                      final emailVerification = result['email_verification'];
-                      final hasPendingEmail = emailVerification != null &&
-                          emailVerification['new_email'] != null;
+                        Navigator.pop(context, {
+                          'admin_id': result['admin_id'],
+                          'success_message':
+                              result['message'] ?? 'تم إضافة المشرف بنجاح',
+                          'email_verification':
+                              hasPendingEmail ? emailVerification : null,
+                        });
+                      }
+                    },
+                    onUpdate: (UpdateAdminRequestModel updateReq) async {
+                      if (initialAdmin == null) return;
+                      final cubit = context.read<AdminManagementCubit>();
+                      final result =
+                          await cubit.updateAdmin(initialAdmin!.id, updateReq);
+                      if (result['success'] == true && context.mounted) {
+                        final emailVerification = result['email_verification'];
+                        final hasPendingEmail = emailVerification != null &&
+                            emailVerification['new_email'] != null;
 
-                      // The waiting dialog is opened by [show] after this route
-                      // pops, so it runs on a cubit that outlives this form.
-                      Navigator.pop(context, {
-                        'admin_id': initialAdmin!.id,
-                        'success_message': result['message'] ?? 'تم تعديل بيانات المشرف بنجاح',
-                        'email_verification':
-                            hasPendingEmail ? emailVerification : null,
-                      });
-                    }
-                  },
-                ),
+                        // The waiting dialog is opened by [show] after this route
+                        // pops, so it runs on a cubit that outlives this form.
+                        Navigator.pop(context, {
+                          'admin_id': initialAdmin!.id,
+                          'success_message': result['message'] ??
+                              'تم تعديل بيانات المشرف بنجاح',
+                          'email_verification':
+                              hasPendingEmail ? emailVerification : null,
+                        });
+                      }
+                    },
+                  ),
               ],
             ),
           );

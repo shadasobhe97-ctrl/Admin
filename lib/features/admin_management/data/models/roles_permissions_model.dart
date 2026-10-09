@@ -118,6 +118,18 @@ class PermissionGroupModel {
   }
 }
 
+extension PermissionsTreeLookup on List<PermissionGroupModel> {
+  /// الاسم العربي للصلاحية من شجرة الباك اند، أو المفتاح نفسه إن لم توجد.
+  String permissionLabel(String key) {
+    for (final group in this) {
+      for (final perm in group.permissions) {
+        if (perm.key == key && perm.name.isNotEmpty) return perm.name;
+      }
+    }
+    return key;
+  }
+}
+
 class RolesPermissionsResponseModel {
   final List<RoleModel> roles;
   final List<PermissionGroupModel> permissionsTree;

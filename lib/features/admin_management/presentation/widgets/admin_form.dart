@@ -72,9 +72,14 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     final lower = msg.toLowerCase();
     if (msg.contains('الاسم') || lower.contains('name')) {
       _serverNameError = msg;
-    } else if (msg.contains('البريد') || msg.contains('إيميل') || lower.contains('email')) {
+    } else if (msg.contains('البريد') ||
+        msg.contains('إيميل') ||
+        lower.contains('email')) {
       _serverEmailError = msg;
-    } else if (msg.contains('الهاتف') || msg.contains('جوال') || lower.contains('phone') || lower.contains('mobile')) {
+    } else if (msg.contains('الهاتف') ||
+        msg.contains('جوال') ||
+        lower.contains('phone') ||
+        lower.contains('mobile')) {
       _serverPhoneError = msg;
     } else if (msg.contains('مرور') || lower.contains('password')) {
       _serverPasswordError = msg;
@@ -96,9 +101,16 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     _isActive = widget.initialAdmin?.isActive ?? true;
     _selectedRoleId = widget.initialAdmin?.roleId;
 
-    if (widget.initialAdmin?.customPermissions != null) {
-      _selectedCustomPermissions
-          .addAll(widget.initialAdmin!.customPermissions);
+    final admin = widget.initialAdmin;
+    if (admin != null) {
+      _selectedCustomPermissions.addAll(admin.customPermissions);
+      // لو الخادم رجّع الصلاحيات مدموجة، فالزائد عن صلاحيات الدور هو الإضافي.
+      final roles = context.read<AdminManagementCubit>().state.roles;
+      final role = roles.where((r) => r.id == admin.roleId).firstOrNull;
+      if (role != null) {
+        _selectedCustomPermissions.addAll(
+            admin.permissions.where((p) => !role.permissions.contains(p)));
+      }
     }
 
     _nameController.addListener(_onNameChanged);
@@ -213,6 +225,17 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         AuthorizationService.hasPermission('admins.manage');
     final passwordText = _passwordController.text.trim();
 
+    // صلاحيات الدور تُمنح تلقائياً، فلا تُرسل ضمن الصلاحيات المخصصة.
+    final roles = context.read<AdminManagementCubit>().state.roles;
+    final rolePermissions = roles
+            .where((r) => r.id == _selectedRoleId)
+            .firstOrNull
+            ?.permissions
+            .toSet() ??
+        const <String>{};
+    final customPermissions =
+        _selectedCustomPermissions.difference(rolePermissions).toList();
+
     if (_isEditMode) {
       final updateReq = UpdateAdminRequestModel(
         fullName: _nameController.text.trim(),
@@ -220,7 +243,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         phoneNumber: _phoneController.text.trim(),
         password: passwordText.isNotEmpty ? passwordText : null,
         roleId: _selectedRoleId,
-        customPermissions: _selectedCustomPermissions.toList(),
+        customPermissions: customPermissions,
         isActive: isCurrentMainAdmin ? _isActive : null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -233,7 +256,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         phoneNumber: _phoneController.text.trim(),
         password: passwordText.isNotEmpty ? passwordText : null,
         roleId: _selectedRoleId,
-        customPermissions: _selectedCustomPermissions.toList(),
+        customPermissions: customPermissions,
         isActive: _isActive,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -265,6 +288,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
             currentSelectedRole = found.first;
           }
         }
+        final rolePermissions =
+            currentSelectedRole?.permissions.toSet() ?? const <String>{};
 
         return Form(
           key: _formKey,
@@ -429,7 +454,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
 
               // ── 1. اختيار الدور (Roles Selector Dynamic from Backend) ────────
               Text(
-                'الدور والتصنيف الوظيفي (Backend Source of Truth):',
+                'الدور والتصنيف الوظيفي:',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -443,33 +468,33 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   child: LinearProgressIndicator(),
                 )
               else if (roles.isNotEmpty) ...[
-                DropdownButtonFormField<int>(
-                  initialValue: _selectedRoleId ?? roles.first.id,
-                  style: TextStyle(color: context.textPrimary, fontSize: 14),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.admin_panel_settings_outlined,
+                // DropdownMenu يُغلق بالضغط على الحقل مرة أخرى أو خارجه.
+                LayoutBuilder(
+                  builder: (context, constraints) => DropdownMenu<int>(
+                    width: constraints.maxWidth,
+                    initialSelection: _selectedRoleId ?? roles.first.id,
+                    requestFocusOnTap: false,
+                    textStyle: TextStyle(
+                      color: context.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    leadingIcon: Icon(Icons.admin_panel_settings_outlined,
                         color: context.primaryColor),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    dropdownMenuEntries: roles
+                        .map((role) => DropdownMenuEntry<int>(
+                              value: role.id,
+                              label: role.name,
+                            ))
+                        .toList(),
+                    onSelected: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedRoleId = val;
+                        });
+                      }
+                    },
                   ),
-                  items: roles.map((role) {
-                    return DropdownMenuItem<int>(
-                      value: role.id,
-                      child: Text(
-                        '${role.name} (${role.key})',
-                        style: TextStyle(
-                            color: context.textPrimary,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _selectedRoleId = val;
-                      });
-                    }
-                  },
                 ),
                 if (currentSelectedRole != null) ...[
                   const SizedBox(height: 8),
@@ -515,7 +540,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                p,
+                                permissionsTree.permissionLabel(p),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -539,21 +564,26 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     Icon(Icons.tune_rounded,
                         size: 18, color: context.primaryColor),
                     const SizedBox(width: 8),
-                    Text(
-                      'الصلاحيات المخصصة (إضافات فوق صلاحيات الدور):',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'الصلاحيات المخصصة (إضافات فوق صلاحيات الدور):',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'اختر الصلاحيات الإضافية المطلوب منحها لهذا المشرف تحديداً من شجرة الصلاحيات الديناميكية:',
+                  'صلاحيات الدور تظهر محددة تلقائياً، واختر الصلاحيات الإضافية المطلوب منحها لهذا المشرف تحديداً:',
                   style: TextStyle(fontSize: 12, color: context.textTertiary),
                 ),
+                const SizedBox(height: 12),
+                _buildSelectedExtrasSummary(
+                    context, permissionsTree, rolePermissions),
                 const SizedBox(height: 12),
                 Container(
                   constraints: const BoxConstraints(maxHeight: 280),
@@ -572,6 +602,14 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final group = permissionsTree[index];
+                        final roleCount = group.permissions
+                            .where((p) => rolePermissions.contains(p.key))
+                            .length;
+                        final extraCount = group.permissions
+                            .where((p) =>
+                                !rolePermissions.contains(p.key) &&
+                                _selectedCustomPermissions.contains(p.key))
+                            .length;
                         return Container(
                           decoration: BoxDecoration(
                             color: theme.cardColor,
@@ -579,6 +617,9 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                             border: Border.all(color: theme.dividerColor),
                           ),
                           child: ExpansionTile(
+                            key: PageStorageKey('perm-group-${group.groupKey}'),
+                            // تُفتح المجموعات التي فيها إضافات ليظهر المختار مباشرة.
+                            initiallyExpanded: extraCount > 0,
                             tilePadding:
                                 const EdgeInsets.symmetric(horizontal: 12),
                             title: Text(
@@ -590,19 +631,25 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                               ),
                             ),
                             subtitle: Text(
-                              '(${group.groupKey}) • ${group.permissions.length} صلاحيات',
+                              '${roleCount + extraCount} من ${group.permissions.length} مختارة',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: context.textTertiary,
+                                color: roleCount + extraCount > 0
+                                    ? context.primaryColor
+                                    : context.textTertiary,
                               ),
                             ),
                             children: group.permissions.map((perm) {
-                              final isChecked =
+                              final isFromRole =
+                                  rolePermissions.contains(perm.key);
+                              final isExtra = !isFromRole &&
                                   _selectedCustomPermissions.contains(perm.key);
                               return CheckboxListTile(
                                 dense: true,
-                                value: isChecked,
-                                activeColor: context.primaryColor,
+                                value: isFromRole || isExtra,
+                                activeColor: isFromRole
+                                    ? context.primaryColor
+                                    : context.warningColor,
                                 title: Text(
                                   perm.name,
                                   style: TextStyle(
@@ -622,26 +669,39 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                                             fontSize: 11,
                                             color: context.textSecondary),
                                       ),
-                                    Text(
-                                      perm.key,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontFamily: 'monospace',
-                                        color: context.textTertiary,
+                                    if (isFromRole)
+                                      Text(
+                                        'ممنوحة من الدور',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: context.primaryColor,
+                                        ),
                                       ),
-                                    ),
+                                    if (isExtra)
+                                      Text(
+                                        'صلاحية إضافية مختارة',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: context.warningColor,
+                                        ),
+                                      ),
                                   ],
                                 ),
-                                onChanged: (bool? selected) {
-                                  setState(() {
-                                    if (selected == true) {
-                                      _selectedCustomPermissions.add(perm.key);
-                                    } else {
-                                      _selectedCustomPermissions
-                                          .remove(perm.key);
-                                    }
-                                  });
-                                },
+                                onChanged: isFromRole
+                                    ? null
+                                    : (bool? selected) {
+                                        setState(() {
+                                          if (selected == true) {
+                                            _selectedCustomPermissions
+                                                .add(perm.key);
+                                          } else {
+                                            _selectedCustomPermissions
+                                                .remove(perm.key);
+                                          }
+                                        });
+                                      },
                               );
                             }).toList(),
                           ),
@@ -664,39 +724,42 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                     border: Border.all(color: theme.dividerColor),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            _isActive
-                                ? Icons.check_circle_rounded
-                                : Icons.pause_circle_rounded,
-                            color: _isActive
-                                ? context.successColor
-                                : context.textTertiary,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'حالة تفعيل الحساب:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: context.textPrimary,
+                      Icon(
+                        _isActive
+                            ? Icons.check_circle_rounded
+                            : Icons.pause_circle_rounded,
+                        color: _isActive
+                            ? context.successColor
+                            : context.textTertiary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 2,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'حالة تفعيل الحساب:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _isActive ? 'نشط (مفعل)' : 'غير نشط (معطل)',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: _isActive
-                                  ? context.successColor
-                                  : context.textTertiary,
+                            Text(
+                              _isActive ? 'نشط (مفعل)' : 'غير نشط (معطل)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _isActive
+                                    ? context.successColor
+                                    : context.textTertiary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       Tooltip(
                         message: isCurrentMainAdmin
@@ -717,10 +780,12 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
               ],
 
               // Error Alert Banner (Backend validation or server error)
-              if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) ...[
+              if (widget.errorMessage != null &&
+                  widget.errorMessage!.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: context.dangerBg,
@@ -729,7 +794,8 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline_rounded, color: context.dangerColor, size: 20),
+                      Icon(Icons.error_outline_rounded,
+                          color: context.dangerColor, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -782,6 +848,70 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
           ),
         );
       },
+    );
+  }
+
+  /// ملخص الصلاحيات الإضافية المختارة فوق صلاحيات الدور.
+  Widget _buildSelectedExtrasSummary(
+    BuildContext context,
+    List<PermissionGroupModel> permissionsTree,
+    Set<String> rolePermissions,
+  ) {
+    final extras = _selectedCustomPermissions
+        .where((p) => !rolePermissions.contains(p))
+        .toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.warningColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: context.warningColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'الصلاحيات الإضافية المختارة (${extras.length}):',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: context.warningColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (extras.isEmpty)
+            Text(
+              'لا توجد صلاحيات إضافية، المشرف لديه صلاحيات الدور فقط.',
+              style: TextStyle(fontSize: 12, color: context.textTertiary),
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: extras.map((key) {
+                return Chip(
+                  label: Text(permissionsTree.permissionLabel(key)),
+                  labelStyle: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: context.warningColor,
+                  ),
+                  backgroundColor: context.warningColor.withValues(alpha: 0.12),
+                  side: BorderSide(
+                      color: context.warningColor.withValues(alpha: 0.3)),
+                  visualDensity: VisualDensity.compact,
+                  deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                  deleteIconColor: context.warningColor,
+                  deleteButtonTooltipMessage: 'إزالة الصلاحية',
+                  onDeleted: () =>
+                      setState(() => _selectedCustomPermissions.remove(key)),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
     );
   }
 }

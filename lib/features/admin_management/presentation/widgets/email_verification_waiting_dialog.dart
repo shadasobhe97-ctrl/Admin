@@ -158,7 +158,9 @@ class _EmailVerificationWaitingDialogState
           child: Container(
             constraints: const BoxConstraints(maxWidth: 480),
             padding: const EdgeInsets.all(24),
-            child: Column(
+            // قابل للتمرير حتى لا يفيض في النوافذ القصيرة.
+            child: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
@@ -303,6 +305,7 @@ class _EmailVerificationWaitingDialogState
                   ],
                 ),
               ],
+              ),
             ),
           ),
         ),

@@ -140,25 +140,26 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header Bar
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Wrap بدل Row: تنزل الأزرار تحت العنوان في الشاشات الضيقة.
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 16,
+                      runSpacing: 12,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'إدارة المشرفين وصلاحيات الحسابات',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                          ],
+                        Text(
+                          'إدارة المشرفين وصلاحيات الحسابات',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
                           children: [
                             // الحماية الفعلية على الخادم (403)، وهذا الإخفاء
                             // لتجربة المستخدم فقط.
@@ -184,7 +185,6 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                                       fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              const SizedBox(width: 12),
                             ],
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
@@ -208,6 +208,7 @@ class _AdminsScreenContentState extends State<_AdminsScreenContent> {
                           ],
                         ),
                       ],
+                      ),
                     ),
                     const SizedBox(height: 24),
 

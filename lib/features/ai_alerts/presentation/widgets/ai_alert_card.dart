@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/utils/json_parsers.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/ai_alert_model.dart';
 import '../../logic/cubit/ai_alerts_cubit.dart';
@@ -103,7 +104,7 @@ class AiAlertCard extends StatelessWidget {
                       size: 13, color: Color(0xFFDC2626)),
                   const SizedBox(width: 4),
                   Text(
-                    'حجب وقائي ينتهي في: ${alert.precautionaryTo}',
+                    'حجب وقائي ينتهي في: ${JsonParsers.formatDateDdMmYyyy(alert.precautionaryTo)}',
                     style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ class AiAlertCard extends StatelessWidget {
             if (alert.createdAt != null && alert.createdAt!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                alert.createdAt!,
+                JsonParsers.formatDateDdMmYyyy(alert.createdAt),
                 style: TextStyle(fontSize: 11, color: context.textTertiary),
               ),
             ],

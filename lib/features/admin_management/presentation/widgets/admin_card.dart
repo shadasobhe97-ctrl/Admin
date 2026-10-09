@@ -200,10 +200,16 @@ class AdminCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Wrap بدل Row: تنزل الأزرار لسطر جديد في الموبايل.
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              runSpacing: 8,
               children: [
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'الحالة الحالية:',
@@ -226,6 +232,7 @@ class AdminCard extends StatelessWidget {
                   ],
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
@@ -260,6 +267,7 @@ class AdminCard extends StatelessWidget {
                   ],
                 ),
               ],
+              ),
             ),
           ],
         ),

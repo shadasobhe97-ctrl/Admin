@@ -33,17 +33,28 @@ class _AiAlertsView extends StatefulWidget {
 class _AiAlertsViewState extends State<_AiAlertsView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleSearch(BuildContext context, String query) {
+    final cubit = context.read<AiAlertsCubit>();
+    final driverId = int.tryParse(query.trim());
+    if (driverId != null) {
+      cubit.filterByDriverId(driverId);
+    }
   }
 
   @override
@@ -75,6 +86,7 @@ class _AiAlertsViewState extends State<_AiAlertsView>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Header Section ──────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -109,9 +121,9 @@ class _AiAlertsViewState extends State<_AiAlertsView>
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // ── Tab Bar Navigation ─────────────────────────────────────────
+            // ── 1. Tab Bar (التبويبات) ────────────────────────────────────────
             Container(
               decoration: BoxDecoration(
                 color: theme.cardColor,
@@ -130,16 +142,27 @@ class _AiAlertsViewState extends State<_AiAlertsView>
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
+            // ── 2. Top Filter Control Bar (الفلاتر على اليمين وشريط البحث على اليسار) ─
+            TopFilterControlBar(
+              state: state,
+              cubit: cubit,
+              searchController: _searchController,
+              onSearchSubmitted: (query) => _handleSearch(context, query),
+              onSearchClear: () {
+                cubit.clearDriverFilter();
+              },
+            ),
+            const SizedBox(height: 14),
+
+            // ── 3. Full-Width Main Content List ─────────────────────────────
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Tab 1: AI Alerts
-                  _buildAlertsTab(context, state, cubit),
-                  // Tab 2: AI Audits
-                  _buildAuditsTab(context, state, cubit),
+                  _buildAlertsContent(context, state, cubit),
+                  _buildAuditsContent(context, state, cubit),
                 ],
               ),
             ),
@@ -149,29 +172,7 @@ class _AiAlertsViewState extends State<_AiAlertsView>
     );
   }
 
-  // ── Tab 1: Alerts Tab ─────────────────────────────────────────────────────
-  Widget _buildAlertsTab(
-    BuildContext context,
-    AiAlertsState state,
-    AiAlertsCubit cubit,
-  ) {
-    return Column(
-      children: [
-        AiAlertFilterBar(
-          selectedRiskLevel: state.selectedRiskLevel,
-          onRiskLevelChanged: (risk) => cubit.changeRiskLevelFilter(risk),
-          selectedIsResolved: state.selectedIsResolved,
-          onResolvedChanged: (resolved) => cubit.changeResolvedFilter(resolved),
-          selectedDriverId: state.selectedDriverId,
-          onDriverIdApplied: (id) => cubit.filterByDriverId(id),
-          onClearDriverFilter: () => cubit.clearDriverFilter(),
-        ),
-        const SizedBox(height: 14),
-        Expanded(child: _buildAlertsContent(context, state, cubit)),
-      ],
-    );
-  }
-
+  // ── Alerts List Content ───────────────────────────────────────────────────
   Widget _buildAlertsContent(
     BuildContext context,
     AiAlertsState state,
@@ -228,59 +229,7 @@ class _AiAlertsViewState extends State<_AiAlertsView>
     );
   }
 
-  // ── Tab 2: Audits Tab ─────────────────────────────────────────────────────
-  Widget _buildAuditsTab(
-    BuildContext context,
-    AiAlertsState state,
-    AiAlertsCubit cubit,
-  ) {
-    final decisionFilters = [
-      {'key': null, 'label': 'جميع القرارات'},
-      {'key': 0, 'label': '0 - بدون إجراء'},
-      {'key': 1, 'label': '1 - مكافأة وتقييم ممتاز'},
-      {'key': 2, 'label': '2 - مخالفة متوسطة'},
-      {'key': 3, 'label': '3 - تحذير رسمي'},
-      {'key': 4, 'label': '4 - مراجعة وتدخل إداري'},
-      {'key': 5, 'label': '5 - إيقاف نهائي'},
-    ];
-
-    return Column(
-      children: [
-        // Decision filter chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: decisionFilters.map((f) {
-              final code = f['key'] as int?;
-              final label = f['label'] as String;
-              final isSelected = state.selectedDecisionCodeFilter == code;
-
-              return Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: ChoiceChip(
-                  label: Text(label),
-                  selected: isSelected,
-                  onSelected: (_) => cubit.changeDecisionCodeFilter(code),
-                  selectedColor: context.primaryColor,
-                  backgroundColor: Theme.of(context).cardColor,
-                  labelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? context.onPrimary : context.textTertiary,
-                  ),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Expanded(child: _buildAuditsContent(context, state, cubit)),
-      ],
-    );
-  }
-
+  // ── Audits List Content ───────────────────────────────────────────────────
   Widget _buildAuditsContent(
     BuildContext context,
     AiAlertsState state,

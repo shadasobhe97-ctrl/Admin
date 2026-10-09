@@ -117,10 +117,16 @@ class StorageService {
     await _prefs?.setStringList(_customPermissionsKey, customPermissions);
   }
 
+  static int _cacheBustCounter = 0;
+
   static Future<void> saveAvatarUrl(String? url, {bool? bustCache}) async {
-    if (url != null && url.isNotEmpty) {
-      await _prefs?.setString(_avatarUrlKey, url);
-      avatarUrlListenable.value = url;
+    final cleanUrl = url?.trim();
+    if (cleanUrl != null && cleanUrl.isNotEmpty) {
+      await _prefs?.setString(_avatarUrlKey, cleanUrl);
+      final finalUrl = (bustCache == true)
+          ? '$cleanUrl?v=${DateTime.now().microsecondsSinceEpoch}_${_cacheBustCounter++}'
+          : cleanUrl;
+      avatarUrlListenable.value = finalUrl;
     } else {
       await _prefs?.remove(_avatarUrlKey);
       avatarUrlListenable.value = null;

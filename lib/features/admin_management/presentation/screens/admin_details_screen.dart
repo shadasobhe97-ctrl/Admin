@@ -7,6 +7,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/models/create_admin_request_model.dart';
+import '../../data/models/roles_permissions_model.dart';
 import '../../data/models/update_admin_request_model.dart';
 import '../../logic/admin_management_cubit.dart';
 import '../../logic/admin_management_state.dart';
@@ -24,8 +25,10 @@ class AdminDetailsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogCtx) => BlocProvider(
-        create: (context) =>
-            sl<AdminManagementCubit>()..fetchAdminDetails(adminId),
+        create: (context) => sl<AdminManagementCubit>()
+          ..fetchAdminDetails(adminId)
+          // الأسماء العربية للصلاحيات + بيانات نموذج التعديل.
+          ..fetchRolesPermissions(),
         child: Dialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -63,10 +66,12 @@ class AdminDetailsScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'تعديل بيانات المشرف',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                          const Expanded(
+                            child: Text(
+                              'تعديل بيانات المشرف',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.close),
@@ -75,41 +80,48 @@ class AdminDetailsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      AdminFormWidget(
-                        initialAdmin: admin,
-                        currentUserId: currentUserId,
-                        isLoading: state.isUpdating,
-                        onCreate: (CreateAdminRequestModel createReq) {},
-                        onUpdate: (UpdateAdminRequestModel updateReq) async {
-                          final result = await ctx
-                              .read<AdminManagementCubit>()
-                              .updateAdmin(admin.id, updateReq);
-                          if (result['success'] == true && dialogCtx.mounted) {
-                            Navigator.pop(dialogCtx);
-                            ctx
+                      if (state.roles.isEmpty && state.isRolesLoading)
+                        const SizedBox(
+                          height: 200,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else
+                        AdminFormWidget(
+                          initialAdmin: admin,
+                          currentUserId: currentUserId,
+                          isLoading: state.isUpdating,
+                          onCreate: (CreateAdminRequestModel createReq) {},
+                          onUpdate: (UpdateAdminRequestModel updateReq) async {
+                            final result = await ctx
                                 .read<AdminManagementCubit>()
-                                .fetchAdminDetails(admin.id);
+                                .updateAdmin(admin.id, updateReq);
+                            if (result['success'] == true &&
+                                dialogCtx.mounted) {
+                              Navigator.pop(dialogCtx);
+                              ctx
+                                  .read<AdminManagementCubit>()
+                                  .fetchAdminDetails(admin.id);
 
-                            final emailVerification =
-                                result['email_verification'];
-                            if (emailVerification != null &&
-                                emailVerification['new_email'] != null) {
-                              final newEmail =
-                                  emailVerification['new_email'].toString();
-                              EmailVerificationWaitingDialog.show(
-                                ctx,
-                                adminId: admin.id,
-                                newEmail: newEmail,
-                                onRefresh: () {
-                                  ctx
-                                      .read<AdminManagementCubit>()
-                                      .fetchAdminDetails(admin.id);
-                                },
-                              );
+                              final emailVerification =
+                                  result['email_verification'];
+                              if (emailVerification != null &&
+                                  emailVerification['new_email'] != null) {
+                                final newEmail =
+                                    emailVerification['new_email'].toString();
+                                EmailVerificationWaitingDialog.show(
+                                  ctx,
+                                  adminId: admin.id,
+                                  newEmail: newEmail,
+                                  onRefresh: () {
+                                    ctx
+                                        .read<AdminManagementCubit>()
+                                        .fetchAdminDetails(admin.id);
+                                  },
+                                );
+                              }
                             }
-                          }
-                        },
-                      ),
+                          },
+                        ),
                     ],
                   ),
                 );
@@ -161,12 +173,14 @@ class AdminDetailsScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'تفاصيل حساب المشرف',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: context.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'تفاصيل حساب المشرف',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -275,7 +289,9 @@ class AdminDetailsScreen extends StatelessWidget {
                             _buildPermissionsSection(
                               context,
                               'صلاحيات الدور الأساسية (${admin.roleName}):',
-                              admin.permissions,
+                              admin.permissions
+                                  .map(state.permissionsTree.permissionLabel)
+                                  .toList(),
                               context.primaryColor,
                             ),
                           ],
@@ -284,14 +300,20 @@ class AdminDetailsScreen extends StatelessWidget {
                             _buildPermissionsSection(
                               context,
                               'الصلاحيات المخصصة الإضافية للمشرف:',
-                              admin.customPermissions,
+                              admin.customPermissions
+                                  .map(state.permissionsTree.permissionLabel)
+                                  .toList(),
                               context.warningColor,
                             ),
                           ],
                           const SizedBox(height: 24),
 
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 12,
+                            runSpacing: 8,
                             children: [
                               OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
@@ -305,7 +327,6 @@ class AdminDetailsScreen extends StatelessWidget {
                                 icon: const Icon(Icons.arrow_back, size: 16),
                                 label: const Text('إغلاق'),
                               ),
-                              const SizedBox(width: 12),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: context.primaryColor,
@@ -323,6 +344,7 @@ class AdminDetailsScreen extends StatelessWidget {
                                         TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ],
+                            ),
                           ),
                         ],
                       ),

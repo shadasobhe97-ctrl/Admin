@@ -55,6 +55,27 @@ class JsonParsers {
     return DateTime.tryParse(text);
   }
 
+  /// تنسيق التاريخ والوقت بصيغة dd/mm/yyyy
+  static String formatDateDdMmYyyy(dynamic value) {
+    if (value == null) return '';
+    final text = value.toString().trim();
+    if (text.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(text).toLocal();
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = dt.month.toString().padLeft(2, '0');
+      final year = dt.year.toString();
+      final hour = dt.hour.toString().padLeft(2, '0');
+      final minute = dt.minute.toString().padLeft(2, '0');
+      if (dt.hour == 0 && dt.minute == 0 && !text.contains(':')) {
+        return '$day/$month/$year';
+      }
+      return '$day/$month/$year - $hour:$minute';
+    } catch (_) {
+      return text;
+    }
+  }
+
   // ── كائنات وقوائم ─────────────────────────────────────────────────────────
 
   /// يحوّل أي قيمة إلى خريطة مفاتيحها نصية، أو `null` إن لم تكن كائناً.

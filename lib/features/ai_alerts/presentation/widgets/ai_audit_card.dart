@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/utils/json_parsers.dart';
 import '../../data/models/ai_decision_audit_model.dart';
 import 'ai_explainability_modal.dart';
 
@@ -98,7 +99,7 @@ class AiAuditCard extends StatelessWidget {
               ),
               if (audit.createdAt != null)
                 Text(
-                  audit.createdAt!,
+                  JsonParsers.formatDateDdMmYyyy(audit.createdAt),
                   style: TextStyle(fontSize: 11.5, color: context.textTertiary),
                 ),
             ],

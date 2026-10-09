@@ -21,6 +21,6 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.textContaining('دَربِي'), findsWidgets);
+    expect(find.textContaining('لوحة التحكم الإدارية'), findsWidgets);
   });
 }
