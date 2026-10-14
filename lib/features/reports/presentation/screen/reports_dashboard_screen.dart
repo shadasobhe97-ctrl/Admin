@@ -187,7 +187,9 @@ class _KpiOverviewContent extends StatelessWidget {
               subtitle: 'نظرة عامة على المستخدمين والرحلات والإيرادات',
               isBusy: isBusy,
               onRefresh: cubit.loadKpiSummary,
-              onExport: AuthorizationService.hasPermission('reports.export')
+              onExport: (AuthorizationService.hasPermission('reports.export') ||
+                      AuthorizationService.hasPermission('reports.view') ||
+                      AuthorizationService.hasPermission('*'))
                   ? () => openReportExportDialog(
                         context,
                         initialType: ReportType.kpi,

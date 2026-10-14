@@ -49,7 +49,10 @@ class _TripsReportsContent extends StatelessWidget {
               subtitle: 'الإنجاز والغياب وكثافة الطلب',
               isBusy: isBusy,
               onRefresh: cubit.loadTripsReport,
-              onExport: AuthorizationService.hasPermission('reports.export')
+              onExport: (AuthorizationService.hasPermission('reports.export') ||
+                      AuthorizationService.hasPermission('reports.view') ||
+                      AuthorizationService.hasPermission('reports.trips') ||
+                      AuthorizationService.hasPermission('trips.generate_daily'))
                   ? () => openReportExportDialog(
                         context,
                         initialType: ReportType.trips,

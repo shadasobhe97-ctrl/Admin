@@ -90,6 +90,8 @@ class FileSaverExportService implements FileExportService {
         return MimeType.csv;
       case 'json':
         return MimeType.json;
+      case 'pdf':
+        return MimeType.pdf;
       default:
         return MimeType.other;
     }

@@ -97,15 +97,27 @@ class ReportType {
 class ReportFormat {
   const ReportFormat._();
 
-  static const String json = 'json';
+  static const String pdf = 'pdf';
   static const String csv = 'csv';
+  static const String json = 'json';
 
-  /// القيمة الافتراضية حسب العقد.
-  static const String defaultFormat = json;
+  /// القيمة الافتراضية للتصدير المنظم.
+  static const String defaultFormat = pdf;
 
-  static const List<String> all = [json, csv];
+  static const List<String> all = [pdf, csv, json];
 
-  static String label(String format) => format.toUpperCase();
+  static String label(String format) {
+    switch (format) {
+      case pdf:
+        return 'مستند PDF منظم (مُوصى به)';
+      case csv:
+        return 'ملف إكسل (CSV)';
+      case json:
+        return 'بيانات خام (JSON)';
+      default:
+        return format.toUpperCase();
+    }
+  }
 }
 
 /// نموذج موحّد لفلاتر التقارير.

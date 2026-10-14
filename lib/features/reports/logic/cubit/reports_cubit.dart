@@ -1,9 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../data/models/report_export_model.dart';
 import '../../data/models/report_filters.dart';
 import '../../data/repositories/reports_repository_impl.dart';
+import '../../presentation/services/report_pdf_generator.dart';
 import '../state/reports_state.dart';
 
 /// منطق ميزة التقارير.
@@ -175,11 +177,80 @@ class ReportsCubit extends Cubit<ReportsState> {
 
     _emitIfOpen(const ReportExportLoading());
     try {
-      final result = await _repository.exportReport(
-        type: type,
-        format: format,
-        filters: filters ?? _filters,
-      );
+      final effectiveFilters = filters ?? _filters;
+      ReportExportModel result;
+
+      if (format == ReportFormat.pdf) {
+        dynamic reportData;
+        switch (type) {
+          case ReportType.financial:
+            if (state is FinancialReportLoaded) {
+              reportData = (state as FinancialReportLoaded).report;
+            } else {
+              reportData = await _repository.getFinancialReport(effectiveFilters);
+            }
+            break;
+          case ReportType.trips:
+            if (state is TripsReportLoaded) {
+              reportData = (state as TripsReportLoaded).report;
+            } else {
+              reportData = await _repository.getTripsReport(effectiveFilters);
+            }
+            break;
+          case ReportType.subscriptions:
+            if (state is SubscriptionsReportLoaded) {
+              reportData = (state as SubscriptionsReportLoaded).report;
+            } else {
+              reportData = await _repository.getSubscriptionsReport(effectiveFilters);
+            }
+            break;
+          case ReportType.drivers:
+            if (state is DriversPerformanceLoaded) {
+              reportData = (state as DriversPerformanceLoaded).report;
+            } else {
+              reportData = await _repository.getDriversPerformance(effectiveFilters);
+            }
+            break;
+          case ReportType.kpi:
+          default:
+            if (state is KpiLoaded) {
+              reportData = (state as KpiLoaded).summary;
+            } else {
+              reportData = await _repository.getKpiSummary();
+            }
+            break;
+        }
+
+        final adminName = StorageService.getUserName() ?? 'المشرف العام';
+        final bytes = await ReportPdfGenerator.generate(
+          type: type,
+          data: reportData,
+          filters: effectiveFilters,
+          adminName: adminName,
+        );
+
+        final fileName = ReportExportModel.resolveFileName(
+          contentDisposition: null,
+          type: type,
+          format: 'pdf',
+          now: DateTime.now(),
+        );
+
+        result = ReportExportModel(
+          type: type,
+          format: 'pdf',
+          fileName: fileName,
+          bytes: bytes,
+          contentType: 'application/pdf',
+        );
+      } else {
+        result = await _repository.exportReport(
+          type: type,
+          format: format,
+          filters: effectiveFilters,
+        );
+      }
+
       _emitIfOpen(ReportExportSuccess(result));
     } catch (error) {
       _emitIfOpen(ReportExportError(_messageOf(error)));

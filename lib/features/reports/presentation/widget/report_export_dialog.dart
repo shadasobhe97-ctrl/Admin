@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 
+import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../data/models/report_export_model.dart';
@@ -47,10 +49,43 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
   late final TextEditingController _searchController;
   late final TextEditingController _perPageController;
 
+  List<String> _getAllowedTypes() {
+    final can = AuthorizationService.hasPermission;
+    final isSuperAdmin = can('*') || can('admins.manage');
+
+    final available = ReportType.all.where((type) {
+      if (isSuperAdmin) return true;
+      switch (type) {
+        case ReportType.financial:
+          return can('reports.financial') || can('financial.view_summary');
+        case ReportType.trips:
+          return can('reports.trips') ||
+              can('trips.view') ||
+              can('trips.generate_daily');
+        case ReportType.subscriptions:
+          return can('reports.subscriptions') ||
+              can('subscriptions.view') ||
+              can('trips.generate_daily');
+        case ReportType.drivers:
+          return can('reports.drivers') ||
+              can('drivers.suspend') ||
+              can('complaints.view') ||
+              can('drivers.review_initial');
+        case ReportType.kpi:
+          return isSuperAdmin;
+        default:
+          return false;
+      }
+    }).toList();
+
+    return available.isEmpty ? [ReportType.all.first] : available;
+  }
+
   @override
   void initState() {
     super.initState();
-    _type = widget.initialType;
+    final allowed = _getAllowedTypes();
+    _type = allowed.contains(widget.initialType) ? widget.initialType : allowed.first;
     _format = ReportFormat.defaultFormat;
     _filters = widget.initialFilters;
     _searchController = TextEditingController(text: _filters.search ?? '');
@@ -110,24 +145,30 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _Label(text: 'نوع التقرير'),
-                DropdownButtonFormField<String>(
-                  initialValue: _type,
-                  isExpanded: true,
-                  dropdownColor: context.cardColor,
-                  style: TextStyle(fontSize: 13, color: context.textPrimary),
-                  items: ReportType.all
-                      .map(
-                        (type) => DropdownMenuItem<String>(
-                          value: type,
-                          child: Text(
-                            ReportType.label(type),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _type = value ?? _type),
+                Builder(
+                  builder: (context) {
+                    final allowedTypes = _getAllowedTypes();
+                    final selectedType = allowedTypes.contains(_type) ? _type : allowedTypes.first;
+                    return DropdownButtonFormField<String>(
+                      initialValue: selectedType,
+                      isExpanded: true,
+                      dropdownColor: context.cardColor,
+                      style: TextStyle(fontSize: 13, color: context.textPrimary),
+                      items: allowedTypes
+                          .map(
+                            (type) => DropdownMenuItem<String>(
+                              value: type,
+                              child: Text(
+                                ReportType.label(type),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _type = value ?? _type),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -341,37 +382,91 @@ class ReportExportResultDialog extends StatelessWidget {
                   valueColor:
                       export.hasBom ? context.successColor : context.warningColor,
                 ),
-              const SizedBox(height: 14),
-              Text(
-                'معاينة المحتوى',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: context.textSecondary,
+              if (export.isPdf) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: context.primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: context.primaryColor.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.primaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.picture_as_pdf_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'مستند PDF منظم واحترافي',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'تم تصميم التقرير باللغة العربية مع كامل الجداول والمؤشرات المعتمدة لمنظومة دَربِي. جاهز للتحميل والطباعة.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: context.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 240,
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.surfaceVariant,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.borderSoft),
+              ] else ...[
+                const SizedBox(height: 14),
+                Text(
+                  'معاينة المحتوى',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: context.textSecondary,
+                  ),
                 ),
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    preview,
-                    textDirection: TextDirection.ltr,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                      color: context.textSecondary,
+                const SizedBox(height: 8),
+                Container(
+                  height: 240,
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: context.borderSoft),
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      preview,
+                      textDirection: TextDirection.ltr,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        color: context.textSecondary,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -380,22 +475,35 @@ class ReportExportResultDialog extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('إغلاق'),
           ),
-          OutlinedButton.icon(
-            onPressed: isSaving
-                ? null
-                : () async {
-                    await Clipboard.setData(ClipboardData(text: text));
-                    if (context.mounted) {
-                      showAdminSnackBar(
-                        context,
-                        'تم نسخ محتوى التقرير إلى الحافظة.',
-                        isError: false,
-                      );
-                    }
-                  },
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: const Text('نسخ المحتوى'),
-          ),
+          if (export.isPdf) ...[
+            OutlinedButton.icon(
+              onPressed: () async {
+                await Printing.layoutPdf(
+                  onLayout: (format) async => export.bytes,
+                  name: export.fileName,
+                );
+              },
+              icon: const Icon(Icons.print_rounded, size: 16),
+              label: const Text('معاينة وطباعة'),
+            ),
+          ] else ...[
+            OutlinedButton.icon(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      await Clipboard.setData(ClipboardData(text: text));
+                      if (context.mounted) {
+                        showAdminSnackBar(
+                          context,
+                          'تم نسخ محتوى التقرير إلى الحافظة.',
+                          isError: false,
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.copy_rounded, size: 16),
+              label: const Text('نسخ المحتوى'),
+            ),
+          ],
           if (onSave != null)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -412,8 +520,17 @@ class ReportExportResultDialog extends StatelessWidget {
                         color: context.onPrimary,
                       ),
                     )
-                  : const Icon(Icons.save_alt_rounded, size: 16),
-              label: Text(isSaving ? 'جارٍ الحفظ…' : 'حفظ الملف'),
+                  : Icon(
+                      export.isPdf
+                          ? Icons.download_rounded
+                          : Icons.save_alt_rounded,
+                      size: 16,
+                    ),
+              label: Text(
+                isSaving
+                    ? 'جارٍ التنزيل…'
+                    : (export.isPdf ? 'تنزيل ملف PDF' : 'حفظ الملف'),
+              ),
             ),
         ],
       ),

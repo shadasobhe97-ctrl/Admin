@@ -48,7 +48,10 @@ class _SubscriptionsReportsContent extends StatelessWidget {
               subtitle: 'الأنواع والحالات والعقود القريبة من الانتهاء',
               isBusy: isBusy,
               onRefresh: cubit.loadSubscriptionsReport,
-              onExport: AuthorizationService.hasPermission('reports.export')
+              onExport: (AuthorizationService.hasPermission('reports.export') ||
+                      AuthorizationService.hasPermission('reports.view') ||
+                      AuthorizationService.hasPermission('reports.subscriptions') ||
+                      AuthorizationService.hasPermission('trips.generate_daily'))
                   ? () => openReportExportDialog(
                         context,
                         initialType: ReportType.subscriptions,

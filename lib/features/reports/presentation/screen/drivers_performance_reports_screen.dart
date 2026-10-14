@@ -71,7 +71,10 @@ class _DriversPerformanceContentState
               subtitle: 'الترتيب وحالة وثائق المركبات',
               isBusy: isBusy,
               onRefresh: cubit.loadDriversPerformance,
-              onExport: AuthorizationService.hasPermission('reports.export')
+              onExport: (AuthorizationService.hasPermission('reports.export') ||
+                      AuthorizationService.hasPermission('reports.view') ||
+                      AuthorizationService.hasPermission('reports.drivers') ||
+                      AuthorizationService.hasPermission('drivers.view'))
                   ? () => openReportExportDialog(
                         context,
                         initialType: ReportType.drivers,

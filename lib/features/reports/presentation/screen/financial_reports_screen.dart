@@ -48,7 +48,10 @@ class _FinancialReportsContent extends StatelessWidget {
               subtitle: 'الإيرادات والشحن والسحوبات والنزاعات',
               isBusy: isBusy,
               onRefresh: cubit.loadFinancialReport,
-              onExport: AuthorizationService.hasPermission('reports.export')
+              onExport: (AuthorizationService.hasPermission('reports.export') ||
+                      AuthorizationService.hasPermission('reports.view') ||
+                      AuthorizationService.hasPermission('reports.financial') ||
+                      AuthorizationService.hasPermission('financial.view_summary'))
                   ? () => openReportExportDialog(
                         context,
                         initialType: ReportType.financial,

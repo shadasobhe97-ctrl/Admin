@@ -29,6 +29,7 @@ class ReportExportModel {
   });
 
   bool get isCsv => format == ReportFormat.csv;
+  bool get isPdf => format == ReportFormat.pdf;
 
   int get sizeInBytes => bytes.length;
 
