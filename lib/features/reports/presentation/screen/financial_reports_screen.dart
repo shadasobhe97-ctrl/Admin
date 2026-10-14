@@ -96,21 +96,26 @@ class _FinancialReportsContent extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ReportsState state) {
     final cubit = context.read<ReportsCubit>();
+    final loaded = state is FinancialReportLoaded
+        ? state
+        : (cubit.lastLoadedState is FinancialReportLoaded
+            ? cubit.lastLoadedState as FinancialReportLoaded
+            : null);
 
-    if (state is FinancialReportLoading) {
+    if (state is FinancialReportLoading && loaded == null) {
       return const AdminLoadingView(message: 'جارٍ تحميل التقرير المالي…');
     }
 
-    if (state is FinancialReportError) {
+    if (state is FinancialReportError && loaded == null) {
       return AdminErrorView(
         message: state.message,
         onRetry: cubit.loadFinancialReport,
       );
     }
 
-    if (state is FinancialReportLoaded) {
+    if (loaded != null) {
       return SingleChildScrollView(
-        child: FinancialReportSection(report: state.report),
+        child: FinancialReportSection(report: loaded.report),
       );
     }
 

@@ -6,10 +6,10 @@ import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../../../core/widgets/admin_pagination.dart';
+import '../../data/models/drivers_performance_report_model.dart';
 import '../../data/models/report_filters.dart';
 import '../../logic/cubit/reports_cubit.dart';
 import '../../logic/state/reports_state.dart';
-import '../widget/documents_status_widget.dart';
 import '../widget/drivers_leaderboard_widget.dart';
 import '../widget/reports_ui.dart';
 import 'report_export_handler.dart';
@@ -37,6 +37,7 @@ class _DriversPerformanceContent extends StatefulWidget {
 class _DriversPerformanceContentState
     extends State<_DriversPerformanceContent> {
   late final TextEditingController _searchController;
+  DriversPerformanceReportModel? _lastReport;
 
   @override
   void initState() {
@@ -57,6 +58,10 @@ class _DriversPerformanceContentState
     return BlocConsumer<ReportsCubit, ReportsState>(
       listener: handleReportExportState,
       builder: (context, state) {
+        if (state is DriversPerformanceLoaded) {
+          _lastReport = state.report;
+        }
+
         final cubit = context.read<ReportsCubit>();
         final filters =
             state is DriversPerformanceLoaded ? state.filters : cubit.filters;
@@ -68,7 +73,7 @@ class _DriversPerformanceContentState
           children: [
             ReportToolbar(
               title: 'أداء السائقين',
-              subtitle: 'الترتيب وحالة وثائق المركبات',
+              subtitle: 'تصنيف ومعدلات أداء السائقين ومتابعة الرحلات المنجزة',
               isBusy: isBusy,
               onRefresh: cubit.loadDriversPerformance,
               onExport: (AuthorizationService.hasPermission('reports.export') ||
@@ -139,19 +144,25 @@ class _DriversPerformanceContentState
   Widget _buildBody(BuildContext context, ReportsState state) {
     final cubit = context.read<ReportsCubit>();
 
-    if (state is DriversPerformanceLoading) {
+    if (state is DriversPerformanceLoading && _lastReport == null) {
       return const AdminLoadingView(message: 'جارٍ تحميل تقرير أداء السائقين…');
     }
 
-    if (state is DriversPerformanceError) {
+    if (state is DriversPerformanceError && _lastReport == null) {
       return AdminErrorView(
         message: state.message,
         onRetry: cubit.loadDriversPerformance,
       );
     }
 
-    if (state is DriversPerformanceLoaded) {
-      final report = state.report;
+    final report = state is DriversPerformanceLoaded
+        ? state.report
+        : _lastReport;
+
+    if (report != null) {
+      final sortBy = state is DriversPerformanceLoaded
+          ? state.filters.sortBy
+          : cubit.filters.sortBy;
 
       return SingleChildScrollView(
         child: Column(
@@ -162,10 +173,9 @@ class _DriversPerformanceContentState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ReportSectionTitle(
-                    title: 'ترتيب السائقين',
+                    title: 'ترتيب وتصنيف السائقين',
                     icon: Icons.emoji_events_rounded,
-                    subtitle: 'الفرز حسب: '
-                        '${DriverSortBy.label(state.filters.sortBy)}',
+                    subtitle: 'الفرز حسب: ${DriverSortBy.label(sortBy)}',
                   ),
                   const SizedBox(height: 14),
                   DriversLeaderboardWidget(entries: report.leaderboard),
@@ -180,8 +190,6 @@ class _DriversPerformanceContentState
                 ],
               ),
             ),
-            const SizedBox(height: 18),
-            DocumentsStatusWidget(status: report.documentsStatus),
           ],
         ),
       );

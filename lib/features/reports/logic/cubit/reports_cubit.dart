@@ -19,14 +19,25 @@ class ReportsCubit extends Cubit<ReportsState> {
   /// الفلاتر الحالية للشاشة المعروضة.
   ReportFilters _filters = const ReportFilters();
 
+  /// يحفظ آخر حالة محتوى تم تحميلها بنجاح لمنع إفراغ الشاشة أثناء التصدير.
+  ReportsState? _lastLoadedState;
+
   /// يمنع إطلاق طلبات متزامنة عند الضغط المتكرر على التحديث أو التصدير.
   bool _isFetching = false;
   bool _isExporting = false;
   bool _isSavingFile = false;
 
   ReportFilters get filters => _filters;
+  ReportsState? get lastLoadedState => _lastLoadedState;
   bool get isExporting => _isExporting;
   bool get isSavingFile => _isSavingFile;
+
+  /// يعيد الشاشة إلى حالتها السابقة المحمّلة فور إغلاق حوار التصدير أو الحفظ.
+  void restorePreviousReportState() {
+    if (_lastLoadedState != null && !_isFetching && !_isExporting) {
+      _emitIfOpen(_lastLoadedState!);
+    }
+  }
 
   String _messageOf(Object error) {
     if (error is ApiException) return error.detailedMessage;
@@ -48,7 +59,9 @@ class ReportsCubit extends Cubit<ReportsState> {
 
     _emitIfOpen(loadingState);
     try {
-      _emitIfOpen(await request());
+      final loaded = await request();
+      _lastLoadedState = loaded;
+      _emitIfOpen(loaded);
     } catch (error) {
       _emitIfOpen(onError(_messageOf(error)));
     } finally {
@@ -186,6 +199,8 @@ class ReportsCubit extends Cubit<ReportsState> {
           case ReportType.financial:
             if (state is FinancialReportLoaded) {
               reportData = (state as FinancialReportLoaded).report;
+            } else if (_lastLoadedState is FinancialReportLoaded) {
+              reportData = (_lastLoadedState as FinancialReportLoaded).report;
             } else {
               reportData = await _repository.getFinancialReport(effectiveFilters);
             }
@@ -193,6 +208,8 @@ class ReportsCubit extends Cubit<ReportsState> {
           case ReportType.trips:
             if (state is TripsReportLoaded) {
               reportData = (state as TripsReportLoaded).report;
+            } else if (_lastLoadedState is TripsReportLoaded) {
+              reportData = (_lastLoadedState as TripsReportLoaded).report;
             } else {
               reportData = await _repository.getTripsReport(effectiveFilters);
             }
@@ -200,13 +217,18 @@ class ReportsCubit extends Cubit<ReportsState> {
           case ReportType.subscriptions:
             if (state is SubscriptionsReportLoaded) {
               reportData = (state as SubscriptionsReportLoaded).report;
+            } else if (_lastLoadedState is SubscriptionsReportLoaded) {
+              reportData = (_lastLoadedState as SubscriptionsReportLoaded).report;
             } else {
               reportData = await _repository.getSubscriptionsReport(effectiveFilters);
             }
             break;
+          case ReportType.documents:
           case ReportType.drivers:
             if (state is DriversPerformanceLoaded) {
               reportData = (state as DriversPerformanceLoaded).report;
+            } else if (_lastLoadedState is DriversPerformanceLoaded) {
+              reportData = (_lastLoadedState as DriversPerformanceLoaded).report;
             } else {
               reportData = await _repository.getDriversPerformance(effectiveFilters);
             }
@@ -215,6 +237,8 @@ class ReportsCubit extends Cubit<ReportsState> {
           default:
             if (state is KpiLoaded) {
               reportData = (state as KpiLoaded).summary;
+            } else if (_lastLoadedState is KpiLoaded) {
+              reportData = (_lastLoadedState as KpiLoaded).summary;
             } else {
               reportData = await _repository.getKpiSummary();
             }

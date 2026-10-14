@@ -253,6 +253,9 @@ class ReportPdfGenerator {
     } else if (data is SubscriptionsReportModel) {
       return _buildSubscriptionsReport(data);
     } else if (data is DriversPerformanceReportModel) {
+      if (type == ReportType.documents) {
+        return _buildDocumentsReport(data);
+      }
       return _buildDriversReport(data);
     } else if (data is KpiSummaryModel) {
       return _buildKpiReport(data);
@@ -457,7 +460,55 @@ class ReportPdfGenerator {
   // ── 4. تقرير أداء السائقين ────────────────────────────────────────────────
   static List<pw.Widget> _buildDriversReport(DriversPerformanceReportModel model) {
     return [
-      _buildSectionTitle('حالة تراخيص ومركبات الأسطول'),
+      _buildSectionTitle('مؤشرات تصنيف وأداء السائقين'),
+      pw.Row(
+        children: [
+          _buildKpiCard(
+            label: 'إجمالي السائقين المصنفين',
+            value: '${model.leaderboard.length}',
+            accent: primaryBlue,
+          ),
+          pw.SizedBox(width: 8),
+          _buildKpiCard(
+            label: 'إجمالي الرحلات المكتملة',
+            value: '${model.leaderboard.fold<int>(0, (sum, d) => sum + d.completedTripsCount)}',
+            accent: successGreen,
+          ),
+          pw.SizedBox(width: 8),
+          _buildKpiCard(
+            label: 'إجمالي العقود النشطة',
+            value: '${model.leaderboard.fold<int>(0, (sum, d) => sum + d.activeSubsCount)}',
+            accent: accentCyan,
+          ),
+        ],
+      ),
+      pw.SizedBox(height: 16),
+      _buildSectionTitle('جدول تصنيف ومعدلات أداء السائقين'),
+      _buildTable(
+        headers: ['#', 'السائق', 'الهاتف', 'رحلات مكتملة', 'اشتراكات', 'التقييم', 'الاستبقاء'],
+        rows: model.leaderboard.isEmpty
+            ? [
+                ['—', 'لا توجد بيانات للسائقين في هذه الفترة', '—', '—', '—', '—', '—']
+              ]
+            : model.leaderboard.take(25).map((d) {
+                return [
+                  '${d.rank ?? '—'}',
+                  d.name ?? 'سائق',
+                  d.phone ?? '—',
+                  '${d.completedTripsCount}',
+                  '${d.activeSubsCount}',
+                  d.ratingAvg != null ? '${d.ratingAvg!.toStringAsFixed(1)} ★' : '—',
+                  d.retentionRate != null ? '${d.retentionRate!.toStringAsFixed(0)}%' : '—',
+                ];
+              }).toList(),
+      ),
+    ];
+  }
+
+  // ── 4ب. تقرير وثائق وتراخيص المركبات ─────────────────────────────────────────
+  static List<pw.Widget> _buildDocumentsReport(DriversPerformanceReportModel model) {
+    return [
+      _buildSectionTitle('حالة تراخيص ووثائق مركبات الأسطول'),
       pw.Row(
         children: [
           _buildKpiCard(
@@ -486,22 +537,20 @@ class ReportPdfGenerator {
         ],
       ),
       pw.SizedBox(height: 16),
-      _buildSectionTitle('جدول تصنيف ومعدلات أداء السائقين'),
+      _buildSectionTitle('قائمة السائقين وتراخيص المركبات المنتهية أو القريبة من الانتهاء'),
       _buildTable(
-        headers: ['#', 'السائق', 'الهاتف', 'رحلات مكتملة', 'اشتراكات', 'التقييم', 'الاستبقاء'],
-        rows: model.leaderboard.isEmpty
+        headers: ['السائق', 'رقم الهاتف', 'تاريخ الانتهاء', 'المتبقي', 'الحالة'],
+        rows: model.documentsStatus.expiringDriversList.isEmpty
             ? [
-                ['—', 'لا توجد بيانات للسائقين في هذه الفترة', '—', '—', '—', '—', '—']
+                ['—', 'لا توجد تراخيص أو وثائق منتهية حالياً في الأسطول', '—', '—', 'سارية ومطابقة']
               ]
-            : model.leaderboard.take(15).map((d) {
+            : model.documentsStatus.expiringDriversList.take(25).map((doc) {
                 return [
-                  '${d.rank ?? '—'}',
-                  d.name ?? 'سائق',
-                  d.phone ?? '—',
-                  '${d.completedTripsCount}',
-                  '${d.activeSubsCount}',
-                  d.ratingAvg != null ? '${d.ratingAvg!.toStringAsFixed(1)} ★' : '—',
-                  d.retentionRate != null ? '${d.retentionRate!.toStringAsFixed(0)}%' : '—',
+                  doc.name ?? 'سائق',
+                  doc.phone ?? '—',
+                  doc.licenseExpiry ?? '—',
+                  doc.daysLeft != null ? '${doc.daysLeft} يوم' : '—',
+                  doc.isExpired ? 'منتهية' : 'تنتهي قريباً',
                 ];
               }).toList(),
       ),

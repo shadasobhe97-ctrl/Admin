@@ -67,6 +67,7 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
               can('subscriptions.view') ||
               can('trips.generate_daily');
         case ReportType.drivers:
+        case ReportType.documents:
           return can('reports.drivers') ||
               can('drivers.suspend') ||
               can('complaints.view') ||
@@ -241,8 +242,11 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
                   TextField(
                     controller: _searchController,
                     style: TextStyle(fontSize: 13, color: context.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'بحث (الاسم / البريد / الهاتف)',
+                    decoration: InputDecoration(
+                      labelText: 'بحث بالسائق: الاسم أو الهاتف أو البريد (اختياري)',
+                      hintText: 'اتركه فارغاً لتصدير تقرير شامل لجميع السائقين',
+                      helperText: 'اختياري: لتخصيص التقرير لسائق محدد فقط، اتركه فارغاً للكل',
+                      helperStyle: TextStyle(fontSize: 11, color: context.textMuted),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -250,8 +254,11 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
                     controller: _perPageController,
                     keyboardType: TextInputType.number,
                     style: TextStyle(fontSize: 13, color: context.textPrimary),
-                    decoration: const InputDecoration(
-                      labelText: 'عدد السجلات في الصفحة (اختياري)',
+                    decoration: InputDecoration(
+                      labelText: 'عدد السجلات في التقرير (اختياري)',
+                      hintText: 'افتراضي: جميع السجلات المتاحة',
+                      helperText: 'اختياري: حدد الحد الأقصى لعدد السجلات المشمولة بالتقرير',
+                      helperStyle: TextStyle(fontSize: 11, color: context.textMuted),
                     ),
                   ),
                 ],
@@ -259,7 +266,9 @@ class _ReportExportDialogState extends State<ReportExportDialog> {
                 if (!supportsPeriod && !supportsDriverFilters) ...[
                   const SizedBox(height: 10),
                   Text(
-                    'تقرير مؤشرات الأداء لا يقبل أي فلاتر حسب العقد.',
+                    _type == ReportType.documents
+                        ? 'تقرير وثائق وتراخيص المركبات يصدّر أحدث حالة معتمدة لأسطول الحافلات.'
+                        : 'تقرير مؤشرات الأداء لا يقبل أي فلاتر حسب العقد.',
                     style: TextStyle(fontSize: 11.5, color: context.textMuted),
                   ),
                 ],

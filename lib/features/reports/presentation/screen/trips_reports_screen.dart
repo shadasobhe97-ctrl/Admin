@@ -92,20 +92,25 @@ class _TripsReportsContent extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ReportsState state) {
     final cubit = context.read<ReportsCubit>();
+    final loaded = state is TripsReportLoaded
+        ? state
+        : (cubit.lastLoadedState is TripsReportLoaded
+            ? cubit.lastLoadedState as TripsReportLoaded
+            : null);
 
-    if (state is TripsReportLoading) {
+    if (state is TripsReportLoading && loaded == null) {
       return const AdminLoadingView(message: 'جارٍ تحميل تقرير الرحلات…');
     }
 
-    if (state is TripsReportError) {
+    if (state is TripsReportError && loaded == null) {
       return AdminErrorView(
         message: state.message,
         onRetry: cubit.loadTripsReport,
       );
     }
 
-    if (state is TripsReportLoaded) {
-      final report = state.report;
+    if (loaded != null) {
+      final report = loaded.report;
       return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

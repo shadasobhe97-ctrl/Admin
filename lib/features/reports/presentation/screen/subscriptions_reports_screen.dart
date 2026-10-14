@@ -96,20 +96,25 @@ class _SubscriptionsReportsContent extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, ReportsState state) {
     final cubit = context.read<ReportsCubit>();
+    final loaded = state is SubscriptionsReportLoaded
+        ? state
+        : (cubit.lastLoadedState is SubscriptionsReportLoaded
+            ? cubit.lastLoadedState as SubscriptionsReportLoaded
+            : null);
 
-    if (state is SubscriptionsReportLoading) {
+    if (state is SubscriptionsReportLoading && loaded == null) {
       return const AdminLoadingView(message: 'جارٍ تحميل تقرير الاشتراكات…');
     }
 
-    if (state is SubscriptionsReportError) {
+    if (state is SubscriptionsReportError && loaded == null) {
       return AdminErrorView(
         message: state.message,
         onRetry: cubit.loadSubscriptionsReport,
       );
     }
 
-    if (state is SubscriptionsReportLoaded) {
-      final report = state.report;
+    if (loaded != null) {
+      final report = loaded.report;
       return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

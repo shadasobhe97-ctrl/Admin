@@ -65,8 +65,16 @@ class ReportType {
   static const String trips = 'trips';
   static const String subscriptions = 'subscriptions';
   static const String drivers = 'drivers';
+  static const String documents = 'documents';
 
-  static const List<String> all = [kpi, financial, trips, subscriptions, drivers];
+  static const List<String> all = [
+    kpi,
+    financial,
+    trips,
+    subscriptions,
+    drivers,
+    documents,
+  ];
 
   static String label(String type) {
     switch (type) {
@@ -80,6 +88,8 @@ class ReportType {
         return 'تقرير الاشتراكات';
       case drivers:
         return 'أداء السائقين';
+      case documents:
+        return 'وثائق وتراخيص المركبات';
       default:
         return type;
     }

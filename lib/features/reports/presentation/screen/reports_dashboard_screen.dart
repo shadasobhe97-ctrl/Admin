@@ -11,6 +11,7 @@ import '../../logic/cubit/reports_cubit.dart';
 import '../../logic/state/reports_state.dart';
 import '../widget/reports_kpi_cards.dart';
 import '../widget/reports_ui.dart';
+import 'drivers_documents_reports_screen.dart';
 import 'drivers_performance_reports_screen.dart';
 import 'financial_reports_screen.dart';
 import 'report_export_handler.dart';
@@ -86,6 +87,18 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
             can('complaints.view') ||
             can('drivers.review_initial'),
       ),
+      // تقارير وثائق وتراخيص المركبات: لمشرف الأسطول ومشرف الدعم والإدارة العامة
+      _ReportTab(
+        id: 'documents',
+        label: 'وثائق وتراخيص المركبات',
+        icon: Icons.folder_shared_rounded,
+        screen: const DriversDocumentsReportsScreen(),
+        isVisible: isSuperAdmin ||
+            can('reports.drivers') ||
+            can('drivers.suspend') ||
+            can('complaints.view') ||
+            can('drivers.review_initial'),
+      ),
     ];
 
     final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
@@ -107,9 +120,9 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
         return t.id == 'financial';
       }
 
-      // إذا كان المستخدم مشرف دعم فني: يرى حصرياً تبويب "أداء السائقين"
+      // إذا كان المستخدم مشرف دعم فني: يرى تبويبَي "أداء السائقين" و"وثائق وتراخيص المركبات"
       if (isSupport) {
-        return t.id == 'drivers';
+        return t.id == 'drivers' || t.id == 'documents';
       }
 
       return t.isVisible;
