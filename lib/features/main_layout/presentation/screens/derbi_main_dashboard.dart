@@ -250,13 +250,48 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   }
 
   void _initDefaultSelectedTab() {
+    final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
+    final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
+
+    // توجيه تلقائي صريح ومباشر لكل دور تخصصي حسب مسؤولياته الميدانية
+    String? preferredRoleTab;
+    if (roleKey.contains('support') ||
+        roleName.contains('دعم') ||
+        roleName.contains('شكاوى')) {
+      preferredRoleTab = 'complaints';
+    } else if (roleKey.contains('financial') ||
+        roleKey.contains('finance') ||
+        roleName.contains('مالي')) {
+      preferredRoleTab = 'financial';
+    } else if (roleKey.contains('geography') ||
+        roleKey.contains('school') ||
+        roleName.contains('مدارس') ||
+        roleName.contains('مناطق')) {
+      preferredRoleTab = 'schools';
+    } else if (roleKey.contains('fleet') ||
+        roleKey.contains('driver') ||
+        roleName.contains('أسطول') ||
+        roleName.contains('سائق')) {
+      preferredRoleTab = 'drivers';
+    }
+
+    if (preferredRoleTab != null) {
+      final roleTabIdx = _navItems.indexWhere((it) => it.id == preferredRoleTab);
+      if (roleTabIdx >= 0) {
+        _selectedTabIndex = roleTabIdx;
+        _expandGroupContainingItem(preferredRoleTab);
+        return;
+      }
+    }
+
     final dashboardIndex = _navItems.indexWhere((it) => it.id == 'dashboard');
     if (dashboardIndex >= 0) {
       _selectedTabIndex = dashboardIndex;
       return;
     }
-    // للأدوار التخصصية التي تحجب عنها الرئيسية: نحدد التبويب الأنسب للدور فور تسجيل الدخول
-    const preferredIds = ['financial', 'complaints', 'schools', 'drivers'];
+
+    // للأدوار التخصصية التي تحجب عنها الرئيسية كبديل احتياطي
+    const preferredIds = ['complaints', 'financial', 'schools', 'drivers'];
     for (final prefId in preferredIds) {
       final idx = _navItems.indexWhere((it) => it.id == prefId);
       if (idx >= 0) {

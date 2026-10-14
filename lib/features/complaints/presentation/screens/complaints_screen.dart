@@ -9,6 +9,8 @@ import '../widgets/complaint_card.dart';
 import '../widgets/complaint_filter_bar.dart';
 import 'complaint_details_screen.dart';
 
+import '../../../../core/permissions/authorization_service.dart';
+
 class ComplaintsScreen extends StatefulWidget {
   const ComplaintsScreen({super.key});
 
@@ -21,7 +23,9 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!PermissionHelper.hasPermission('complaints.view')) {
+    if (!AuthorizationService.hasPermission('complaints.view') &&
+        !PermissionHelper.hasPermission('complaints.view') &&
+        !AuthorizationService.hasPermission('*')) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -119,6 +123,11 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
 
               const SizedBox(height: 16),
 
+              // 1.5 Quick KPI Cards
+              _buildComplaintStats(context, state, cubit),
+
+              const SizedBox(height: 16),
+
               // 2. Filter Bar
               ComplaintFilterBar(
                 selectedStatus: state.selectedStatus,
@@ -137,6 +146,180 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildComplaintStats(
+    BuildContext context,
+    ComplaintsState state,
+    ComplaintsCubit cubit,
+  ) {
+    final total =
+        state.meta.total > 0 ? state.meta.total : state.complaints.length;
+    final pending = state.complaints
+        .where((c) => c.status.toLowerCase() == 'pending')
+        .length;
+    final completed = state.complaints
+        .where((c) =>
+            c.status.toLowerCase() == 'completed' ||
+            c.status.toLowerCase() == 'resolved')
+        .length;
+    final dismissed = state.complaints
+        .where((c) =>
+            c.status.toLowerCase() == 'dismissed' ||
+            c.status.toLowerCase() == 'rejected')
+        .length;
+
+    final cards = [
+      _ComplaintStatItem(
+        title: 'إجمالي الشكاوى',
+        count: total,
+        statusKey: 'all',
+        icon: Icons.assignment_rounded,
+        color: context.primaryColor,
+        bgColor: context.surfaceVariant,
+      ),
+      _ComplaintStatItem(
+        title: 'قيد الانتظار',
+        count: pending,
+        statusKey: 'pending',
+        icon: Icons.hourglass_top_rounded,
+        color: context.warningColor,
+        bgColor: context.warningBg,
+      ),
+      _ComplaintStatItem(
+        title: 'معالجة ومكتملة',
+        count: completed,
+        statusKey: 'completed',
+        icon: Icons.check_circle_rounded,
+        color: context.successColor,
+        bgColor: context.successBg,
+      ),
+      _ComplaintStatItem(
+        title: 'مرفوضة / متجاهلة',
+        count: dismissed,
+        statusKey: 'dismissed',
+        icon: Icons.cancel_rounded,
+        color: context.textMuted,
+        bgColor: context.surfaceVariant,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 720;
+        if (isWide) {
+          return Row(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                Expanded(
+                  child: _buildStatCard(
+                    context,
+                    item: cards[i],
+                    isSelected: state.selectedStatus == cards[i].statusKey,
+                    onTap: () => cubit.changeStatusFilter(cards[i].statusKey),
+                  ),
+                ),
+                if (i != cards.length - 1) const SizedBox(width: 12),
+              ],
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                SizedBox(
+                  width: 170,
+                  child: _buildStatCard(
+                    context,
+                    item: cards[i],
+                    isSelected: state.selectedStatus == cards[i].statusKey,
+                    onTap: () => cubit.changeStatusFilter(cards[i].statusKey),
+                  ),
+                ),
+                if (i != cards.length - 1) const SizedBox(width: 10),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCard(
+    BuildContext context, {
+    required _ComplaintStatItem item,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? item.color : context.borderSoft,
+            width: isSelected ? 1.8 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: item.color.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: item.bgColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(item.icon, size: 20, color: item.color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.title,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isSelected ? item.color : context.textMuted,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${item.count}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -248,3 +431,22 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
     );
   }
 }
+
+class _ComplaintStatItem {
+  final String title;
+  final int count;
+  final String statusKey;
+  final IconData icon;
+  final Color color;
+  final Color bgColor;
+
+  const _ComplaintStatItem({
+    required this.title,
+    required this.count,
+    required this.statusKey,
+    required this.icon,
+    required this.color,
+    required this.bgColor,
+  });
+}
+
