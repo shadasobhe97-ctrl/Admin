@@ -48,6 +48,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   late String _roleName;
   late List<NavigationItem> _navItems;
 
+  late final AdminNotificationsCubit _notificationsCubit;
   StreamSubscription<RemoteMessage>? _fcmForegroundSubscription;
   StreamSubscription<RemoteMessage>? _fcmClickSubscription;
   Timer? _unreadPollingTimer;
@@ -55,6 +56,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   @override
   void initState() {
     super.initState();
+    _notificationsCubit = sl<AdminNotificationsCubit>();
     _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
     _navItems = _buildNavItems();
@@ -82,7 +84,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
       // تحديث العدادات اللحظية للإشعارات غير المقروءة وطلبات السائقين في الهيدر والـ Sidebar
       try {
-        context.read<AdminNotificationsCubit>().fetchUnreadCount();
+        _notificationsCubit.fetchUnreadCount();
         sl<DriversManagementCubit>().refreshPendingCounts();
       } catch (_) {}
 
@@ -107,7 +109,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     // 4. فحص دوري تلقائي كل 35 ثانية لتحديث عداد الإشعارات غير المقروءة
     _unreadPollingTimer = Timer.periodic(const Duration(seconds: 35), (_) {
       if (mounted) {
-        context.read<AdminNotificationsCubit>().fetchUnreadCount();
+        _notificationsCubit.fetchUnreadCount();
       }
     });
   }
@@ -117,6 +119,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     _fcmForegroundSubscription?.cancel();
     _fcmClickSubscription?.cancel();
     _unreadPollingTimer?.cancel();
+    _notificationsCubit.close();
     super.dispose();
   }
 
@@ -431,8 +434,8 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AdminNotificationsCubit>(
-      create: (context) => sl<AdminNotificationsCubit>()..fetchUnreadCount(),
+    return BlocProvider<AdminNotificationsCubit>.value(
+      value: _notificationsCubit..fetchUnreadCount(),
       child: BlocBuilder<AdminNotificationsCubit, AdminNotificationsState>(
         builder: (context, notifState) {
           final unreadCount = notifState.unreadCount;
