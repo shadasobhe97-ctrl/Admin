@@ -52,15 +52,25 @@ class FileSaverExportService implements FileExportService {
     final extension = _extension(fileName);
 
     try {
-      final path = await FileSaver.instance.saveAs(
-        name: baseName,
-        bytes: bytes,
-        fileExtension: extension,
-        mimeType: _mimeTypeFor(extension),
-      );
+      final String? path;
+      if (kIsWeb) {
+        path = await FileSaver.instance.saveFile(
+          name: baseName,
+          bytes: bytes,
+          fileExtension: extension,
+          mimeType: _mimeTypeFor(extension),
+        );
+      } else {
+        path = await FileSaver.instance.saveAs(
+          name: baseName,
+          bytes: bytes,
+          fileExtension: extension,
+          mimeType: _mimeTypeFor(extension),
+        );
+      }
 
       // `saveAs` يعيد `null` عندما يغلق المستخدم النافذة دون اختيار وجهة.
-      if (path == null) return const FileExportResult.cancelled();
+      if (path == null && !kIsWeb) return const FileExportResult.cancelled();
       return FileExportResult(isSaved: true, path: path);
     } catch (error) {
       debugPrint('[FILE EXPORT] فشل حفظ "$fileName": $error');
