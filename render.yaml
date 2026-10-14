@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: admin-panel
+    env: static
+    buildCommand: git clone https://github.com/flutter/flutter.git -b stable --depth 1 _flutter && _flutter/bin/flutter build web --release
+    staticPublishPath: ./build/web
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

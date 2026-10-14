@@ -1,5 +1,10 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://darby2003.onrender.com/api';
+  /// الرابط الأساسي للـ API (الافتراضي هو خادم الإنتاج على Render)
+  /// يمكن تمريره أيضاً وقت البناء عبر: --dart-define=API_BASE_URL=https://...
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://darby2003.onrender.com/api',
+  );
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
