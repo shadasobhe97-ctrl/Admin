@@ -30,13 +30,59 @@ class ReportsDashboardScreen extends StatefulWidget {
 class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
   int _selectedIndex = 0;
 
-  static const List<_ReportTab> _tabs = [
-    _ReportTab('مؤشرات الأداء', Icons.speed_rounded),
-    _ReportTab('التقرير المالي', Icons.payments_rounded),
-    _ReportTab('الرحلات', Icons.route_rounded),
-    _ReportTab('الاشتراكات', Icons.card_membership_rounded),
-    _ReportTab('أداء السائقين', Icons.emoji_events_rounded),
-  ];
+  List<_ReportTab> _getVisibleTabs() {
+    final can = AuthorizationService.hasPermission;
+    final isSuperAdmin = can('*') || can('admins.manage');
+
+    final allTabs = [
+      // التقرير المالي: للمشرف المالي والإدارة العامة
+      _ReportTab(
+        id: 'financial',
+        label: 'التقرير المالي',
+        icon: Icons.payments_rounded,
+        screen: const FinancialReportsScreen(),
+        isVisible: can('financial.view_summary') || can('reports.view'),
+      ),
+      // مؤشرات الأداء: تظهر للإدارة العامة / المشرف العام
+      _ReportTab(
+        id: 'kpi',
+        label: 'مؤشرات الأداء',
+        icon: Icons.speed_rounded,
+        screen: const _KpiOverviewTab(),
+        isVisible: isSuperAdmin || (can('dashboard.view_stats') && !can('financial.view_summary')),
+      ),
+      // تقارير الرحلات: تتطلب صلاحية إدارة الرحلات
+      _ReportTab(
+        id: 'trips',
+        label: 'الرحلات',
+        icon: Icons.route_rounded,
+        screen: const TripsReportsScreen(),
+        isVisible: can('trips.view') || can('trips.manage'),
+      ),
+      // تقارير الاشتراكات: تتطلب صلاحية إدارة الاشتراكات
+      _ReportTab(
+        id: 'subscriptions',
+        label: 'الاشتراكات',
+        icon: Icons.card_membership_rounded,
+        screen: const SubscriptionsReportsScreen(),
+        isVisible: can('subscriptions.view') || can('schools.manage'),
+      ),
+      // تقارير أداء السائقين: تتطلب صلاحية إدارة السائقين
+      _ReportTab(
+        id: 'drivers',
+        label: 'أداء السائقين',
+        icon: Icons.emoji_events_rounded,
+        screen: const DriversPerformanceReportsScreen(),
+        isVisible: can('drivers.view') || can('drivers.manage'),
+      ),
+    ];
+
+    final visible = allTabs.where((t) => t.isVisible).toList();
+    if (visible.isEmpty) {
+      return [allTabs.first];
+    }
+    return visible;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +105,7 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'استعراض قسم التقارير يتطلب صلاحية (reports.view).',
+                'استعراض قسم التقارير يتطلب صلاحية عرض التقارير.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: context.textMuted),
               ),
@@ -69,33 +115,21 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
       );
     }
 
+    final visibleTabs = _getVisibleTabs();
+    final clampedIndex = _selectedIndex.clamp(0, visibleTabs.length - 1);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ReportsTabBar(
-          tabs: _tabs,
-          selectedIndex: _selectedIndex,
+          tabs: visibleTabs,
+          selectedIndex: clampedIndex,
           onSelect: (index) => setState(() => _selectedIndex = index),
         ),
         const SizedBox(height: 18),
-        Expanded(child: _buildTab()),
+        Expanded(child: visibleTabs[clampedIndex].screen),
       ],
     );
-  }
-
-  Widget _buildTab() {
-    switch (_selectedIndex) {
-      case 1:
-        return const FinancialReportsScreen();
-      case 2:
-        return const TripsReportsScreen();
-      case 3:
-        return const SubscriptionsReportsScreen();
-      case 4:
-        return const DriversPerformanceReportsScreen();
-      default:
-        return const _KpiOverviewTab();
-    }
   }
 }
 
@@ -172,10 +206,19 @@ class _KpiOverviewContent extends StatelessWidget {
 }
 
 class _ReportTab {
+  final String id;
   final String label;
   final IconData icon;
+  final Widget screen;
+  final bool isVisible;
 
-  const _ReportTab(this.label, this.icon);
+  const _ReportTab({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.screen,
+    required this.isVisible,
+  });
 }
 
 /// شريط تبويبات أفقي قابل للتمرير على الشاشات الأضيق.

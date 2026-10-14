@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../models/admin_details_model.dart';
 import '../models/admin_model.dart';
 import '../models/create_admin_request_model.dart';
@@ -23,7 +24,8 @@ class AdminManagementRemoteDataSource {
         data['required_permission'] != null &&
         data['required_permission'].toString().trim().isNotEmpty) {
       final reqPerm = data['required_permission'].toString().trim();
-      message = 'غير مصرح لك بتنفيذ هذه العملية. الصلاحية المطلوبة: $reqPerm';
+      final label = ApiException.formatPermissionLabel(reqPerm);
+      message = 'غير مصرح لك بتنفيذ هذه العملية. تحتاج صلاحية: ($label).';
     } else if (data is Map<String, dynamic>) {
       if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
         final firstVal = (data['errors'] as Map).values.first;

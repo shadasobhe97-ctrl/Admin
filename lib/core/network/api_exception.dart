@@ -110,11 +110,49 @@ class ApiErrorMapper {
     return null;
   }
 
+  static const Map<String, String> _permissionLabels = {
+    'drivers.view': 'عرض بيانات السائقين',
+    'drivers.edit_data': 'تعديل بيانات السائقين',
+    'drivers.suspend': 'إيقاف أو تعليق السائقين',
+    'drivers.activate': 'تفعيل السائقين',
+    'drivers.review_initial': 'مراجعة طلبات التسجيل',
+    'drivers.review_changes': 'مراجعة طلبات تعديل البيانات',
+    'admins.manage': 'إدارة المشرفين والصلاحيات',
+    'parents.view': 'عرض بيانات أولياء الأمور',
+    'schools.manage': 'إدارة المدارس',
+    'geography.manage': 'إدارة المناطق الجغرافية',
+    'complaints.view': 'عرض الشكاوى والبلاغات',
+    'complaints.resolve': 'معالجة الشكاوى والبلاغات',
+    'driver_reviews.manage': 'إدارة تقييمات السائقين',
+    'financial.view_summary': 'عرض البيانات المالية',
+    'financial.manage_withdrawals': 'إدارة طلبات السحب',
+    'financial.manage_recharges': 'إدارة عمليات الشحن',
+    'financial.manage_pricing': 'إدارة التسعير',
+    'financial.manage_payment_methods': 'إدارة طرق الدفع',
+    'financial.release_escrows': 'تحرير المبالغ المعلقة',
+    'reports.view': 'عرض التقارير والتحليلات',
+    'reports.export': 'تصدير التقارير',
+    'audit_logs.view': 'عرض سجل تدقيق العمليات',
+    'dashboard.view_stats': 'عرض إحصائيات لوحة التحكم',
+    'trips.emergency_cancel': 'إلغاء الرحلات الطارئ',
+    'trips.view': 'عرض الرحلات',
+    'ai_alerts.view': 'عرض تنبيهات الذكاء الاصطناعي',
+  };
+
+  /// تحويل مفتاح الصلاحية الإنجليزي إلى مسمى عربي واضح، لمنع ظهور مصطلحات برمجية للمستخدم.
+  static String formatPermissionLabel(String key) {
+    return _permissionLabels[key] ?? key;
+  }
+
   static String? _parseMessage(dynamic data) {
     if (data is Map) {
       final reqPerm = data['required_permission'];
       if (reqPerm != null && reqPerm.toString().trim().isNotEmpty) {
-        return 'غير مصرح لك بتنفيذ هذه العملية. الصلاحية المطلوبة: $reqPerm';
+        final label = _permissionLabels[reqPerm.toString().trim()];
+        if (label != null) {
+          return 'غير مصرح لك بتنفيذ هذه العملية. تحتاج صلاحية: ($label).';
+        }
+        return 'عذراً، لا تملك الصلاحية الكافية لتنفيذ هذه العملية أو الوصول إلى هذه البيانات.';
       }
       final message = data['message'];
       if (message != null && message.toString().trim().isNotEmpty) {

@@ -158,9 +158,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       if (can('driver_reviews.manage'))
         NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded,
             badge: 0),
-      NavigationItem(
-          'ai_alerts', 'تنبيهات الذكاء الاصطناعي', Icons.smart_toy_outlined,
-          badge: 0),
+      if (can('ai_alerts.view') || can('drivers.suspend'))
+        NavigationItem(
+            'ai_alerts', 'تنبيهات الذكاء الاصطناعي', Icons.smart_toy_outlined,
+            badge: 0),
     ];
 
     final financialAndReportsItems = [

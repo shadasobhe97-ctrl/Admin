@@ -59,7 +59,7 @@ class _TripCancellationViewState extends State<_TripCancellationView> {
     if (!canCancel) {
       showAdminSnackBar(
         context,
-        'عذراً، غير مصرح لك بتنفيذ إلغاء الرحلة. (الصلاحية المطلوبة: trips.emergency_cancel)',
+        'عذراً، غير مصرح لك بتنفيذ إلغاء الرحلة (تحتاج صلاحية: إلغاء الرحلات الطارئ).',
         isError: true,
       );
       return;
@@ -91,7 +91,7 @@ class _TripCancellationViewState extends State<_TripCancellationView> {
         child: Scaffold(
           appBar: AppBar(title: Text('معاينة إلغاء الرحلة #${widget.tripId}')),
           body: const AdminErrorView(
-            message: 'عذراً، لا تملك الصلاحية المطلوبة للوصول إلى هذه الشاشة. (الصلاحية المطلوبة: trips.emergency_cancel)',
+            message: 'عذراً، لا تملك الصلاحية الكافية للوصول إلى هذه الشاشة (تحتاج صلاحية: إلغاء الرحلات الطارئ).',
           ),
         ),
       );
