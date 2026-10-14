@@ -128,7 +128,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem(
             'drivers', 'إدارة السائقين', Icons.directions_bus_rounded,
             badge: DriversPendingCounters.pendingDriversCount.value),
-      if (can('drivers.review_changes'))
+      if (can('drivers.review_changes') || can('drivers.kyc.review_changes'))
         NavigationItem(
             'updates', 'طلبات تعديل بيانات السائقين', Icons.sync_rounded,
             badge: DriversPendingCounters.pendingChangesCount.value),
@@ -136,7 +136,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem(
             'admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded,
             badge: 0),
-      if (can('parents.view') || can('admins.manage') || can('drivers.view'))
+      if (can('parents.view'))
         NavigationItem(
             'parents', 'عرض أولياء الأمور', Icons.family_restroom_rounded,
             badge: 0),
@@ -156,10 +156,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem(
             'complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded,
             badge: 2),
-      if (can('driver_reviews.manage'))
+      if (can('drivers.reviews.view') || can('driver_reviews.manage'))
         NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded,
             badge: 0),
-      if (can('ai_alerts.view') || can('drivers.suspend'))
+      if (can('ai_alerts.view'))
         NavigationItem(
             'ai_alerts', 'تنبيهات الذكاء الاصطناعي', Icons.smart_toy_outlined,
             badge: 0),
@@ -209,31 +209,44 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   }
 
   /// فحص هل المشرف الحالي مسموح له باستعراض الشاشة الرئيسية للعمليات.
-  /// المشرف المالي لا تظهر له الرئيسية (مخصصة للعمليات وإحصائيات الرحلات والسائقين).
+  /// تُعرض لـ: المدير العام، مشرف العمليات والرادار، ومشرف السائقين والأسطول.
+  /// وتُحجب عن: المشرف المالي، مشرف خدمة العملاء والشكاوى، ومشرف المدارس والمناطق.
   bool _canViewDashboard() {
     final can = AuthorizationService.hasPermission;
     if (!can('dashboard.view_stats')) return false;
 
-    // فحص مسمى أو مفتاح الدور: المشرف المالي لا تظهر له الرئيسية
+    // المدير العام يملك الصلاحية الكاملة ويرى الرئيسية دائماً
+    if (can('*') || can('admins.manage')) return true;
+
     final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
     final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
-    final isFinance = roleKey.contains('financial') ||
+
+    // الأدوار التخصصية التي تحجب عنها شاشة العمليات والرادار
+    final isExcluded = roleKey.contains('financial') ||
         roleKey.contains('finance') ||
         roleKey.contains('accountant') ||
+        roleKey.contains('geography') ||
+        roleKey.contains('support') ||
         roleName.contains('مالي') ||
-        roleName.contains('مالية');
+        roleName.contains('مالية') ||
+        roleName.contains('جغرافي') ||
+        roleName.contains('مدارس') ||
+        roleName.contains('دعم') ||
+        roleName.contains('شكاوى');
 
-    if (isFinance && !can('admins.manage') && !can('*')) {
-      return false;
-    }
+    if (isExcluded) return false;
 
-    final hasOperationsOrAdminAccess = can('*') ||
-        can('admins.manage') ||
-        can('drivers.view') ||
-        can('trips.view') ||
-        can('schools.manage');
+    // مشرف العمليات ومشرف الأسطول يملكون متابعة الرحلات أو مراجعة واعتماد السائقين
+    final hasOperationsOrFleet = can('trips.generate_daily') ||
+        can('trips.emergency_cancel') ||
+        can('drivers.review_initial') ||
+        can('drivers.review_changes') ||
+        can('drivers.edit_data') ||
+        can('drivers.kyc.review_initial') ||
+        can('drivers.kyc.review_changes') ||
+        can('drivers.suspend');
 
-    return hasOperationsOrAdminAccess;
+    return hasOperationsOrFleet;
   }
 
   void _initDefaultSelectedTab() {
@@ -242,7 +255,16 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
       _selectedTabIndex = dashboardIndex;
       return;
     }
-    // للمشرف المالي أو الأدوار التي لا تملك الرئيسية، نفتح أول تبويب وظيفي متاح (مثل المالية)
+    // للأدوار التخصصية التي تحجب عنها الرئيسية: نحدد التبويب الأنسب للدور فور تسجيل الدخول
+    const preferredIds = ['financial', 'complaints', 'schools', 'drivers'];
+    for (final prefId in preferredIds) {
+      final idx = _navItems.indexWhere((it) => it.id == prefId);
+      if (idx >= 0) {
+        _selectedTabIndex = idx;
+        _expandGroupContainingItem(prefId);
+        return;
+      }
+    }
     final firstFunctionalIndex = _navItems.indexWhere(
       (it) => it.id != 'profile' && it.id != 'notifications',
     );
@@ -866,9 +888,16 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
   Widget _buildCurrentTabScreen(int index) {
     if (index < 0 || index >= _navItems.length) {
-      return _canViewDashboard()
-          ? const DashboardOverviewScreen()
-          : const FinancialDashboardScreen();
+      if (_canViewDashboard()) return const DashboardOverviewScreen();
+      final functionalItem = _navItems.firstWhere(
+        (it) => it.id != 'profile' && it.id != 'notifications',
+        orElse: () => _navItems.first,
+      );
+      final fallbackIndex = _navItems.indexOf(functionalItem);
+      if (fallbackIndex >= 0 && fallbackIndex != index) {
+        return _buildCurrentTabScreen(fallbackIndex);
+      }
+      return const SizedBox.shrink();
     }
     final itemId = _navItems[index].id;
     switch (itemId) {

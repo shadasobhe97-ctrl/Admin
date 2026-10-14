@@ -35,49 +35,71 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
     final isSuperAdmin = can('*') || can('admins.manage');
 
     final allTabs = [
-      // التقرير المالي: للمشرف المالي والإدارة العامة
+      // التقرير المالي: للمشرف المالي والإدارة العامة فقط
       _ReportTab(
         id: 'financial',
         label: 'التقرير المالي',
         icon: Icons.payments_rounded,
         screen: const FinancialReportsScreen(),
-        isVisible: can('financial.view_summary') || can('reports.view'),
+        isVisible: isSuperAdmin || can('reports.financial') || can('financial.view_summary'),
       ),
-      // مؤشرات الأداء: تظهر للإدارة العامة / المشرف العام
+      // مؤشرات الأداء: تظهر للإدارة العامة
       _ReportTab(
         id: 'kpi',
         label: 'مؤشرات الأداء',
         icon: Icons.speed_rounded,
         screen: const _KpiOverviewTab(),
-        isVisible: isSuperAdmin || (can('dashboard.view_stats') && !can('financial.view_summary')),
+        isVisible: isSuperAdmin,
       ),
-      // تقارير الرحلات: تتطلب صلاحية إدارة الرحلات
+      // تقارير الرحلات: لمشرف العمليات والإدارة العامة
       _ReportTab(
         id: 'trips',
         label: 'الرحلات',
         icon: Icons.route_rounded,
         screen: const TripsReportsScreen(),
-        isVisible: can('trips.view') || can('trips.manage'),
+        isVisible: isSuperAdmin ||
+            can('reports.trips') ||
+            can('trips.view') ||
+            can('trips.generate_daily'),
       ),
-      // تقارير الاشتراكات: تتطلب صلاحية إدارة الاشتراكات
+      // تقارير الاشتراكات: لمشرف العمليات والإدارة العامة
       _ReportTab(
         id: 'subscriptions',
         label: 'الاشتراكات',
         icon: Icons.card_membership_rounded,
         screen: const SubscriptionsReportsScreen(),
-        isVisible: can('subscriptions.view') || can('schools.manage'),
+        isVisible: isSuperAdmin ||
+            can('reports.subscriptions') ||
+            can('subscriptions.view') ||
+            can('trips.generate_daily'),
       ),
-      // تقارير أداء السائقين: تتطلب صلاحية إدارة السائقين
+      // تقارير أداء السائقين: لمشرف الأسطول ومشرف الدعم والإدارة العامة
       _ReportTab(
         id: 'drivers',
         label: 'أداء السائقين',
         icon: Icons.emoji_events_rounded,
         screen: const DriversPerformanceReportsScreen(),
-        isVisible: can('drivers.view') || can('drivers.manage'),
+        isVisible: isSuperAdmin ||
+            can('reports.drivers') ||
+            can('drivers.suspend') ||
+            can('complaints.view') ||
+            can('drivers.review_initial'),
       ),
     ];
 
-    final visible = allTabs.where((t) => t.isVisible).toList();
+    final visible = allTabs.where((t) {
+      if (isSuperAdmin) return true;
+      // إذا كان المستخدم مشرف مالية: يرى التقرير المالي فقط
+      final isFinance = can('financial.view_summary') &&
+          !can('trips.generate_daily') &&
+          !can('complaints.view') &&
+          !can('drivers.suspend');
+      if (isFinance) {
+        return t.id == 'financial';
+      }
+      return t.isVisible;
+    }).toList();
+
     if (visible.isEmpty) {
       return [allTabs.first];
     }

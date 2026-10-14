@@ -172,7 +172,7 @@ void main() {
       expect(apiException.statusCode, equals(403));
       expect(
         apiException.message,
-        contains('غير مصرح لك بتنفيذ هذه العملية. الصلاحية المطلوبة: admins.manage'),
+        contains('غير مصرح لك بتنفيذ هذه العملية. تحتاج صلاحية: (إدارة المشرفين والصلاحيات).'),
       );
     });
 
