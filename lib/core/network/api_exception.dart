@@ -46,6 +46,10 @@ class ApiException implements Exception {
     return '$message\n${details.join('\n')}';
   }
 
+  /// تحويل مفتاح الصلاحية الإنجليزي إلى مسمى عربي واضح
+  static String formatPermissionLabel(String key) =>
+      ApiErrorMapper.formatPermissionLabel(key);
+
   @override
   String toString() => detailedMessage;
 }
