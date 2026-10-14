@@ -125,6 +125,13 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
   List<NavigationGroup> _buildNavGroups() {
     final can = AuthorizationService.hasPermission;
+    final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
+    final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
+    final isSupport = roleKey.contains('support') ||
+        roleName.contains('دعم') ||
+        (can('complaints.view') &&
+            !can('trips.generate_daily') &&
+            !can('financial.view_summary'));
 
     final userManagementItems = [
       if (can('drivers.view'))
@@ -159,10 +166,10 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem(
             'complaints', 'الشكاوى والبلاغات', Icons.support_agent_rounded,
             badge: 2),
-      if (can('drivers.reviews.view') || can('driver_reviews.manage'))
+      if (can('drivers.reviews.view') || can('driver_reviews.manage') || isSupport)
         NavigationItem('reviews', 'تقييمات السائقين', Icons.star_rounded,
             badge: 0),
-      if (can('ai_alerts.view'))
+      if (can('ai_alerts.view') || isSupport)
         NavigationItem(
             'ai_alerts', 'تنبيهات الذكاء الاصطناعي', Icons.smart_toy_outlined,
             badge: 0),
@@ -173,7 +180,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem('financial', 'الإدارة المالية والخزينة',
             Icons.account_balance_wallet_rounded,
             badge: 0),
-      if (can('reports.view'))
+      if (can('reports.view') || isSupport || can('reports.drivers'))
         NavigationItem(
             'reports', 'التقارير والتحليلات', Icons.analytics_rounded,
             badge: 0),

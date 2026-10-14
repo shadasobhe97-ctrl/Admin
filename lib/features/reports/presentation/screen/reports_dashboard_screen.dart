@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/permissions/authorization_service.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
 import '../../data/models/report_filters.dart';
@@ -87,6 +88,14 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
       ),
     ];
 
+    final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
+    final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
+    final isSupport = roleKey.contains('support') ||
+        roleName.contains('دعم') ||
+        (can('complaints.view') &&
+            !can('trips.generate_daily') &&
+            !can('financial.view_summary'));
+
     final visible = allTabs.where((t) {
       if (isSuperAdmin) return true;
       // إذا كان المستخدم مشرف مالية: يرى التقرير المالي فقط
@@ -97,6 +106,12 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
       if (isFinance) {
         return t.id == 'financial';
       }
+
+      // إذا كان المستخدم مشرف دعم فني: يرى حصرياً تبويب "أداء السائقين"
+      if (isSupport) {
+        return t.id == 'drivers';
+      }
+
       return t.isVisible;
     }).toList();
 
@@ -108,7 +123,18 @@ class _ReportsDashboardScreenState extends State<ReportsDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!AuthorizationService.hasPermission('reports.view')) {
+    final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
+    final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
+    final isSupport = roleKey.contains('support') ||
+        roleName.contains('دعم') ||
+        (AuthorizationService.hasPermission('complaints.view') &&
+            !AuthorizationService.hasPermission('trips.generate_daily') &&
+            !AuthorizationService.hasPermission('financial.view_summary'));
+
+    if (!AuthorizationService.hasPermission('reports.view') &&
+        !AuthorizationService.hasPermission('reports.drivers') &&
+        !isSupport &&
+        !AuthorizationService.hasPermission('*')) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
