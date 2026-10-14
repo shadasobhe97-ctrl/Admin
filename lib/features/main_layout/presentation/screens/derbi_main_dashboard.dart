@@ -58,6 +58,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     _adminName = StorageService.getUserName() ?? 'الآدمن الرئيسي';
     _roleName = StorageService.getRoleName() ?? 'مدير النظام';
     _navItems = _buildNavItems();
+    _initDefaultSelectedTab();
     _ensureSessionFresh();
     _initNotificationsAndFcm();
     sl<DriversManagementCubit>().refreshPendingCounts();
@@ -207,12 +208,56 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     ];
   }
 
+  /// فحص هل المشرف الحالي مسموح له باستعراض الشاشة الرئيسية للعمليات.
+  /// المشرف المالي لا تظهر له الرئيسية (مخصصة للعمليات وإحصائيات الرحلات والسائقين).
+  bool _canViewDashboard() {
+    final can = AuthorizationService.hasPermission;
+    if (!can('dashboard.view_stats')) return false;
+
+    // فحص مسمى أو مفتاح الدور: المشرف المالي لا تظهر له الرئيسية
+    final roleKey = StorageService.getRoleKey()?.toLowerCase() ?? '';
+    final roleName = StorageService.getRoleName()?.toLowerCase() ?? '';
+    final isFinance = roleKey.contains('financial') ||
+        roleKey.contains('finance') ||
+        roleKey.contains('accountant') ||
+        roleName.contains('مالي') ||
+        roleName.contains('مالية');
+
+    if (isFinance && !can('admins.manage') && !can('*')) {
+      return false;
+    }
+
+    final hasOperationsOrAdminAccess = can('*') ||
+        can('admins.manage') ||
+        can('drivers.view') ||
+        can('trips.view') ||
+        can('schools.manage');
+
+    return hasOperationsOrAdminAccess;
+  }
+
+  void _initDefaultSelectedTab() {
+    final dashboardIndex = _navItems.indexWhere((it) => it.id == 'dashboard');
+    if (dashboardIndex >= 0) {
+      _selectedTabIndex = dashboardIndex;
+      return;
+    }
+    // للمشرف المالي أو الأدوار التي لا تملك الرئيسية، نفتح أول تبويب وظيفي متاح (مثل المالية)
+    final firstFunctionalIndex = _navItems.indexWhere(
+      (it) => it.id != 'profile' && it.id != 'notifications',
+    );
+    if (firstFunctionalIndex >= 0) {
+      _selectedTabIndex = firstFunctionalIndex;
+      _expandGroupContainingItem(_navItems[_selectedTabIndex].id);
+    }
+  }
+
   /// كل عنصر Sidebar مرتبط بالصلاحية التي يحدّدها الـ Backend (RBAC V2).
   List<NavigationItem> _buildNavItems() {
     final groups = _buildNavGroups();
     final items = <NavigationItem>[
       NavigationItem('profile', 'الملف الشخصي', Icons.person_rounded, badge: 0),
-      if (AuthorizationService.hasPermission('dashboard.view_stats'))
+      if (_canViewDashboard())
         NavigationItem('dashboard', 'الرئيسية', Icons.dashboard_rounded,
             badge: 0),
     ];
@@ -249,7 +294,11 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
           _navItems = _buildNavItems();
           final newIndex =
               _navItems.indexWhere((item) => item.id == selectedId);
-          _selectedTabIndex = newIndex >= 0 ? newIndex : 0;
+          if (newIndex >= 0) {
+            _selectedTabIndex = newIndex;
+          } else {
+            _initDefaultSelectedTab();
+          }
           _expandGroupContainingItem(_navItems[_selectedTabIndex].id);
         });
       }
@@ -613,8 +662,7 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
   }
 
   Widget _buildSidebarContent(BuildContext context) {
-    final can = AuthorizationService.hasPermission;
-    final dashboardItem = can('dashboard.view_stats')
+    final dashboardItem = _canViewDashboard()
         ? NavigationItem('dashboard', 'الرئيسية', Icons.dashboard_rounded,
             badge: 0)
         : null;
@@ -818,7 +866,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
 
   Widget _buildCurrentTabScreen(int index) {
     if (index < 0 || index >= _navItems.length) {
-      return const DashboardOverviewScreen();
+      return _canViewDashboard()
+          ? const DashboardOverviewScreen()
+          : const FinancialDashboardScreen();
     }
     final itemId = _navItems[index].id;
     switch (itemId) {
@@ -856,7 +906,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
           onNameChanged: (newName) => setState(() => _adminName = newName),
         );
       default:
-        return const DashboardOverviewScreen();
+        return _canViewDashboard()
+            ? const DashboardOverviewScreen()
+            : const FinancialDashboardScreen();
     }
   }
 
