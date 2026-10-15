@@ -298,18 +298,22 @@ class ReportPdfGenerator {
       pw.SizedBox(height: 16),
       _buildSectionTitle('بيانات الشحن وعمليات الدفع الإلكتروني'),
       _buildTable(
-        headers: ['طريقة الدفع', 'عدد العمليات', 'المبلغ الإجمالي', 'النسبة المئوية'],
+        headers: ['#', 'طريقة الدفع', 'عدد العمليات', 'المبلغ الإجمالي', 'النسبة المئوية'],
         rows: model.rechargeReport.paymentMethodsBreakdown.isEmpty
             ? [
                 [
+                  '1',
                   'إجمالي المبالغ المشحونة',
                   '—',
                   '${model.rechargeReport.totalRecharged.toStringAsFixed(2)} د.ل',
                   '100%'
                 ]
               ]
-            : model.rechargeReport.paymentMethodsBreakdown.map((item) {
+            : model.rechargeReport.paymentMethodsBreakdown.asMap().entries.map((entry) {
+                final idx = entry.key + 1;
+                final item = entry.value;
                 return [
+                  '$idx',
                   item.paymentMethod ?? 'طريقة دفع غير محددة',
                   '${item.count}',
                   '${item.totalAmount.toStringAsFixed(2)} د.ل',
@@ -347,9 +351,12 @@ class ReportPdfGenerator {
         pw.SizedBox(height: 16),
         _buildSectionTitle('تفاصيل الإيرادات وحجم التعاملات حسب الفترات الزمنية'),
         _buildTable(
-          headers: ['الفترة الزمنية', 'إجمالي حجم التداول', 'أرباح السائقين', 'عمولة المنصة'],
-          rows: model.revenueSummary.chartData.take(30).map((point) {
+          headers: ['#', 'الفترة الزمنية', 'إجمالي حجم التداول', 'أرباح السائقين', 'عمولة المنصة'],
+          rows: model.revenueSummary.chartData.take(30).toList().asMap().entries.map((entry) {
+            final idx = entry.key + 1;
+            final point = entry.value;
             return [
+              '$idx',
               point.period,
               '${point.totalVolume.toStringAsFixed(2)} د.ل',
               '${point.driverEarnings.toStringAsFixed(2)} د.ل',
@@ -407,9 +414,10 @@ class ReportPdfGenerator {
       pw.SizedBox(height: 16),
       _buildSectionTitle('إحصائيات الحضور والغياب للطلاب والسائقين'),
       _buildTable(
-        headers: ['الفئة', 'إجمالي السجلات', 'حضور / مكتمل', 'غياب معتذر', 'غياب غير معتذر'],
+        headers: ['#', 'الفئة', 'إجمالي السجلات', 'حضور / مكتمل', 'غياب معتذر', 'غياب غير معتذر'],
         rows: [
           [
+            '1',
             'الطلاب',
             '${model.absenceStats.student.totalRecords}',
             '${model.absenceStats.student.presentCount}',
@@ -417,6 +425,7 @@ class ReportPdfGenerator {
             '${model.absenceStats.student.unexcusedCount}',
           ],
           [
+            '2',
             'السائقين',
             '${model.absenceStats.driver.driverCancellationsCount + model.absenceStats.driver.driverAbsencesCount}',
             '—',
@@ -503,20 +512,23 @@ class ReportPdfGenerator {
       pw.SizedBox(height: 16),
       _buildSectionTitle('توزيع باقات وأنواع الاشتراكات'),
       _buildTable(
-        headers: ['نوع الاشتراك', 'عدد العقود', 'النسبة من الإجمالي'],
+        headers: ['#', 'نوع الاشتراك', 'عدد العقود', 'النسبة من الإجمالي'],
         rows: [
-          ['اشتراك شهري كامل', '${model.subscriptionTypes.monthlyCount}', '${model.subscriptionTypes.monthlyPercentage.toStringAsFixed(1)}%'],
-          ['اشتراك رحلات يومية', '${model.subscriptionTypes.dailyCount}', '${model.subscriptionTypes.dailyPercentage.toStringAsFixed(1)}%'],
-          ['اشتراك باقة مشتركة', '${model.subscriptionTypes.bothCount}', '${model.subscriptionTypes.bothPercentage.toStringAsFixed(1)}%'],
+          ['1', 'اشتراك شهري كامل', '${model.subscriptionTypes.monthlyCount}', '${model.subscriptionTypes.monthlyPercentage.toStringAsFixed(1)}%'],
+          ['2', 'اشتراك رحلات يومية', '${model.subscriptionTypes.dailyCount}', '${model.subscriptionTypes.dailyPercentage.toStringAsFixed(1)}%'],
+          ['3', 'اشتراك باقة مشتركة', '${model.subscriptionTypes.bothCount}', '${model.subscriptionTypes.bothPercentage.toStringAsFixed(1)}%'],
         ],
       ),
       if (model.expiringSoon.list.isNotEmpty) ...[
         pw.SizedBox(height: 16),
         _buildSectionTitle('عقود قاربت على الانتهاء'),
         _buildTable(
-          headers: ['رقم العقد', 'ولي الأمر', 'الهاتف', 'السائق', 'الأيام المتبقية'],
-          rows: model.expiringSoon.list.take(35).map((contract) {
+          headers: ['#', 'رقم العقد', 'ولي الأمر', 'الهاتف', 'السائق', 'الأيام المتبقية'],
+          rows: model.expiringSoon.list.take(35).toList().asMap().entries.map((entry) {
+            final idx = entry.key + 1;
+            final contract = entry.value;
             return [
+              '$idx',
               contract.contractNumber ?? '—',
               contract.parentName ?? '—',
               contract.parentPhone ?? '—',
@@ -611,13 +623,16 @@ class ReportPdfGenerator {
       pw.SizedBox(height: 16),
       _buildSectionTitle('قائمة السائقين وتراخيص المركبات المنتهية أو القريبة من الانتهاء'),
       _buildTable(
-        headers: ['السائق', 'رقم الهاتف', 'تاريخ الانتهاء', 'المتبقي', 'الحالة'],
+        headers: ['#', 'السائق', 'رقم الهاتف', 'تاريخ الانتهاء', 'المتبقي', 'الحالة'],
         rows: model.documentsStatus.expiringDriversList.isEmpty
             ? [
-                ['—', 'لا توجد تراخيص أو وثائق منتهية حالياً في الأسطول', '—', '—', 'سارية ومطابقة']
+                ['—', 'لا توجد تراخيص أو وثائق منتهية حالياً في الأسطول', '—', '—', '—', 'سارية ومطابقة']
               ]
-            : model.documentsStatus.expiringDriversList.take(50).map((doc) {
+            : model.documentsStatus.expiringDriversList.take(50).toList().asMap().entries.map((entry) {
+                final idx = entry.key + 1;
+                final doc = entry.value;
                 return [
+                  '$idx',
                   doc.name ?? 'سائق',
                   doc.phone ?? '—',
                   doc.licenseExpiry ?? '—',
@@ -686,12 +701,12 @@ class ReportPdfGenerator {
       pw.SizedBox(height: 16),
       _buildSectionTitle('التنبيهات الإدارية العاجلة'),
       _buildTable(
-        headers: ['نوع التنبيه', 'العدد قيد الانتظار', 'الحالة الإدارية'],
+        headers: ['#', 'نوع التنبيه', 'العدد قيد الانتظار', 'الحالة الإدارية'],
         rows: [
-          ['سائقون بانتظار المراجعة والاعتماد', '${model.urgentAlerts.pendingDrivers}', 'يتطلب تدقيق المستندات'],
-          ['طلبات سحب أرباح معلقة', '${model.urgentAlerts.pendingWithdrawals}', 'تنتظر التحويل المصرفي'],
-          ['نزاعات مالية مفتوحة', '${model.urgentAlerts.openDisputes}', 'تتطلب قرار المشرف'],
-          ['عمليات شحن يدوي معلقة', '${model.urgentAlerts.pendingRecharges}', 'بانتظار التأكيد'],
+          ['1', 'سائقون بانتظار المراجعة والاعتماد', '${model.urgentAlerts.pendingDrivers}', 'يتطلب تدقيق المستندات'],
+          ['2', 'طلبات سحب أرباح معلقة', '${model.urgentAlerts.pendingWithdrawals}', 'تنتظر التحويل المصرفي'],
+          ['3', 'نزاعات مالية مفتوحة', '${model.urgentAlerts.openDisputes}', 'تتطلب قرار المشرف'],
+          ['4', 'عمليات شحن يدوي معلقة', '${model.urgentAlerts.pendingRecharges}', 'بانتظار التأكيد'],
         ],
       ),
     ];
@@ -759,13 +774,21 @@ class ReportPdfGenerator {
     required List<String> headers,
     required List<List<String>> rows,
   }) {
+    // في واجهات اللغة العربية (RTL):
+    // الترتيب الطبيعي للقراءة يبدأ من اليمين إلى اليسار.
+    // وبما أن pw.Table في مكتبة PDF ترسم خلايا السطر من اليسار إلى اليمين (LTR)،
+    // فإن عكس ترتيب عناصر العناوين والصفوف (headers.reversed و row.reversed)
+    // يجعل العمود الأول دائماً (# أو المعرّف ID) يظهر في أقصى اليمين،
+    // لتتطابق الجداول المطبوعة 100% مع أصول القراءة العربية الصحيحة.
+    final rtlHeaders = headers.reversed.toList();
+
     return pw.Table(
       border: pw.TableBorder.all(color: borderLight, width: 0.5),
       children: [
         // صف العناوين
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: primaryBlue),
-          children: headers.map((header) {
+          children: rtlHeaders.map((header) {
             return pw.Padding(
               padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: pw.Text(
@@ -785,11 +808,12 @@ class ReportPdfGenerator {
           final index = entry.key;
           final row = entry.value;
           final isEven = index % 2 == 0;
+          final rtlRow = row.reversed.toList();
           return pw.TableRow(
             decoration: pw.BoxDecoration(
               color: isEven ? PdfColors.white : cardBg,
             ),
-            children: row.map((cell) {
+            children: rtlRow.map((cell) {
               return pw.Padding(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 child: pw.Text(

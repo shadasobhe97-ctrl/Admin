@@ -3,7 +3,7 @@ class ApiEndpoints {
   /// يمكن تمريره أيضاً وقت البناء عبر: --dart-define=API_BASE_URL=https://...
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://darby-app-api.loca.lt/api',
+    defaultValue: 'https://darby2003.onrender.com/api',
   );
 
   // ── Auth ────────────────────────────────────────────────────────────────────
