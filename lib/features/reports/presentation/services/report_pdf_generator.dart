@@ -343,13 +343,28 @@ class ReportPdfGenerator {
           ),
         ],
       ),
+      if (model.revenueSummary.chartData.isNotEmpty) ...[
+        pw.SizedBox(height: 16),
+        _buildSectionTitle('تفاصيل الإيرادات وحجم التعاملات حسب الفترات الزمنية'),
+        _buildTable(
+          headers: ['الفترة الزمنية', 'إجمالي حجم التداول', 'أرباح السائقين', 'عمولة المنصة'],
+          rows: model.revenueSummary.chartData.take(30).map((point) {
+            return [
+              point.period,
+              '${point.totalVolume.toStringAsFixed(2)} د.ل',
+              '${point.driverEarnings.toStringAsFixed(2)} د.ل',
+              '${point.platformCommission.toStringAsFixed(2)} د.ل',
+            ];
+          }).toList(),
+        ),
+      ],
     ];
   }
 
   // ── 2. تقرير الرحلات المدرسية والعمليات ─────────────────────────────────────
   static List<pw.Widget> _buildTripsReport(TripsReportModel model) {
     return [
-      _buildSectionTitle('معدلات إنجاز الرحلات'),
+      _buildSectionTitle('معدلات إنجاز الرحلات المدرسية'),
       pw.Row(
         children: [
           _buildKpiCard(
@@ -373,6 +388,22 @@ class ReportPdfGenerator {
           ),
         ],
       ),
+      pw.SizedBox(height: 8),
+      pw.Row(
+        children: [
+          _buildKpiCard(
+            label: 'رحلات قيد التنفيذ (جارية)',
+            value: '${model.completionSummary.inProgressTrips}',
+            accent: accentCyan,
+          ),
+          pw.SizedBox(width: 8),
+          _buildKpiCard(
+            label: 'رحلات مجدولة لاحقاً',
+            value: '${model.completionSummary.scheduledTrips}',
+            accent: warningAmber,
+          ),
+        ],
+      ),
       pw.SizedBox(height: 16),
       _buildSectionTitle('إحصائيات الحضور والغياب للطلاب والسائقين'),
       _buildTable(
@@ -393,6 +424,47 @@ class ReportPdfGenerator {
             '${model.absenceStats.driver.driverCancellationsCount} إلغاء مسار',
           ],
         ],
+      ),
+      pw.SizedBox(height: 16),
+      _buildSectionTitle('أعلى المدارس طلباً في النقل المدرسي'),
+      _buildTable(
+        headers: ['#', 'اسم المدرسة', 'عدد الطلاب المسجلين', 'الموقع الجغرافي'],
+        rows: model.demandHeatmap.topSchools.isEmpty
+            ? [
+                ['—', 'لا توجد بيانات طلب على المدارس في هذه الفترة', '—', '—']
+              ]
+            : model.demandHeatmap.topSchools.asMap().entries.map((entry) {
+                final index = entry.key + 1;
+                final school = entry.value;
+                final coords = school.hasCoordinates
+                    ? '${school.lat!.toStringAsFixed(4)}, ${school.lng!.toStringAsFixed(4)}'
+                    : 'إحداثيات غير مسجلة';
+                return [
+                  '$index',
+                  school.schoolName ?? 'مدرسة',
+                  '${school.studentsCount} طالب',
+                  coords,
+                ];
+              }).toList(),
+      ),
+      pw.SizedBox(height: 16),
+      _buildSectionTitle('أعلى المناطق الجغرافية تغطيةً بالسائقين'),
+      _buildTable(
+        headers: ['#', 'المنطقة الجغرافية', 'عدد السائقين المتوفرين', 'حالة التغطية'],
+        rows: model.demandHeatmap.topZones.isEmpty
+            ? [
+                ['—', 'لا توجد بيانات مناطق مسجلة في هذه الفترة', '—', '—']
+              ]
+            : model.demandHeatmap.topZones.asMap().entries.map((entry) {
+                final index = entry.key + 1;
+                final zone = entry.value;
+                return [
+                  '$index',
+                  zone.zoneName ?? 'منطقة',
+                  '${zone.driversCount} سائق',
+                  zone.driversCount > 0 ? 'مغطاة بنجاح' : 'تحتاج تغطية',
+                ];
+              }).toList(),
       ),
     ];
   }
@@ -443,7 +515,7 @@ class ReportPdfGenerator {
         _buildSectionTitle('عقود قاربت على الانتهاء'),
         _buildTable(
           headers: ['رقم العقد', 'ولي الأمر', 'الهاتف', 'السائق', 'الأيام المتبقية'],
-          rows: model.expiringSoon.list.take(10).map((contract) {
+          rows: model.expiringSoon.list.take(35).map((contract) {
             return [
               contract.contractNumber ?? '—',
               contract.parentName ?? '—',
@@ -490,7 +562,7 @@ class ReportPdfGenerator {
             ? [
                 ['—', 'لا توجد بيانات للسائقين في هذه الفترة', '—', '—', '—', '—', '—']
               ]
-            : model.leaderboard.take(25).map((d) {
+            : model.leaderboard.take(50).map((d) {
                 return [
                   '${d.rank ?? '—'}',
                   d.name ?? 'سائق',
@@ -544,7 +616,7 @@ class ReportPdfGenerator {
             ? [
                 ['—', 'لا توجد تراخيص أو وثائق منتهية حالياً في الأسطول', '—', '—', 'سارية ومطابقة']
               ]
-            : model.documentsStatus.expiringDriversList.take(25).map((doc) {
+            : model.documentsStatus.expiringDriversList.take(50).map((doc) {
                 return [
                   doc.name ?? 'سائق',
                   doc.phone ?? '—',

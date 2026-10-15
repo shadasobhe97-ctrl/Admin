@@ -133,6 +133,19 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
             !can('trips.generate_daily') &&
             !can('financial.view_summary'));
 
+    final isOperations = roleKey.contains('operations') ||
+        roleName.contains('عمليات') ||
+        can('trips.generate_daily') ||
+        can('dashboard.view_radar') ||
+        can('trips.view');
+
+    final isFleet = roleKey.contains('fleet') ||
+        roleName.contains('أسطول') ||
+        roleName.contains('اسطول') ||
+        can('drivers.review_initial') ||
+        can('drivers.kyc.review_initial') ||
+        can('drivers.view');
+
     final userManagementItems = [
       if (can('drivers.view'))
         NavigationItem(
@@ -146,9 +159,9 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
         NavigationItem(
             'admins', 'إدارة المشرفين', Icons.admin_panel_settings_rounded,
             badge: 0),
-      if (can('parents.view'))
+      if (can('parents.view') || isOperations || isFleet || isSupport)
         NavigationItem(
-            'parents', 'عرض أولياء الأمور', Icons.family_restroom_rounded,
+            'parents', 'إدارة أولياء الأمور', Icons.family_restroom_rounded,
             badge: 0),
     ];
 
