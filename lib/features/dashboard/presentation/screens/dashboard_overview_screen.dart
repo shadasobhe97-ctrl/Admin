@@ -1077,21 +1077,35 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   textDirection: TextDirection.ltr,
                                 ),
                               if (trip.region.isNotEmpty)
-                                Text(
-                                  '📍 ${trip.region}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AdminColors.accentCyan,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined, size: 12, color: AdminColors.accentCyan),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.region,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.accentCyan,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
-                                Text(
-                                  '⏱ ${trip.duration.isNotEmpty ? trip.duration : trip.startedAt}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: context.textTertiary,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.schedule_rounded, size: 12, color: context.textTertiary),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: context.textTertiary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                             ],
                           ),
@@ -1118,11 +1132,18 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         color: AdminColors.accentCyan,
                       ),
                     ),
-                    Text('🚖 ${trip.ridingCount} راكب', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
-                    Text('⏳ ${trip.waitingCount} ينتظر', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
-                    Text('✅ ${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
+                    Text('${trip.ridingCount} على المتن', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
+                    Text('${trip.waitingCount} بانتظار', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
+                    Text('${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
                     if (trip.destination.isNotEmpty)
-                      Text('🏫 ${trip.destination}', style: TextStyle(fontSize: 11, color: context.textTertiary)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.school_outlined, size: 13, color: context.textTertiary),
+                          const SizedBox(width: 4),
+                          Text(trip.destination, style: TextStyle(fontSize: 11, color: context.textTertiary)),
+                        ],
+                      ),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -1273,21 +1294,35 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   textDirection: TextDirection.ltr,
                                 ),
                               if (trip.region.isNotEmpty)
-                                Text(
-                                  '📍 ${trip.region}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AdminColors.accentCyan,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined, size: 12, color: AdminColors.accentCyan),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.region,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.accentCyan,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
-                                Text(
-                                  '⏱ ${trip.duration.isNotEmpty ? trip.duration : trip.startedAt}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: context.textTertiary,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.schedule_rounded, size: 12, color: context.textTertiary),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: context.textTertiary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                             ],
                           ),
@@ -1315,12 +1350,12 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             color: AdminColors.accentCyan,
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        Text('${trip.ridingCount} على المتن', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 8),
-                        Text('🚖 ${trip.ridingCount}', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 6),
-                        Text('⏳ ${trip.waitingCount}', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 6),
-                        Text('✅ ${trip.arrivedCount}', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
+                        Text('${trip.waitingCount} بانتظار', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Text('${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 4),

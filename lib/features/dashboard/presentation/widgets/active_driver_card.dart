@@ -155,14 +155,14 @@ class ActiveDriverCard extends StatelessWidget {
               // العدادات الإحصائية للركاب
               Row(
                 children: [
-                  Expanded(child: _buildStatusBadge('🚖 راكب', '${trip.ridingCount}', context.successBg, context.successBorder, context.successColor)),
+                  Expanded(child: _buildStatusBadge('على المتن', '${trip.ridingCount}', context.successBg, context.successBorder, context.successColor)),
                   const SizedBox(width: 4),
-                  Expanded(child: _buildStatusBadge('⏳ ينتظر', '${trip.waitingCount}', context.warningBg, context.warningBorder, context.warningColor)),
+                  Expanded(child: _buildStatusBadge('بانتظار', '${trip.waitingCount}', context.warningBg, context.warningBorder, context.warningColor)),
                   const SizedBox(width: 4),
-                  Expanded(child: _buildStatusBadge('✅ وصل', '${trip.arrivedCount}', context.infoBg, context.infoBorder, context.infoColor)),
+                  Expanded(child: _buildStatusBadge('تم التوصيل', '${trip.arrivedCount}', context.infoBg, context.infoBorder, context.infoColor)),
                   if (trip.absentStudentsCount > 0) ...[
                     const SizedBox(width: 4),
-                    Expanded(child: _buildStatusBadge('🚫 غائب', '${trip.absentStudentsCount}', AdminColors.dangerBgLight, AdminColors.statusDanger.withValues(alpha: 0.3), AdminColors.statusDanger)),
+                    Expanded(child: _buildStatusBadge('غائب', '${trip.absentStudentsCount}', AdminColors.dangerBgLight, AdminColors.statusDanger.withValues(alpha: 0.3), AdminColors.statusDanger)),
                   ],
                 ],
               ),
