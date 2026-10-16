@@ -574,9 +574,11 @@ class ReportPdfGenerator {
             ? [
                 ['—', 'لا توجد بيانات للسائقين في هذه الفترة', '—', '—', '—', '—', '—']
               ]
-            : model.leaderboard.take(50).map((d) {
+            : model.leaderboard.take(50).toList().asMap().entries.map((entry) {
+                final idx = entry.key + 1;
+                final d = entry.value;
                 return [
-                  '${d.rank ?? '—'}',
+                  '${d.rank ?? idx}',
                   d.name ?? 'سائق',
                   d.phone ?? '—',
                   '${d.completedTripsCount}',
