@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+
 import 'core/di/service_locator.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/admin_theme.dart';
@@ -13,10 +15,22 @@ import 'features/Auth/presentation/screens/admin_login_screen.dart';
 import 'features/Auth/presentation/screens/admin_splash_screen.dart';
 import 'features/Auth/presentation/screens/reset_password_screen.dart';
 import 'features/main_layout/presentation/screens/derbi_main_dashboard.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
+
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    debugPrint('Firebase initialization error in main: $e');
+  }
+
   await setupServiceLocator();
   runApp(const DerbiApp());
 }

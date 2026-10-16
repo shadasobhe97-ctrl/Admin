@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,7 +34,6 @@ class _DashboardOverviewContent extends StatefulWidget {
 }
 
 class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
-  Timer? _pollingTimer;
   final MapController _mapController = MapController();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapKey = GlobalKey();
@@ -43,19 +42,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   bool _isMapInteractive = false;
 
   @override
-  void initState() {
-    super.initState();
-    // إعداد التحديث الدوري التلقائي (Polling) للرحلات النشطة كل 30 ثانية
-    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) {
-        context.read<DashboardCubit>().fetchDashboardData();
-      }
-    });
-  }
-
-  @override
   void dispose() {
-    _pollingTimer?.cancel();
     _scrollController.dispose();
     _mapController.dispose();
     super.dispose();
@@ -194,7 +181,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     // 3. قسم الرادار والخريطة التفاعلية مع دعم الحظر التام للتفاعل عند القفل
                     Container(
                       key: _mapKey,
-                      child: _buildRealMapSection(context, state.activeTrips),
+                      child: _buildRealMapSection(context, state.activeTrips, state),
                     ),
                     const SizedBox(height: 32),
 
@@ -513,7 +500,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
 
   // --- قسم الخريطة: مع استخدام IgnorePointer لتعطيل التفاعل 100% عند القفل ---
   Widget _buildRealMapSection(
-      BuildContext context, List<ActiveTripModel> trips) {
+      BuildContext context, List<ActiveTripModel> trips, DashboardState state) {
     final theme = Theme.of(context);
 
     bool isValidCoord(double lat, double lng) {
@@ -538,8 +525,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       markers.add(
         Marker(
           point: LatLng(trip.currentLat, trip.currentLng),
-          width: 140,
-          height: 75,
+          width: 155,
+          height: 85,
           child: GestureDetector(
             onTap: () => TripInspectorModal.show(context, trip),
             child: Column(
@@ -549,11 +536,17 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.9),
+                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: AdminColors.brandPrimary, width: 1.5),
-                    boxShadow: [
+                    border: Border.all(
+                      color: trip.isSignalWeak
+                          ? AdminColors.orange
+                          : (trip.isOnline
+                              ? AdminColors.statusSuccess
+                              : AdminColors.brandPrimary),
+                      width: 1.5,
+                    ),
+                    boxShadow: const [
                       BoxShadow(
                         color: AdminColors.mapMarkerShadow,
                         blurRadius: 6,
@@ -563,6 +556,20 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // مؤشر النبض اللحظي
+                      Container(
+                        width: 7,
+                        height: 7,
+                        margin: const EdgeInsets.only(left: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: trip.isSignalWeak
+                              ? AdminColors.orange
+                              : (trip.isOnline
+                                  ? AdminColors.statusSuccess
+                                  : Colors.grey),
+                        ),
+                      ),
                       Flexible(
                         child: Text(
                           trip.driverName,
@@ -573,6 +580,24 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (trip.speedKmH > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: context.primaryColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${trip.speedKmH} كم/س',
+                            style: const TextStyle(
+                                color: AdminColors.onMapMarkerLabel,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -593,20 +618,32 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: AdminColors.brandPrimary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: AdminColors.mapMarkerShadow,
-                          blurRadius: 4,
-                          offset: Offset(0, 2)),
-                    ],
+                // أيقونة الحافلة موجهة بزاوية السير الفعلي في الشارع (Vehicle Heading)
+                Transform.rotate(
+                  angle: (trip.heading * (math.pi / 180)),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: trip.isSignalWeak
+                          ? AdminColors.orange
+                          : (trip.isOnline
+                              ? AdminColors.brandPrimary
+                              : Colors.grey.shade700),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: AdminColors.mapMarkerShadow,
+                            blurRadius: 5,
+                            offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.navigation,
+                      color: AdminColors.onMapMarkerLabel,
+                      size: 16,
+                    ),
                   ),
-                  child: const Icon(Icons.directions_bus_filled,
-                      color: AdminColors.onMapMarkerLabel, size: 18),
                 ),
               ],
             ),
@@ -653,32 +690,59 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color:
-                                  context.textPrimary,
+                              color: context.textPrimary,
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AdminColors.successBgLight,
+                              color: state.isRealtimeActive
+                                  ? AdminColors.successBgLight
+                                  : (state.isUsingFallbackPolling
+                                      ? AdminColors.amber.withValues(alpha: 0.15)
+                                      : AdminColors.successBgLight),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: AdminColors.statusSuccess
-                                      .withValues(alpha: 0.2)),
+                                color: state.isRealtimeActive
+                                    ? AdminColors.statusSuccess.withValues(alpha: 0.3)
+                                    : (state.isUsingFallbackPolling
+                                        ? AdminColors.amber.withValues(alpha: 0.4)
+                                        : AdminColors.statusSuccess.withValues(alpha: 0.2)),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.circle,
-                                    size: 8, color: AdminColors.statusSuccess),
+                                Icon(
+                                  state.isRealtimeActive
+                                      ? Icons.bolt_rounded
+                                      : (state.isUsingFallbackPolling
+                                          ? Icons.sync_rounded
+                                          : Icons.circle),
+                                  size: 14,
+                                  color: state.isRealtimeActive
+                                      ? AdminColors.statusSuccess
+                                      : (state.isUsingFallbackPolling
+                                          ? AdminColors.amber
+                                          : AdminColors.statusSuccess),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${validTrips.length} رحلة مباشرة على الخريطة',
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AdminColors.successFgLight,
-                                      fontWeight: FontWeight.bold),
+                                  state.isRealtimeActive
+                                      ? 'بث فوري مباشر (Firebase) • ${validTrips.length} رحلة'
+                                      : (state.isUsingFallbackPolling
+                                          ? 'تحديث احتياطي (Polling 15s) • ${validTrips.length} رحلة'
+                                          : '${validTrips.length} رحلة مباشرة على الخريطة'),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: state.isRealtimeActive
+                                        ? AdminColors.successFgLight
+                                        : (state.isUsingFallbackPolling
+                                            ? AdminColors.amber
+                                            : AdminColors.successFgLight),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),

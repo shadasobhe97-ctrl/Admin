@@ -49,6 +49,16 @@ class ActiveTripModel {
   final String timeElapsed;
   final List<TripPassenger> passengers;
 
+  // Realtime Live Radar & Tracking fields (Firebase & Backend Hybrid)
+  final double heading;
+  final bool isOnline;
+  final String destination;
+  final String firestoreDoc;
+  final String lastUpdate;
+  final DateTime? updatedAt;
+  final double? mapX;
+  final double? mapY;
+
   ActiveTripModel({
     required this.tripId,
     required this.driverId,
@@ -64,12 +74,82 @@ class ActiveTripModel {
     this.carPlate = 'ليبيا',
     this.rating = 5.0,
     this.currentLocationName = 'الموقع الميداني الحقيقي',
-    this.speedKmH = 40,
+    this.speedKmH = 0,
     this.timeElapsed = '',
     this.passengers = const [],
+    this.heading = 0.0,
+    this.isOnline = true,
+    this.destination = '',
+    this.firestoreDoc = '',
+    this.lastUpdate = '',
+    this.updatedAt,
+    this.mapX,
+    this.mapY,
   });
 
   String get id => tripId.toString();
+
+  /// فحص هل انقطعت إشارة الـ GPS لأكثر من دقيقتين
+  bool get isSignalWeak {
+    if (updatedAt == null) return false;
+    return DateTime.now().difference(updatedAt!).inMinutes >= 2;
+  }
+
+  ActiveTripModel copyWith({
+    int? tripId,
+    int? driverId,
+    String? driverName,
+    String? status,
+    double? currentLat,
+    double? currentLng,
+    int? studentsCount,
+    String? startedAt,
+    String? driverPhone,
+    String? driverAvatar,
+    String? carModel,
+    String? carPlate,
+    double? rating,
+    String? currentLocationName,
+    int? speedKmH,
+    String? timeElapsed,
+    List<TripPassenger>? passengers,
+    double? heading,
+    bool? isOnline,
+    String? destination,
+    String? firestoreDoc,
+    String? lastUpdate,
+    DateTime? updatedAt,
+    double? mapX,
+    double? mapY,
+  }) {
+    return ActiveTripModel(
+      tripId: tripId ?? this.tripId,
+      driverId: driverId ?? this.driverId,
+      driverName: driverName ?? this.driverName,
+      status: status ?? this.status,
+      currentLat: currentLat ?? this.currentLat,
+      currentLng: currentLng ?? this.currentLng,
+      studentsCount: studentsCount ?? this.studentsCount,
+      startedAt: startedAt ?? this.startedAt,
+      driverPhone: driverPhone ?? this.driverPhone,
+      driverAvatar: driverAvatar ?? this.driverAvatar,
+      carModel: carModel ?? this.carModel,
+      carPlate: carPlate ?? this.carPlate,
+      rating: rating ?? this.rating,
+      currentLocationName: currentLocationName ?? this.currentLocationName,
+      speedKmH: speedKmH ?? this.speedKmH,
+      timeElapsed: timeElapsed ?? this.timeElapsed,
+      passengers: passengers ?? this.passengers,
+      heading: heading ?? this.heading,
+      isOnline: isOnline ?? this.isOnline,
+      destination: destination ?? this.destination,
+      firestoreDoc: firestoreDoc ?? this.firestoreDoc,
+      lastUpdate: lastUpdate ?? this.lastUpdate,
+      updatedAt: updatedAt ?? this.updatedAt,
+      mapX: mapX ?? this.mapX,
+      mapY: mapY ?? this.mapY,
+    );
+  }
 
   int get ridingCount => passengers.where((p) => p.status == 'راكب').length;
   int get waitingCount => passengers.where((p) => p.status == 'ينتظر').length;
@@ -236,13 +316,43 @@ class ActiveTripModel {
     final studentsCount =
         countFromApi > 0 ? countFromApi : parsedPassengers.length;
 
+    int parseSpeed(dynamic val) {
+      if (val is num) return val.round();
+      if (val is String) {
+        final match = RegExp(r'\d+').firstMatch(val);
+        if (match != null) {
+          return int.tryParse(match.group(0)!) ?? 0;
+        }
+      }
+      return 0;
+    }
+
+    final heading = parseDouble(json['heading']);
+    final isOnline = json['is_online'] == null
+        ? true
+        : (json['is_online'] == true ||
+            json['is_online'].toString() == '1' ||
+            json['is_online'].toString() == 'true');
+    final destination = pickStr(json, ['destination', 'dropoff_location', 'school_name']);
+    final firestoreDoc = pickStr(json, ['firestore_doc', 'firestoreDoc']);
+    final lastUpdate = pickStr(json, ['last_update', 'lastUpdate']);
+    DateTime? updatedAt;
+    if (json['updated_at'] != null) {
+      updatedAt = DateTime.tryParse(json['updated_at'].toString());
+    }
+    final mapX = json['map_x'] != null ? parseDouble(json['map_x']) : null;
+    final mapY = json['map_y'] != null ? parseDouble(json['map_y']) : null;
+
+    final rawSpeed = json['speed'] ?? json['speed_km_h'] ?? json['speedKmH'];
+    final speedKmH = rawSpeed != null ? parseSpeed(rawSpeed) : 0;
+
     return ActiveTripModel(
       tripId: parseInt(json['trip_id'] ?? json['id']),
       driverId: parseInt(json['driver_id'] ?? json['driverId'] ?? driver?['id']),
       driverName: driverName,
       status: json['status']?.toString() ?? 'in_progress',
-      currentLat: parseDouble(json['current_lat'] ?? json['currentLat'] ?? json['lat']),
-      currentLng: parseDouble(json['current_lng'] ?? json['currentLng'] ?? json['lng']),
+      currentLat: parseDouble(json['current_lat'] ?? json['currentLat'] ?? json['lat'] ?? json['driver_lat']),
+      currentLng: parseDouble(json['current_lng'] ?? json['currentLng'] ?? json['lng'] ?? json['driver_lng']),
       studentsCount: studentsCount,
       startedAt: json['started_at']?.toString() ?? json['startedAt']?.toString() ?? '',
       driverPhone: json['driver_phone']?.toString() ?? json['driverPhone']?.toString() ?? json['phone']?.toString() ?? '',
@@ -251,9 +361,17 @@ class ActiveTripModel {
       carPlate: json['car_plate']?.toString() ?? json['carPlate']?.toString() ?? '',
       rating: parseDouble(json['rating'] ?? 5.0),
       currentLocationName: json['current_location_name']?.toString() ?? json['currentLocationName']?.toString() ?? json['region']?.toString() ?? 'طريق الخدمة الحية',
-      speedKmH: parseInt(json['speed_km_h'] ?? json['speedKmH'] ?? 40),
+      speedKmH: speedKmH,
       timeElapsed: json['time_elapsed']?.toString() ?? json['timeElapsed']?.toString() ?? json['duration']?.toString() ?? '',
       passengers: parsedPassengers,
+      heading: heading,
+      isOnline: isOnline,
+      destination: destination,
+      firestoreDoc: firestoreDoc,
+      lastUpdate: lastUpdate,
+      updatedAt: updatedAt,
+      mapX: mapX,
+      mapY: mapY,
     );
   }
 }

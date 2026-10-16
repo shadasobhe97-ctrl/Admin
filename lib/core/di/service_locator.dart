@@ -8,6 +8,7 @@ import '../../features/Auth/data/repositories/admin_password_reset_repository.da
 import '../../features/Auth/logic/admin_auth_cubit.dart';
 import '../../features/Auth/logic/admin_password_reset_cubit.dart';
 import '../../features/dashboard/data/repositories/dashboard_repository.dart';
+import '../../features/dashboard/data/services/radar_tracking_service.dart';
 import '../../features/dashboard/logic/dashboard_cubit.dart';
 
 import '../../features/admin_management/data/datasources/admin_management_remote_data_source.dart';
@@ -85,14 +86,20 @@ Future<void> setupServiceLocator() async {
     () => AdminPasswordResetCubit(sl<AdminPasswordResetRepository>()),
   );
 
-  // Register DashboardRepository
+  // Register Dashboard Feature & Radar Tracking
+  sl.registerLazySingleton<RadarTrackingService>(
+    () => RadarTrackingService(),
+  );
+
   sl.registerLazySingleton<DashboardRepository>(
     () => DashboardRepository(sl<ApiClient>()),
   );
 
-  // Register DashboardCubit
   sl.registerFactory<DashboardCubit>(
-    () => DashboardCubit(sl<DashboardRepository>()),
+    () => DashboardCubit(
+      sl<DashboardRepository>(),
+      radarTrackingService: sl<RadarTrackingService>(),
+    ),
   );
 
   // ── Admin Management Feature ──────────────────────────────────────────────

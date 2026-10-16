@@ -51,27 +51,167 @@ class TripInspectorModal extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: AdminColors.brandPrimary.withValues(alpha: 0.1),
-                        radius: 24,
-                        child: const Icon(Icons.person, color: AdminColors.brandPrimary),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(trip.driverName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
-                          Text('سائق ID: #${trip.driverId} • انطلاق: ${trip.startedAt}', style: TextStyle(fontSize: 13, color: context.textTertiary)),
-                        ],
-                      ),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: AdminColors.brandPrimary.withValues(alpha: 0.1),
+                          radius: 24,
+                          child: const Icon(Icons.person, color: AdminColors.brandPrimary),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(trip.driverName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                              const SizedBox(height: 2),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text('سائق ID: #${trip.driverId} • انطلاق: ${trip.startedAt}', style: TextStyle(fontSize: 12, color: context.textTertiary)),
+                                  if (trip.driverPhone.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: context.surfaceVariant,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: context.borderSoft),
+                                      ),
+                                      child: Text(
+                                        trip.driverPhone,
+                                        style: TextStyle(fontSize: 11, color: context.primaryColor, fontWeight: FontWeight.bold),
+                                        textDirection: TextDirection.ltr,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // شريط المؤشرات الحية للرحلة (سرعة، وجهة، حالة البث)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  // حالة الاتصال والنبض
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: trip.isSignalWeak
+                          ? AdminColors.orange.withValues(alpha: 0.15)
+                          : (trip.isOnline ? AdminColors.successBgLight : Colors.grey.withValues(alpha: 0.15)),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: trip.isSignalWeak
+                            ? AdminColors.orange
+                            : (trip.isOnline ? AdminColors.statusSuccess : Colors.grey),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.circle,
+                          size: 8,
+                          color: trip.isSignalWeak
+                              ? AdminColors.orange
+                              : (trip.isOnline ? AdminColors.statusSuccess : Colors.grey),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          trip.isSignalWeak
+                              ? 'إشارة ضعيفة / متوقف'
+                              : (trip.isOnline ? 'بث حي متصل' : 'غير متصل'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: trip.isSignalWeak
+                                ? AdminColors.orange
+                                : (trip.isOnline ? AdminColors.successFgLight : context.textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // عداد السرعة
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: context.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: context.primaryColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.speed_rounded, size: 14, color: context.primaryColor),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${trip.speedKmH} كم/س',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.primaryColor),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // الوجهة المدرسية
+                  if (trip.destination.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: context.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.borderSoft),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.school_outlined, size: 14, color: context.textSecondary),
+                          const SizedBox(width: 5),
+                          Text(
+                            trip.destination,
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // زاوية الاتجاه
+                  if (trip.heading > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: context.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.borderSoft),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.navigation_rounded, size: 14, color: context.textSecondary),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${trip.heading.toStringAsFixed(0)}°',
+                            style: TextStyle(fontSize: 11, color: context.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ],
