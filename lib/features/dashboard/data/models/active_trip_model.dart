@@ -9,6 +9,7 @@ class TripPassenger {
   final String schoolName;
   final String scheduledTime;
   final String status;
+  final String? statusLabel;
   final String? actualTime;
   final String? notes;
 
@@ -23,9 +24,25 @@ class TripPassenger {
     required this.schoolName,
     required this.scheduledTime,
     required this.status,
+    this.statusLabel,
     this.actualTime,
     this.notes,
   });
+
+  bool get isOnBoard => status == 'on_board' || status == 'راكب';
+  bool get isPending => status == 'pending' || status == 'ينتظر';
+  bool get isDelivered => status == 'delivered' || status == 'وصل';
+  bool get isAbsent => status == 'absent' || status == 'غائب';
+
+  String get displayStatus {
+    if (statusLabel != null && statusLabel!.trim().isNotEmpty) {
+      return statusLabel!.trim();
+    }
+    if (isOnBoard) return 'على متن الحافلة (مع السائق)';
+    if (isDelivered) return 'تم التوصيل بنجاح';
+    if (isAbsent) return 'غائب';
+    return 'بانتظار الاستلام (لم يُصعد بعد)';
+  }
 }
 
 class ActiveTripModel {
@@ -59,6 +76,16 @@ class ActiveTripModel {
   final double? mapX;
   final double? mapY;
 
+  // New rich metrics and fields from backend
+  final int totalChildrenCount;
+  final int childrenOnBoardCount;
+  final int pendingPickupCount;
+  final int deliveredCount;
+  final int absentCount;
+  final String region;
+  final String duration;
+  final String childrenSummary;
+
   ActiveTripModel({
     required this.tripId,
     required this.driverId,
@@ -85,6 +112,14 @@ class ActiveTripModel {
     this.updatedAt,
     this.mapX,
     this.mapY,
+    this.totalChildrenCount = 0,
+    this.childrenOnBoardCount = 0,
+    this.pendingPickupCount = 0,
+    this.deliveredCount = 0,
+    this.absentCount = 0,
+    this.region = '',
+    this.duration = '',
+    this.childrenSummary = '',
   });
 
   String get id => tripId.toString();
@@ -121,6 +156,14 @@ class ActiveTripModel {
     DateTime? updatedAt,
     double? mapX,
     double? mapY,
+    int? totalChildrenCount,
+    int? childrenOnBoardCount,
+    int? pendingPickupCount,
+    int? deliveredCount,
+    int? absentCount,
+    String? region,
+    String? duration,
+    String? childrenSummary,
   }) {
     return ActiveTripModel(
       tripId: tripId ?? this.tripId,
@@ -148,12 +191,32 @@ class ActiveTripModel {
       updatedAt: updatedAt ?? this.updatedAt,
       mapX: mapX ?? this.mapX,
       mapY: mapY ?? this.mapY,
+      totalChildrenCount: totalChildrenCount ?? this.totalChildrenCount,
+      childrenOnBoardCount: childrenOnBoardCount ?? this.childrenOnBoardCount,
+      pendingPickupCount: pendingPickupCount ?? this.pendingPickupCount,
+      deliveredCount: deliveredCount ?? this.deliveredCount,
+      absentCount: absentCount ?? this.absentCount,
+      region: region ?? this.region,
+      duration: duration ?? this.duration,
+      childrenSummary: childrenSummary ?? this.childrenSummary,
     );
   }
 
-  int get ridingCount => passengers.where((p) => p.status == 'راكب').length;
-  int get waitingCount => passengers.where((p) => p.status == 'ينتظر').length;
-  int get arrivedCount => passengers.where((p) => p.status == 'وصل').length;
+  int get ridingCount => childrenOnBoardCount > 0
+      ? childrenOnBoardCount
+      : passengers.where((p) => p.isOnBoard).length;
+
+  int get waitingCount => pendingPickupCount > 0
+      ? pendingPickupCount
+      : passengers.where((p) => p.isPending).length;
+
+  int get arrivedCount => deliveredCount > 0
+      ? deliveredCount
+      : passengers.where((p) => p.isDelivered).length;
+
+  int get absentStudentsCount => absentCount > 0
+      ? absentCount
+      : passengers.where((p) => p.isAbsent).length;
 
   factory ActiveTripModel.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic val) {
@@ -180,77 +243,47 @@ class ActiveTripModel {
 
     Map? asMap(dynamic v) => v is Map ? v : null;
 
-    // توحيد حالة الراكب مع القيم المستخدمة في الواجهة (راكب / ينتظر / وصل)
+    // توحيد حالة الراكب مع القيم المستخدمة في الواجهة
     String normalizeStatus(String raw) {
-      switch (raw.toLowerCase()) {
+      switch (raw.toLowerCase().trim()) {
+        case 'on_board':
+        case 'onboard':
         case 'راكب':
         case 'picked_up':
         case 'pickedup':
-        case 'on_board':
-        case 'onboard':
-        case 'boarded':
         case 'riding':
+        case 'boarded':
         case 'in_bus':
-          return 'راكب';
+          return 'on_board';
+        case 'delivered':
         case 'وصل':
         case 'dropped_off':
         case 'droppedoff':
         case 'arrived':
-        case 'delivered':
         case 'completed':
-          return 'وصل';
+          return 'delivered';
+        case 'absent':
+        case 'غائب':
+        case 'cancelled':
+          return 'absent';
+        case 'pending':
+        case 'ينتظر':
+        case 'waiting':
         default:
-          return 'ينتظر';
+          return 'pending';
       }
     }
 
-    final dynamic rawPassengers = json['passengers'] ??
-        json['children'] ??
-        json['students'] ??
-        json['kids'] ??
-        json['trip_children'] ??
-        json['subscriptions'];
-
     final parsedPassengers = <TripPassenger>[];
-    if (rawPassengers is String) {
-      // الباك يبعت الأسماء نص واحد مفصول بـ " و " مثل: "علي و مروة"
-      final destination = pickStr(json, ['destination']);
-      final names = rawPassengers
-          .split(RegExp(r'\s+و\s+|[,،]'))
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty && s != 'غير محدد');
-      for (final name in names) {
-        parsedPassengers.add(TripPassenger(
-          id: '',
-          childName: name,
-          parentName: '',
-          parentPhone: '',
-          pickupLocation: '',
-          dropoffLocation: destination,
-          schoolName: destination,
-          scheduledTime: '',
-          status: 'ينتظر',
-        ));
-      }
-    } else if (rawPassengers is List) {
-      for (final item in rawPassengers) {
-        if (item is String) {
-          // الباك ممكن يبعت أسماء فقط
-          if (item.trim().isNotEmpty) {
-            parsedPassengers.add(TripPassenger(
-              id: '',
-              childName: item.trim(),
-              parentName: '',
-              parentPhone: '',
-              pickupLocation: '',
-              dropoffLocation: '',
-              schoolName: '',
-              scheduledTime: '',
-              status: 'ينتظر',
-            ));
-          }
-          continue;
-        }
+
+    // 1. الأولوية الأولى: تفاصيل الطلاب المنفصلة (children_details)
+    final dynamic rawDetails = json['children_details'] ??
+        json['childrenDetails'] ??
+        json['students_details'] ??
+        json['passengers_details'];
+
+    if (rawDetails is List && rawDetails.isNotEmpty) {
+      for (final item in rawDetails) {
         final p = asMap(item);
         if (p == null) continue;
         final child = asMap(p['child']) ?? asMap(p['student']);
@@ -258,63 +291,189 @@ class ActiveTripModel {
         final parentUser = asMap(parent?['user']);
         final school = asMap(p['school']) ?? asMap(child?['school']);
 
+        final childId = [
+          pickStr(p, ['child_id', 'id', 'student_id']),
+          pickStr(child, ['id']),
+        ].firstWhere((s) => s.isNotEmpty, orElse: () => '');
+
+        final childName = [
+          pickStr(p, ['child_name', 'name', 'student_name', 'studentName', 'full_name', 'fullName']),
+          pickStr(child, ['full_name', 'fullName', 'name']),
+        ].firstWhere((s) => s.isNotEmpty, orElse: () => 'طالب');
+
         final ageStr = pickStr(p, ['child_age', 'childAge', 'age']).isNotEmpty
             ? pickStr(p, ['child_age', 'childAge', 'age'])
             : pickStr(child, ['age']);
 
+        final parentName = [
+          pickStr(p, ['parent_name', 'parentName', 'guardian_name']),
+          pickStr(parent, ['full_name', 'fullName', 'name']),
+          pickStr(parentUser, ['full_name', 'fullName', 'name']),
+        ].firstWhere((s) => s.isNotEmpty, orElse: () => '');
+
+        final parentPhone = [
+          pickStr(p, ['parent_phone', 'parentPhone', 'phone', 'mobile']),
+          pickStr(parent, ['phone', 'phone_number']),
+          pickStr(parentUser, ['phone', 'phone_number']),
+        ].firstWhere((s) => s.isNotEmpty, orElse: () => '');
+
+        final schoolName = [
+          pickStr(p, ['school_name', 'schoolName', 'school']),
+          pickStr(school, ['name']),
+        ].firstWhere((s) => s.isNotEmpty, orElse: () => '');
+
+        final pickupLocation = pickStr(p, ['pickup_location', 'pickupLocation', 'pickup_address', 'home_address', 'address']);
+        final dropoffLocation = pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address']).isNotEmpty
+            ? pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address'])
+            : (schoolName.isNotEmpty ? schoolName : pickStr(school, ['name', 'address']));
+
+        final rawStatus = pickStr(p, ['status', 'child_status', 'boarding_status', 'pivot_status']);
+        final statusLabel = pickStr(p, ['status_label', 'statusLabel', 'label']);
+
         parsedPassengers.add(TripPassenger(
-          id: pickStr(p, ['id', 'child_id', 'childId']).isNotEmpty
-              ? pickStr(p, ['id', 'child_id', 'childId'])
-              : pickStr(child, ['id']),
-          childName: [
-            pickStr(p, ['child_name', 'childName', 'student_name', 'studentName', 'full_name', 'fullName', 'name']),
-            pickStr(child, ['full_name', 'fullName', 'name']),
-          ].firstWhere((s) => s.isNotEmpty, orElse: () => 'طفل'),
+          id: childId,
+          childName: childName,
           childAge: int.tryParse(ageStr),
-          parentName: [
-            pickStr(p, ['parent_name', 'parentName']),
-            pickStr(parent, ['full_name', 'fullName', 'name']),
-            pickStr(parentUser, ['full_name', 'fullName', 'name']),
-          ].firstWhere((s) => s.isNotEmpty, orElse: () => ''),
-          parentPhone: [
-            pickStr(p, ['parent_phone', 'parentPhone']),
-            pickStr(parent, ['phone', 'phone_number']),
-            pickStr(parentUser, ['phone', 'phone_number']),
-          ].firstWhere((s) => s.isNotEmpty, orElse: () => ''),
-          pickupLocation: pickStr(p, ['pickup_location', 'pickupLocation', 'pickup_address', 'home_address', 'address']),
-          dropoffLocation: pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address']).isNotEmpty
-              ? pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address'])
-              : pickStr(school, ['name', 'address']),
-          schoolName: pickStr(p, ['school_name', 'schoolName']).isNotEmpty
-              ? pickStr(p, ['school_name', 'schoolName'])
-              : pickStr(school, ['name']),
+          parentName: parentName,
+          parentPhone: parentPhone,
+          pickupLocation: pickupLocation,
+          dropoffLocation: dropoffLocation,
+          schoolName: schoolName,
           scheduledTime: pickStr(p, ['scheduled_time', 'scheduledTime', 'pickup_time']),
-          status: normalizeStatus(pickStr(p, ['status', 'child_status', 'boarding_status', 'pivot_status'])),
+          status: normalizeStatus(rawStatus),
+          statusLabel: statusLabel.isNotEmpty ? statusLabel : null,
           actualTime: pickStr(p, ['actual_time', 'actualTime', 'picked_up_at', 'dropped_off_at']).isEmpty
               ? null
               : pickStr(p, ['actual_time', 'actualTime', 'picked_up_at', 'dropped_off_at']),
           notes: pickStr(p, ['notes']).isEmpty ? null : pickStr(p, ['notes']),
         ));
       }
+    } else {
+      // 2. بديل احتياطي: عند عدم وجود children_details نعتمد على الحقول السابقة
+      final dynamic rawPassengers = json['passengers'] ??
+          json['children'] ??
+          json['students'] ??
+          json['kids'] ??
+          json['trip_children'] ??
+          json['subscriptions'];
+
+      if (rawPassengers is String) {
+        // الباك يبعت الأسماء نص واحد مفصول بـ " و " مثل: "علي و مروة"
+        final destination = pickStr(json, ['destination']);
+        final names = rawPassengers
+            .split(RegExp(r'\s+و\s+|[,،]'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty && s != 'غير محدد');
+        for (final name in names) {
+          parsedPassengers.add(TripPassenger(
+            id: '',
+            childName: name,
+            parentName: '',
+            parentPhone: '',
+            pickupLocation: '',
+            dropoffLocation: destination,
+            schoolName: destination,
+            scheduledTime: '',
+            status: 'pending',
+            statusLabel: 'بانتظار الاستلام',
+          ));
+        }
+      } else if (rawPassengers is List) {
+        for (final item in rawPassengers) {
+          if (item is String) {
+            if (item.trim().isNotEmpty) {
+              parsedPassengers.add(TripPassenger(
+                id: '',
+                childName: item.trim(),
+                parentName: '',
+                parentPhone: '',
+                pickupLocation: '',
+                dropoffLocation: '',
+                schoolName: '',
+                scheduledTime: '',
+                status: 'pending',
+                statusLabel: 'بانتظار الاستلام',
+              ));
+            }
+            continue;
+          }
+          final p = asMap(item);
+          if (p == null) continue;
+          final child = asMap(p['child']) ?? asMap(p['student']);
+          final parent = asMap(p['parent']) ?? asMap(child?['parent']);
+          final parentUser = asMap(parent?['user']);
+          final school = asMap(p['school']) ?? asMap(child?['school']);
+
+          final ageStr = pickStr(p, ['child_age', 'childAge', 'age']).isNotEmpty
+              ? pickStr(p, ['child_age', 'childAge', 'age'])
+              : pickStr(child, ['age']);
+
+          parsedPassengers.add(TripPassenger(
+            id: pickStr(p, ['id', 'child_id', 'childId']).isNotEmpty
+                ? pickStr(p, ['id', 'child_id', 'childId'])
+                : pickStr(child, ['id']),
+            childName: [
+              pickStr(p, ['child_name', 'childName', 'student_name', 'studentName', 'full_name', 'fullName', 'name']),
+              pickStr(child, ['full_name', 'fullName', 'name']),
+            ].firstWhere((s) => s.isNotEmpty, orElse: () => 'طفل'),
+            childAge: int.tryParse(ageStr),
+            parentName: [
+              pickStr(p, ['parent_name', 'parentName']),
+              pickStr(parent, ['full_name', 'fullName', 'name']),
+              pickStr(parentUser, ['full_name', 'fullName', 'name']),
+            ].firstWhere((s) => s.isNotEmpty, orElse: () => ''),
+            parentPhone: [
+              pickStr(p, ['parent_phone', 'parentPhone']),
+              pickStr(parent, ['phone', 'phone_number']),
+              pickStr(parentUser, ['phone', 'phone_number']),
+            ].firstWhere((s) => s.isNotEmpty, orElse: () => ''),
+            pickupLocation: pickStr(p, ['pickup_location', 'pickupLocation', 'pickup_address', 'home_address', 'address']),
+            dropoffLocation: pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address']).isNotEmpty
+                ? pickStr(p, ['dropoff_location', 'dropoffLocation', 'dropoff_address'])
+                : pickStr(school, ['name', 'address']),
+            schoolName: pickStr(p, ['school_name', 'schoolName']).isNotEmpty
+                ? pickStr(p, ['school_name', 'schoolName'])
+                : pickStr(school, ['name']),
+            scheduledTime: pickStr(p, ['scheduled_time', 'scheduledTime', 'pickup_time']),
+            status: normalizeStatus(pickStr(p, ['status', 'child_status', 'boarding_status', 'pivot_status'])),
+            statusLabel: pickStr(p, ['status_label', 'statusLabel', 'label']).isNotEmpty
+                ? pickStr(p, ['status_label', 'statusLabel', 'label'])
+                : null,
+            actualTime: pickStr(p, ['actual_time', 'actualTime', 'picked_up_at', 'dropped_off_at']).isEmpty
+                ? null
+                : pickStr(p, ['actual_time', 'actualTime', 'picked_up_at', 'dropped_off_at']),
+            notes: pickStr(p, ['notes']).isEmpty ? null : pickStr(p, ['notes']),
+          ));
+        }
+      }
     }
 
     final driver = asMap(json['driver']);
     final driverUser = asMap(driver?['user']);
     final driverName = [
-      pickStr(json, ['driver_name', 'driverName', 'driver_full_name', 'name']),
+      pickStr(json, ['name', 'driver_name', 'driverName', 'driver_full_name']),
       pickStr(driver, ['full_name', 'fullName', 'name']),
       pickStr(driverUser, ['full_name', 'fullName', 'name']),
     ].firstWhere((s) => s.isNotEmpty, orElse: () => 'سائق غير معروف');
 
-    // عدد الأطفال: من الباك، وإلا من طول القائمة
+    // العدادات الإحصائية للطلاب
+    final totalChildrenCount = parseInt(json['total_children_count'] ?? json['totalChildrenCount']);
+    final childrenOnBoardCount = parseInt(json['children_on_board_count'] ?? json['childrenOnBoardCount']);
+    final pendingPickupCount = parseInt(json['pending_pickup_count'] ?? json['pendingPickupCount']);
+    final deliveredCount = parseInt(json['delivered_count'] ?? json['deliveredCount']);
+    final absentCount = parseInt(json['absent_count'] ?? json['absentCount']);
+
+    // عدد الأطفال الكلي
     final countFromApi = parseInt(json['students_count'] ??
         json['studentsCount'] ??
         json['children_count'] ??
         json['childrenCount'] ??
         json['passengers_count'] ??
+        json['total_children_count'] ??
         json['kids_count']);
-    final studentsCount =
-        countFromApi > 0 ? countFromApi : parsedPassengers.length;
+    final studentsCount = countFromApi > 0
+        ? countFromApi
+        : (totalChildrenCount > 0 ? totalChildrenCount : parsedPassengers.length);
 
     int parseSpeed(dynamic val) {
       if (val is num) return val.round();
@@ -346,6 +505,10 @@ class ActiveTripModel {
     final rawSpeed = json['speed'] ?? json['speed_km_h'] ?? json['speedKmH'];
     final speedKmH = rawSpeed != null ? parseSpeed(rawSpeed) : 0;
 
+    final region = pickStr(json, ['region', 'current_location_name', 'currentLocationName']);
+    final duration = pickStr(json, ['duration', 'time_elapsed', 'timeElapsed']);
+    final childrenSummary = json['children'] is String ? json['children'].toString().trim() : '';
+
     return ActiveTripModel(
       tripId: parseInt(json['trip_id'] ?? json['id']),
       driverId: parseInt(json['driver_id'] ?? json['driverId'] ?? driver?['id']),
@@ -355,14 +518,14 @@ class ActiveTripModel {
       currentLng: parseDouble(json['current_lng'] ?? json['currentLng'] ?? json['lng'] ?? json['driver_lng']),
       studentsCount: studentsCount,
       startedAt: json['started_at']?.toString() ?? json['startedAt']?.toString() ?? '',
-      driverPhone: json['driver_phone']?.toString() ?? json['driverPhone']?.toString() ?? json['phone']?.toString() ?? '',
-      driverAvatar: json['driver_avatar']?.toString() ?? json['driverAvatar']?.toString() ?? json['avatar']?.toString() ?? '',
+      driverPhone: pickStr(json, ['phone', 'driver_phone', 'driverPhone']),
+      driverAvatar: pickStr(json, ['avatar', 'driver_avatar', 'driverAvatar']),
       carModel: json['car_model']?.toString() ?? json['carModel']?.toString() ?? 'حافلة السائق',
       carPlate: json['car_plate']?.toString() ?? json['carPlate']?.toString() ?? '',
       rating: parseDouble(json['rating'] ?? 5.0),
-      currentLocationName: json['current_location_name']?.toString() ?? json['currentLocationName']?.toString() ?? json['region']?.toString() ?? 'طريق الخدمة الحية',
+      currentLocationName: region.isNotEmpty ? region : 'طريق الخدمة الحية',
       speedKmH: speedKmH,
-      timeElapsed: json['time_elapsed']?.toString() ?? json['timeElapsed']?.toString() ?? json['duration']?.toString() ?? '',
+      timeElapsed: duration.isNotEmpty ? duration : '',
       passengers: parsedPassengers,
       heading: heading,
       isOnline: isOnline,
@@ -372,6 +535,14 @@ class ActiveTripModel {
       updatedAt: updatedAt,
       mapX: mapX,
       mapY: mapY,
+      totalChildrenCount: totalChildrenCount > 0 ? totalChildrenCount : studentsCount,
+      childrenOnBoardCount: childrenOnBoardCount,
+      pendingPickupCount: pendingPickupCount,
+      deliveredCount: deliveredCount,
+      absentCount: absentCount,
+      region: region,
+      duration: duration,
+      childrenSummary: childrenSummary,
     );
   }
 }
