@@ -55,6 +55,8 @@ class ApiEndpoints {
   static const String parents = '/admin/parents';
   static String parentDetails(dynamic id) => '/admin/parents/$id';
   static String parentActivate(dynamic id) => '/admin/parents/$id/activate';
+  static String parentSuspend(dynamic id) => '/admin/parents/$id/suspend';
+  static String parentDeactivate(dynamic id) => '/admin/parents/$id/deactivate';
 
   // Driver Reviews
   static const String driverReviewsAll = '/admin/driver-reviews/all';

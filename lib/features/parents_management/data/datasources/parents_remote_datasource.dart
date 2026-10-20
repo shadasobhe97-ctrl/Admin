@@ -6,6 +6,7 @@ abstract class ParentsRemoteDataSource {
   Future<List<ParentModel>> getParents();
   Future<ParentModel> getParentDetails(int id);
   Future<Map<String, dynamic>> activateParent(int id);
+  Future<Map<String, dynamic>> suspendParent(int id);
 }
 
 class ParentsRemoteDataSourceImpl implements ParentsRemoteDataSource {
@@ -43,5 +44,28 @@ class ParentsRemoteDataSourceImpl implements ParentsRemoteDataSource {
       return data;
     }
     return {'status': true, 'message': 'تم تفعيل الحساب بنجاح'};
+  }
+
+  @override
+  Future<Map<String, dynamic>> suspendParent(int id) async {
+    try {
+      final response = await _apiClient.post(ApiEndpoints.parentSuspend(id));
+      final data = response.data;
+      if (data != null && data is Map<String, dynamic>) {
+        return data;
+      }
+      return {'status': true, 'message': 'تم إلغاء تفعيل حساب ولي الأمر بنجاح'};
+    } catch (_) {
+      try {
+        final altResponse = await _apiClient.post(ApiEndpoints.parentDeactivate(id));
+        final altData = altResponse.data;
+        if (altData != null && altData is Map<String, dynamic>) {
+          return altData;
+        }
+      } catch (_) {
+        rethrow;
+      }
+      return {'status': true, 'message': 'تم إلغاء تفعيل حساب ولي الأمر بنجاح'};
+    }
   }
 }

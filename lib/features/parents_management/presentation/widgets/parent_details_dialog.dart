@@ -5,6 +5,7 @@ import '../../../../core/widgets/remote_circle_avatar.dart';
 import '../../data/models/parent_model.dart';
 import '../../logic/cubit/parents_cubit.dart';
 import '../../logic/cubit/parents_state.dart';
+import 'parent_address_map_dialog.dart';
 
 class ParentDetailsDialog extends StatefulWidget {
   final ParentModel initialParent;
@@ -81,25 +82,13 @@ class _ParentDetailsDialogState extends State<ParentDetailsDialog> {
                                 color: context.primaryColor, size: 24),
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'تفاصيل حساب ولي الأمر',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                'معرف الحساب: #${parent.id}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.textTertiary,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'تفاصيل حساب ولي الأمر',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
                           ),
                         ],
                       ),
@@ -169,12 +158,6 @@ class _ParentDetailsDialogState extends State<ParentDetailsDialog> {
                                                   ? Icons.check_circle_rounded
                                                   : Icons.pause_circle_rounded,
                                             ),
-                                            if (parent.isTrusted)
-                                              _buildStatusChip(
-                                                label: 'حساب موثوق',
-                                                color: context.primaryColor,
-                                                icon: Icons.verified_rounded,
-                                              ),
                                             if (parent.phoneVerified)
                                               _buildStatusChip(
                                                 label: 'هاتف محقق',
@@ -202,6 +185,23 @@ class _ParentDetailsDialogState extends State<ParentDetailsDialog> {
                                               .activateParent(parent.id),
                                       icon: const Icon(Icons.bolt_rounded, size: 18),
                                       label: const Text('تفعيل الحساب'),
+                                    )
+                                  else
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: context.dangerColor,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      onPressed: state.isActionLoading
+                                          ? null
+                                          : () => context
+                                              .read<ParentsCubit>()
+                                              .suspendParent(parent.id),
+                                      icon: const Icon(Icons.pause_circle_outline_rounded, size: 18),
+                                      label: const Text('إلغاء تفعيل الحساب'),
                                     ),
                                 ],
                               ),
@@ -252,15 +252,6 @@ class _ParentDetailsDialogState extends State<ParentDetailsDialog> {
                                         value: parent.email ?? 'غير محدد',
                                       ),
                                       _buildInfoTile(
-                                        icon: Icons.wc_rounded,
-                                        title: 'الجنس',
-                                        value: parent.gender == 'male'
-                                            ? 'ذكر'
-                                            : (parent.gender == 'female'
-                                                ? 'أنثى'
-                                                : 'غير محدد'),
-                                      ),
-                                      _buildInfoTile(
                                         icon: Icons.login_rounded,
                                         title: 'آخر تسجيل دخول',
                                         value: parent.lastLoginAt ?? 'لم يدخل بعد',
@@ -298,33 +289,59 @@ class _ParentDetailsDialogState extends State<ParentDetailsDialog> {
                               child: parent.defaultAddress != null
                                   ? Row(
                                       children: [
-                                        Icon(Icons.location_on_rounded,
-                                            color: context.primaryColor, size: 22),
-                                        const SizedBox(width: 10),
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: context.primaryColor.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(Icons.location_on_rounded,
+                                              color: context.primaryColor, size: 22),
+                                        ),
+                                        const SizedBox(width: 12),
                                         Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                parent.defaultAddress!.label,
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: context.textPrimary,
-                                                ),
-                                              ),
-                                              if (parent.defaultAddress!.lat != null &&
-                                                  parent.defaultAddress!.lng != null)
-                                                Text(
-                                                  'الإحداثيات الجغرافية: ${parent.defaultAddress!.lat}, ${parent.defaultAddress!.lng}',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: context.textTertiary,
-                                                  ),
-                                                ),
-                                            ],
+                                          child: Text(
+                                            parent.defaultAddress!.label.isNotEmpty
+                                                ? parent.defaultAddress!.label
+                                                : 'عنوان ولي الأمر الافتراضي',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: context.textPrimary,
+                                            ),
                                           ),
                                         ),
+                                        if (parent.defaultAddress!.lat != null &&
+                                            parent.defaultAddress!.lng != null)
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: context.primaryColor,
+                                              foregroundColor: Colors.white,
+                                              elevation: 0,
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 10),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              ParentAddressMapDialog.show(
+                                                context,
+                                                lat: parent.defaultAddress!.lat!,
+                                                lng: parent.defaultAddress!.lng!,
+                                                addressLabel: parent.defaultAddress!.label,
+                                                parentName: parent.fullName,
+                                              );
+                                            },
+                                            icon: const Icon(Icons.map_rounded, size: 18),
+                                            label: const Text(
+                                              'عرض على الخريطة',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     )
                                   : Row(

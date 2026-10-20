@@ -43,10 +43,14 @@ class ParentsCubit extends Cubit<ParentsState> {
   }
 
   Future<void> activateParent(int id) async {
-    emit(state.copyWith(isActionLoading: true, clearMessages: true));
+    emit(state.copyWith(
+      isActionLoading: true,
+      actionParentId: id,
+      clearMessages: true,
+    ));
     try {
       final response = await _repository.activateParent(id);
-      final msg = response['message']?.toString() ?? 'تم تحديث حالة حساب ولي الأمر بنجاح';
+      final msg = response['message']?.toString() ?? 'تم تفعيل حساب ولي الأمر بنجاح';
 
       // Update parent active status locally
       final updatedParents = state.parents.map((p) {
@@ -65,6 +69,7 @@ class ParentsCubit extends Cubit<ParentsState> {
 
       emit(state.copyWith(
         isActionLoading: false,
+        clearActionParentId: true,
         parents: updatedParents,
         filteredParents: filtered,
         selectedParent: updatedSelected,
@@ -73,7 +78,50 @@ class ParentsCubit extends Cubit<ParentsState> {
     } catch (e) {
       emit(state.copyWith(
         isActionLoading: false,
+        clearActionParentId: true,
         errorMessage: 'تعذر إعادة تفعيل حساب ولي الأمر: ${e.toString().replaceAll('Exception: ', '')}',
+      ));
+    }
+  }
+
+  Future<void> suspendParent(int id) async {
+    emit(state.copyWith(
+      isActionLoading: true,
+      actionParentId: id,
+      clearMessages: true,
+    ));
+    try {
+      final response = await _repository.suspendParent(id);
+      final msg = response['message']?.toString() ?? 'تم إلغاء تفعيل حساب ولي الأمر بنجاح';
+
+      // Update parent active status locally to false
+      final updatedParents = state.parents.map((p) {
+        if (p.id == id) {
+          return p.copyWith(isActive: false);
+        }
+        return p;
+      }).toList();
+
+      ParentModel? updatedSelected = state.selectedParent;
+      if (updatedSelected != null && updatedSelected.id == id) {
+        updatedSelected = updatedSelected.copyWith(isActive: false);
+      }
+
+      final filtered = _filterList(updatedParents, state.searchQuery, state.statusFilter);
+
+      emit(state.copyWith(
+        isActionLoading: false,
+        clearActionParentId: true,
+        parents: updatedParents,
+        filteredParents: filtered,
+        selectedParent: updatedSelected,
+        successMessage: msg,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isActionLoading: false,
+        clearActionParentId: true,
+        errorMessage: 'تعذر إلغاء تفعيل حساب ولي الأمر: ${e.toString().replaceAll('Exception: ', '')}',
       ));
     }
   }

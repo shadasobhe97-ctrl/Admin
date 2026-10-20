@@ -196,7 +196,7 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                                           context.read<ParentsCubit>().searchParents(val),
                                       style: TextStyle(fontSize: 13, color: context.textPrimary),
                                       decoration: InputDecoration(
-                                        hintText: 'البحث باسم ولي الأمر، رقم الهاتف، الإيميل، أو المعرف...',
+                                        hintText: 'البحث باسم ولي الأمر، رقم الهاتف، أو الإيميل...',
                                         prefixIcon: Icon(Icons.search_rounded,
                                             color: context.primaryColor, size: 20),
                                         suffixIcon: _searchController.text.isNotEmpty
@@ -490,38 +490,15 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        parent.fullName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: context.surfaceVariant,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '#${parent.id}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: context.textTertiary,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  parent.fullName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -616,23 +593,6 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                     ),
                   ),
                 ),
-                if (parent.isTrusted)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: context.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'موثوق',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: context.primaryColor,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -654,19 +614,157 @@ class _ParentsScreenContentState extends State<_ParentsScreenContent> {
                 label: const Text('التفاصيل', style: TextStyle(fontSize: 12)),
               ),
               const SizedBox(width: 8),
-              if (!parent.isActive)
-                IconButton.filledTonal(
-                  style: IconButton.styleFrom(
-                    backgroundColor: context.successColor.withValues(alpha: 0.15),
-                    foregroundColor: context.successColor,
-                  ),
-                  onPressed: () => cubit.activateParent(parent.id),
-                  icon: const Icon(Icons.bolt_rounded, size: 18),
-                  tooltip: 'إعادة تفعيل الحساب',
-                ),
+              Builder(
+                builder: (context) {
+                  final isActionLoading = cubit.state.isActionLoading &&
+                      cubit.state.actionParentId == parent.id;
+
+                  if (parent.isActive) {
+                    return OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.dangerColor,
+                        side: BorderSide(
+                          color: context.dangerColor.withValues(alpha: 0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                      ),
+                      onPressed: isActionLoading
+                          ? null
+                          : () => _confirmToggleStatus(context, parent,
+                              activate: false),
+                      icon: isActionLoading
+                          ? SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.dangerColor,
+                              ),
+                            )
+                          : const Icon(Icons.pause_circle_outline_rounded,
+                              size: 16),
+                      label: const Text('إلغاء التفعيل',
+                          style: TextStyle(fontSize: 12)),
+                    );
+                  } else {
+                    return OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.successColor,
+                        side: BorderSide(
+                          color: context.successColor.withValues(alpha: 0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                      ),
+                      onPressed: isActionLoading
+                          ? null
+                          : () => _confirmToggleStatus(context, parent,
+                              activate: true),
+                      icon: isActionLoading
+                          ? SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.successColor,
+                              ),
+                            )
+                          : const Icon(Icons.check_circle_outline_rounded,
+                              size: 16),
+                      label: const Text('تفعيل الحساب',
+                          style: TextStyle(fontSize: 12)),
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _confirmToggleStatus(BuildContext context, ParentModel parent,
+      {required bool activate}) {
+    final cubit = context.read<ParentsCubit>();
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: context.cardColor,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (activate ? context.successColor : context.dangerColor)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  activate
+                      ? Icons.check_circle_rounded
+                      : Icons.pause_circle_rounded,
+                  color: activate ? context.successColor : context.dangerColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                activate ? 'تأكيد تفعيل الحساب' : 'تأكيد إلغاء تفعيل الحساب',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: context.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            activate
+                ? 'هل أنت متأكد من رغبتك في إعادة تفعيل حساب ولي الأمر "${parent.fullName}"؟ سيتمكن من تسجيل الدخول واستخدام خدمات التطبيق مجدداً.'
+                : 'هل أنت متأكد من رغبتك في إلغاء تفعيل حساب ولي الأمر "${parent.fullName}"؟ سيتم تعطيل الحساب ومنعه من الوصول إلى خدمات التطبيق.',
+            style: TextStyle(
+              fontSize: 13,
+              color: context.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    activate ? context.successColor : context.dangerColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                if (activate) {
+                  cubit.activateParent(parent.id);
+                } else {
+                  cubit.suspendParent(parent.id);
+                }
+              },
+              child: Text(activate ? 'تأكيد التفعيل' : 'تأكيد الإلغاء'),
+            ),
+          ],
+        ),
       ),
     );
   }
