@@ -8,6 +8,8 @@ class DashboardState {
   final String? successMessage;
   final DashboardStatsModel? stats;
   final List<ActiveTripModel> activeTrips;
+  final bool isRealtimeActive;
+  final bool isUsingFallbackPolling;
 
   const DashboardState({
     this.isLoading = false,
@@ -16,6 +18,8 @@ class DashboardState {
     this.successMessage,
     this.stats,
     this.activeTrips = const [],
+    this.isRealtimeActive = false,
+    this.isUsingFallbackPolling = false,
   });
 
   DashboardState copyWith({
@@ -25,6 +29,8 @@ class DashboardState {
     String? successMessage,
     DashboardStatsModel? stats,
     List<ActiveTripModel>? activeTrips,
+    bool? isRealtimeActive,
+    bool? isUsingFallbackPolling,
     bool clearError = false,
     bool clearSuccess = false,
   }) {
@@ -35,6 +41,8 @@ class DashboardState {
       successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
       stats: stats ?? this.stats,
       activeTrips: activeTrips ?? this.activeTrips,
+      isRealtimeActive: isRealtimeActive ?? this.isRealtimeActive,
+      isUsingFallbackPolling: isUsingFallbackPolling ?? this.isUsingFallbackPolling,
     );
   }
 }

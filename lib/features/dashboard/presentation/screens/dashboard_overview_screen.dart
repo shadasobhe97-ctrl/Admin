@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -12,6 +12,7 @@ import '../../logic/dashboard_state.dart';
 import '../widgets/trip_inspector_modal.dart';
 import '../../../../core/theme/admin_colors.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../../../core/widgets/remote_circle_avatar.dart';
 
 class DashboardOverviewScreen extends StatelessWidget {
   const DashboardOverviewScreen({super.key});
@@ -34,7 +35,6 @@ class _DashboardOverviewContent extends StatefulWidget {
 }
 
 class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
-  Timer? _pollingTimer;
   final MapController _mapController = MapController();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapKey = GlobalKey();
@@ -43,19 +43,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   bool _isMapInteractive = false;
 
   @override
-  void initState() {
-    super.initState();
-    // إعداد التحديث الدوري التلقائي (Polling) للرحلات النشطة كل 30 ثانية
-    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) {
-        context.read<DashboardCubit>().fetchDashboardData();
-      }
-    });
-  }
-
-  @override
   void dispose() {
-    _pollingTimer?.cancel();
     _scrollController.dispose();
     _mapController.dispose();
     super.dispose();
@@ -194,7 +182,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     // 3. قسم الرادار والخريطة التفاعلية مع دعم الحظر التام للتفاعل عند القفل
                     Container(
                       key: _mapKey,
-                      child: _buildRealMapSection(context, state.activeTrips),
+                      child: _buildRealMapSection(context, state.activeTrips, state),
                     ),
                     const SizedBox(height: 32),
 
@@ -513,7 +501,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
 
   // --- قسم الخريطة: مع استخدام IgnorePointer لتعطيل التفاعل 100% عند القفل ---
   Widget _buildRealMapSection(
-      BuildContext context, List<ActiveTripModel> trips) {
+      BuildContext context, List<ActiveTripModel> trips, DashboardState state) {
     final theme = Theme.of(context);
 
     bool isValidCoord(double lat, double lng) {
@@ -538,8 +526,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       markers.add(
         Marker(
           point: LatLng(trip.currentLat, trip.currentLng),
-          width: 140,
-          height: 75,
+          width: 155,
+          height: 85,
           child: GestureDetector(
             onTap: () => TripInspectorModal.show(context, trip),
             child: Column(
@@ -549,11 +537,17 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.9),
+                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: AdminColors.brandPrimary, width: 1.5),
-                    boxShadow: [
+                    border: Border.all(
+                      color: trip.isSignalWeak
+                          ? AdminColors.orange
+                          : (trip.isOnline
+                              ? AdminColors.statusSuccess
+                              : AdminColors.brandPrimary),
+                      width: 1.5,
+                    ),
+                    boxShadow: const [
                       BoxShadow(
                         color: AdminColors.mapMarkerShadow,
                         blurRadius: 6,
@@ -563,6 +557,20 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // مؤشر النبض اللحظي
+                      Container(
+                        width: 7,
+                        height: 7,
+                        margin: const EdgeInsets.only(left: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: trip.isSignalWeak
+                              ? AdminColors.orange
+                              : (trip.isOnline
+                                  ? AdminColors.statusSuccess
+                                  : Colors.grey),
+                        ),
+                      ),
                       Flexible(
                         child: Text(
                           trip.driverName,
@@ -573,6 +581,24 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (trip.speedKmH > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: context.primaryColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '${trip.speedKmH} كم/س',
+                            style: const TextStyle(
+                                color: AdminColors.onMapMarkerLabel,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -582,7 +608,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '${trip.studentsCount} طلاب',
+                          '${trip.totalChildrenCount > 0 ? trip.totalChildrenCount : trip.studentsCount} طلاب',
                           style: const TextStyle(
                               color: AdminColors.onMapMarkerLabel,
                               fontSize: 8,
@@ -593,20 +619,32 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: AdminColors.brandPrimary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: AdminColors.mapMarkerShadow,
-                          blurRadius: 4,
-                          offset: Offset(0, 2)),
-                    ],
+                // أيقونة الحافلة موجهة بزاوية السير الفعلي في الشارع (Vehicle Heading)
+                Transform.rotate(
+                  angle: (trip.heading * (math.pi / 180)),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: trip.isSignalWeak
+                          ? AdminColors.orange
+                          : (trip.isOnline
+                              ? AdminColors.brandPrimary
+                              : Colors.grey.shade700),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: AdminColors.mapMarkerShadow,
+                            blurRadius: 5,
+                            offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.navigation,
+                      color: AdminColors.onMapMarkerLabel,
+                      size: 16,
+                    ),
                   ),
-                  child: const Icon(Icons.directions_bus_filled,
-                      color: AdminColors.onMapMarkerLabel, size: 18),
                 ),
               ],
             ),
@@ -653,32 +691,59 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color:
-                                  context.textPrimary,
+                              color: context.textPrimary,
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AdminColors.successBgLight,
+                              color: state.isRealtimeActive
+                                  ? AdminColors.successBgLight
+                                  : (state.isUsingFallbackPolling
+                                      ? AdminColors.amber.withValues(alpha: 0.15)
+                                      : AdminColors.successBgLight),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: AdminColors.statusSuccess
-                                      .withValues(alpha: 0.2)),
+                                color: state.isRealtimeActive
+                                    ? AdminColors.statusSuccess.withValues(alpha: 0.3)
+                                    : (state.isUsingFallbackPolling
+                                        ? AdminColors.amber.withValues(alpha: 0.4)
+                                        : AdminColors.statusSuccess.withValues(alpha: 0.2)),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.circle,
-                                    size: 8, color: AdminColors.statusSuccess),
+                                Icon(
+                                  state.isRealtimeActive
+                                      ? Icons.bolt_rounded
+                                      : (state.isUsingFallbackPolling
+                                          ? Icons.sync_rounded
+                                          : Icons.circle),
+                                  size: 14,
+                                  color: state.isRealtimeActive
+                                      ? AdminColors.statusSuccess
+                                      : (state.isUsingFallbackPolling
+                                          ? AdminColors.amber
+                                          : AdminColors.statusSuccess),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${validTrips.length} رحلة مباشرة على الخريطة',
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AdminColors.successFgLight,
-                                      fontWeight: FontWeight.bold),
+                                  state.isRealtimeActive
+                                      ? 'بث فوري مباشر (Firebase) • ${validTrips.length} رحلة'
+                                      : (state.isUsingFallbackPolling
+                                          ? 'تحديث احتياطي (Polling 15s) • ${validTrips.length} رحلة'
+                                          : '${validTrips.length} رحلة مباشرة على الخريطة'),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: state.isRealtimeActive
+                                        ? AdminColors.successFgLight
+                                        : (state.isUsingFallbackPolling
+                                            ? AdminColors.amber
+                                            : AdminColors.successFgLight),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),
@@ -913,17 +978,20 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 800;
 
+          final totalStudents = trip.totalChildrenCount > 0 ? trip.totalChildrenCount : trip.studentsCount;
+
           if (isMobile) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: context.infoBg,
+                    RemoteCircleAvatar(
+                      rawUrl: trip.driverAvatar,
                       radius: 20,
-                      child: const Icon(Icons.person,
-                          color: AdminColors.brandPrimary, size: 20),
+                      initials: trip.driverName.trim().isNotEmpty
+                          ? trip.driverName.trim()[0]
+                          : 'س',
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -932,12 +1000,15 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                trip.driverName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: context.textPrimary,
+                              Flexible(
+                                child: Text(
+                                  trip.driverName,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: context.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -961,45 +1032,118 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   ),
                                 ),
                               ),
+                              if (trip.status.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: context.primaryColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    trip.status,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            'سائق معرف: #${trip.driverId}  |  وقت الانطلاق: ${trip.startedAt.isNotEmpty ? trip.startedAt : 'غير محدد'}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: context.textTertiary,
-                            ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                'سائق معرف: #${trip.driverId}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.textTertiary,
+                                ),
+                              ),
+                              if (trip.driverPhone.isNotEmpty)
+                                Text(
+                                  trip.driverPhone,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: context.textSecondary,
+                                  ),
+                                  textDirection: TextDirection.ltr,
+                                ),
+                              if (trip.region.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined, size: 12, color: AdminColors.accentCyan),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.region,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.accentCyan,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.schedule_rounded, size: 12, color: context.textTertiary),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: context.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Divider(
                     height: 1,
                     color: context.borderSoft),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'الطلاب بالرحلة: ${trip.studentsCount} طلاب',
+                      'الطلاب بالرحلة: $totalStudents طلاب',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: AdminColors.accentCyan,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'الإحداثيات: ${trip.currentLng.toStringAsFixed(4)} , ${trip.currentLat.toStringAsFixed(4)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.textTertiary,
+                    Text('${trip.ridingCount} على المتن', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
+                    Text('${trip.waitingCount} بانتظار', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
+                    Text('${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
+                    if (trip.destination.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.school_outlined, size: 13, color: context.textTertiary),
+                          const SizedBox(width: 4),
+                          Text(trip.destination, style: TextStyle(fontSize: 11, color: context.textTertiary)),
+                        ],
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -1048,93 +1192,185 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
             );
           }
 
-          // العرض الأفقي المطابق تماماً لصورة المستخدم
+          // العرض الأفقي للمكتبي
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. جهة اليمين: الأفاتار + اسم السائق والشارة + معرف السائق ووقت الانطلاق
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: context.infoBg,
-                    radius: 20,
-                    child: const Icon(Icons.person,
-                        color: AdminColors.brandPrimary, size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
+              // 1. جهة اليمين: الأفاتار + اسم السائق والشارة + معرف السائق ووقت الانطلاق والمنطقة
+              Expanded(
+                flex: 4,
+                child: Row(
+                  children: [
+                    RemoteCircleAvatar(
+                      rawUrl: trip.driverAvatar,
+                      radius: 20,
+                      initials: trip.driverName.trim().isNotEmpty
+                          ? trip.driverName.trim()[0]
+                          : 'س',
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            trip.driverName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: context.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AdminColors.successFgLight
-                                  .withValues(alpha: isDark ? 0.3 : 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                  color: AdminColors.statusSuccess
-                                      .withValues(alpha: 0.4)),
-                            ),
-                            child: Text(
-                              'رحلة #${trip.tripId}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AdminColors.statusSuccess,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  trip.driverName,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: context.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AdminColors.successFgLight
+                                      .withValues(alpha: isDark ? 0.3 : 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                      color: AdminColors.statusSuccess
+                                          .withValues(alpha: 0.4)),
+                                ),
+                                child: Text(
+                                  'رحلة #${trip.tripId}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AdminColors.statusSuccess,
+                                  ),
+                                ),
+                              ),
+                              if (trip.status.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: context.primaryColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    trip.status,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: context.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 2,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                'سائق معرف: #${trip.driverId}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.textTertiary,
+                                ),
+                              ),
+                              if (trip.driverPhone.isNotEmpty)
+                                Text(
+                                  trip.driverPhone,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: context.textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textDirection: TextDirection.ltr,
+                                ),
+                              if (trip.region.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.location_on_outlined, size: 12, color: AdminColors.accentCyan),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.region,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AdminColors.accentCyan,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.schedule_rounded, size: 12, color: context.textTertiary),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: context.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'سائق معرف: #${trip.driverId}  |  وقت الانطلاق: ${trip.startedAt.isNotEmpty ? trip.startedAt : 'غير محدد'}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
 
-              // 2. المنتصف: عدد الطلاب بالرحلة + الإحداثيات
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'الطلاب بالرحلة: ${trip.studentsCount} طلاب',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AdminColors.accentCyan,
+              // 2. المنتصف: عدد الطلاب بالرحلة وتوزيع الركاب والوجهة
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'الطلاب: $totalStudents',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AdminColors.accentCyan,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text('${trip.ridingCount} على المتن', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Text('${trip.waitingCount} بانتظار', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Text('${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'الإحداثيات: ${trip.currentLng.toStringAsFixed(4)} , ${trip.currentLat.toStringAsFixed(4)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.textTertiary,
+                    const SizedBox(height: 4),
+                    Text(
+                      trip.destination.isNotEmpty
+                          ? 'الوجهة: ${trip.destination}'
+                          : 'الإحداثيات: ${trip.currentLng.toStringAsFixed(4)} , ${trip.currentLat.toStringAsFixed(4)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.textTertiary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               // 3. جهة اليسار: الأزرار (تمرُكز بالخريطة + تفاصيل الرحلة)

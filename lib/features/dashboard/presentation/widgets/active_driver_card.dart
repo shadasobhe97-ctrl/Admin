@@ -60,23 +60,42 @@ class ActiveDriverCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: context.surfaceVariant,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: context.borderSoft),
-                    ),
-                    child: Text(
-                      trip.carPlate,
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: context.surfaceVariant,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: context.borderSoft),
+                        ),
+                        child: Text(
+                          'رحلة #${trip.tripId}',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.primaryColor),
+                        ),
+                      ),
+                      if (trip.status.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AdminColors.successBgLight,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            trip.status,
+                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AdminColors.statusSuccess),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 12),
 
-              // بيانات المركبة والموقع
+              // بيانات المركبة والمنطقة والوجهة
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -84,30 +103,67 @@ class ActiveDriverCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: context.borderSoft),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Text(trip.carModel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textPrimary)),
-                    Flexible(
-                      child: Text(
-                        trip.currentLocationName,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: context.primaryColor, fontWeight: FontWeight.w600),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 12, color: AdminColors.accentCyan),
+                            const SizedBox(width: 4),
+                            Text(
+                              trip.region.isNotEmpty ? trip.region : trip.currentLocationName,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.textPrimary),
+                            ),
+                          ],
+                        ),
+                        if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
+                          Row(
+                            children: [
+                              const Icon(Icons.timer_outlined, size: 12, color: AdminColors.statusWarning),
+                              const SizedBox(width: 4),
+                              Text(
+                                trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
+                                style: TextStyle(fontSize: 10, color: context.textSecondary),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
+                    if (trip.destination.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.school_outlined, size: 12, color: AdminColors.textMutedLight),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              trip.destination,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 10, color: context.textTertiary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(height: 12),
 
-              // العدادات الثلاثية
+              // العدادات الإحصائية للركاب
               Row(
                 children: [
-                  Expanded(child: _buildStatusBadge('🚖 راكب معاه', '${trip.ridingCount} أطفال', context.successBg, context.successBorder, context.successColor)),
-                  const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('⏳ ينتظر', '${trip.waitingCount} أطفال', context.warningBg, context.warningBorder, context.warningColor)),
-                  const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('✅ وصل', '${trip.arrivedCount} أطفال', context.infoBg, context.infoBorder, context.infoColor)),
+                  Expanded(child: _buildStatusBadge('على المتن', '${trip.ridingCount}', context.successBg, context.successBorder, context.successColor)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildStatusBadge('بانتظار', '${trip.waitingCount}', context.warningBg, context.warningBorder, context.warningColor)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildStatusBadge('تم التوصيل', '${trip.arrivedCount}', context.infoBg, context.infoBorder, context.infoColor)),
+                  if (trip.absentStudentsCount > 0) ...[
+                    const SizedBox(width: 4),
+                    Expanded(child: _buildStatusBadge('غائب', '${trip.absentStudentsCount}', AdminColors.dangerBgLight, AdminColors.statusDanger.withValues(alpha: 0.3), AdminColors.statusDanger)),
+                  ],
                 ],
               ),
               const SizedBox(height: 12),
