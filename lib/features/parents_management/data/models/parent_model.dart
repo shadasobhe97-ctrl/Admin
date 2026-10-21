@@ -138,7 +138,7 @@ class ParentModel {
       gender: json['gender']?.toString(),
       avatarUrl: json['avatar_url']?.toString(),
       isActive: json['is_active'] == true || json['is_active'] == 1,
-      isTrusted: json['is_trusted'] == true || json['is_trusted'] == 1,
+      isTrusted: false,
       phoneVerified: json['phone_verified'] == true || json['phone_verified'] == 1,
       lastLoginAt: json['last_login_at']?.toString(),
       createdAt: json['created_at']?.toString(),

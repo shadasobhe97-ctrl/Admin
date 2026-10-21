@@ -5,6 +5,7 @@ abstract class ParentsRepository {
   Future<List<ParentModel>> getParents();
   Future<ParentModel> getParentDetails(int id);
   Future<Map<String, dynamic>> activateParent(int id);
+  Future<Map<String, dynamic>> suspendParent(int id);
 }
 
 class ParentsRepositoryImpl implements ParentsRepository {
@@ -25,5 +26,10 @@ class ParentsRepositoryImpl implements ParentsRepository {
   @override
   Future<Map<String, dynamic>> activateParent(int id) async {
     return await _remoteDataSource.activateParent(id);
+  }
+
+  @override
+  Future<Map<String, dynamic>> suspendParent(int id) async {
+    return await _remoteDataSource.suspendParent(id);
   }
 }
