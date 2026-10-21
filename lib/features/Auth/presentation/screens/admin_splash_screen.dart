@@ -54,6 +54,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -65,19 +66,27 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
             children: [
               ScaleTransition(
                 scale: _scaleAnim,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
+                child: Image.asset(
+                  isDark
+                      ? 'assets/images/admindark_logo.png'
+                      : 'assets/images/adminligth_logo.png',
+                  height: 120,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: context.primaryColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
                         color: context.primaryColor.withValues(alpha: 0.3),
-                        width: 2),
-                  ),
-                  child: Icon(
-                    Icons.admin_panel_settings_rounded,
-                    size: 80,
-                    color: context.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.admin_panel_settings_rounded,
+                      size: 80,
+                      color: context.primaryColor,
+                    ),
                   ),
                 ),
               ),
@@ -85,17 +94,17 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
               Text(
                 'منظومة الربط والنقل الذكي طرابلس',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: context.textTertiary,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  color: context.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 36),
               SizedBox(
                 width: 160,
                 child: LinearProgressIndicator(
                   borderRadius: BorderRadius.circular(10),
-                  backgroundColor: theme.cardColor,
+                  backgroundColor: context.surfaceVariant,
                   color: context.primaryColor,
                 ),
               ),

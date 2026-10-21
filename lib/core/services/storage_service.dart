@@ -27,8 +27,8 @@ class StorageService {
   static final ValueNotifier<String?> avatarUrlListenable =
       ValueNotifier<String?>(null);
 
-  // Theme Mode
-  static bool getThemeMode() => _prefs?.getBool(_themeKey) ?? true;
+  // Theme Mode (الافتراضي هو الوضع الفاتح Light Mode)
+  static bool getThemeMode() => _prefs?.getBool(_themeKey) ?? false;
 
   static Future<bool> saveThemeMode(bool isDark) async {
     return await _prefs?.setBool(_themeKey, isDark) ?? false;
