@@ -1,5 +1,6 @@
 import '../data/models/dashboard_stats_model.dart';
 import '../data/models/active_trip_model.dart';
+import '../data/models/emergency_trip_item_model.dart';
 
 class DashboardState {
   final bool isLoading;
@@ -8,6 +9,8 @@ class DashboardState {
   final String? successMessage;
   final DashboardStatsModel? stats;
   final List<ActiveTripModel> activeTrips;
+  final List<EmergencyTripItemModel> emergencyTrips;
+  final EmergencyStatsModel? emergencyStats;
   final bool isRealtimeActive;
   final bool isUsingFallbackPolling;
 
@@ -18,6 +21,8 @@ class DashboardState {
     this.successMessage,
     this.stats,
     this.activeTrips = const [],
+    this.emergencyTrips = const [],
+    this.emergencyStats,
     this.isRealtimeActive = false,
     this.isUsingFallbackPolling = false,
   });
@@ -29,6 +34,8 @@ class DashboardState {
     String? successMessage,
     DashboardStatsModel? stats,
     List<ActiveTripModel>? activeTrips,
+    List<EmergencyTripItemModel>? emergencyTrips,
+    EmergencyStatsModel? emergencyStats,
     bool? isRealtimeActive,
     bool? isUsingFallbackPolling,
     bool clearError = false,
@@ -41,6 +48,8 @@ class DashboardState {
       successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
       stats: stats ?? this.stats,
       activeTrips: activeTrips ?? this.activeTrips,
+      emergencyTrips: emergencyTrips ?? this.emergencyTrips,
+      emergencyStats: emergencyStats ?? this.emergencyStats,
       isRealtimeActive: isRealtimeActive ?? this.isRealtimeActive,
       isUsingFallbackPolling: isUsingFallbackPolling ?? this.isUsingFallbackPolling,
     );

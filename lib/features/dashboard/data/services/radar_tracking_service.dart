@@ -23,9 +23,7 @@ class RadarTrackingService {
     stopTracking();
 
     try {
-      final query = _firestore
-          .collection('trips_tracking')
-          .where('status', isEqualTo: 'active');
+      final query = _firestore.collection('trips_tracking');
 
       _subscription = query.snapshots().listen(
         (snapshot) {
@@ -35,36 +33,37 @@ class RadarTrackingService {
             final data = change.doc.data();
             if (data == null) continue;
 
-            final rawTripId = data['trip_id'] ?? change.doc.id;
+            final rawTripId = data['trip_id'] ?? data['id'] ?? change.doc.id;
             final tripId = int.tryParse(rawTripId.toString()) ?? 0;
             if (tripId == 0) continue;
 
-            final status = (data['status'] ?? '').toString().toLowerCase();
-            final isOnline = data['is_online'] == true ||
-                data['is_online'].toString() == '1' ||
-                data['is_online'].toString() == 'true';
+            final status = (data['status'] ?? data['trip_status'] ?? '').toString().toLowerCase();
+            final isOnline = data['is_online'] == null
+                ? true
+                : (data['is_online'] == true ||
+                    data['is_online'].toString() == '1' ||
+                    data['is_online'].toString() == 'true');
 
-            // إذا أصبحت الرحلة مكتملة أو غير متصلة أو حُذفت الوثيقة، تُزال من الرادار
+            // إذا أصبحت الرحلة مكتملة أو ملغاة أو حُذفت الوثيقة، تُزال من الرادار
             if (change.type == DocumentChangeType.removed ||
                 status == 'completed' ||
+                status == 'cancelled' ||
                 !isOnline) {
               updatedMap.remove(tripId);
               continue;
             }
 
-            // قراءة الإحداثيات والزاوية والسرعة
+            // قراءة الإحداثيات والزاوية والسرعة بدعم كافة المسميات الممكنة
             double? lat;
-            if (data['driver_lat'] != null) {
-              lat = double.tryParse(data['driver_lat'].toString());
-            } else if (data['lat'] != null) {
-              lat = double.tryParse(data['lat'].toString());
+            final rawLat = data['driver_lat'] ?? data['current_lat'] ?? data['latitude'] ?? data['lat'];
+            if (rawLat != null) {
+              lat = double.tryParse(rawLat.toString());
             }
 
             double? lng;
-            if (data['driver_lng'] != null) {
-              lng = double.tryParse(data['driver_lng'].toString());
-            } else if (data['lng'] != null) {
-              lng = double.tryParse(data['lng'].toString());
+            final rawLng = data['driver_lng'] ?? data['current_lng'] ?? data['longitude'] ?? data['lng'];
+            if (rawLng != null) {
+              lng = double.tryParse(rawLng.toString());
             }
 
             double? heading;

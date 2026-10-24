@@ -78,6 +78,36 @@ class AdminApiService {
     return [];
   }
 
+  Future<Map<String, dynamic>> getEmergenciesList({int page = 1}) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.emergenciesList,
+      queryParameters: {'page': page},
+    );
+    if (response.data is Map<String, dynamic>) return response.data;
+    throw Exception('استجابة غير متوافقة من الخادم');
+  }
+
+  Future<Map<String, dynamic>> getEmergencyDetails(dynamic id) async {
+    final response = await _apiClient.get(ApiEndpoints.emergencyDetails(id));
+    if (response.data is Map<String, dynamic>) return response.data;
+    throw Exception('استجابة غير متوافقة من الخادم');
+  }
+
+  Future<Map<String, dynamic>> assignSubstituteDriver(dynamic dispatchId, int substituteDriverId) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.assignSubstituteDriver(dispatchId),
+      data: {'substitute_driver_id': substituteDriverId},
+    );
+    if (response.data is Map<String, dynamic>) return response.data;
+    throw Exception('استجابة غير متوافقة من الخادم');
+  }
+
+  Future<Map<String, dynamic>> resolveEmergency(dynamic dispatchId) async {
+    final response = await _apiClient.post(ApiEndpoints.resolveEmergency(dispatchId), data: {});
+    if (response.data is Map<String, dynamic>) return response.data;
+    throw Exception('استجابة غير متوافقة من الخادم');
+  }
+
   // ---------------------------------------------------------------------------
   // 2. Drivers Management
   // ---------------------------------------------------------------------------

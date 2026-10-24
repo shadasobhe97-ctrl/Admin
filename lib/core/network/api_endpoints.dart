@@ -3,7 +3,7 @@ class ApiEndpoints {
   /// يمكن تمريره أيضاً وقت البناء عبر: --dart-define=API_BASE_URL=https://...
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://darby2003.onrender.com/api',
+    defaultValue: 'https://darby-app-api.loca.lt/api',
   );
 
   // ── Auth ────────────────────────────────────────────────────────────────────
@@ -34,6 +34,14 @@ class ApiEndpoints {
   static const String dashboardStats = '/admin/dashboard/stats';
   static const String activeTrips = '/admin/dashboard/active-trips';
   static const String generateDailyTrips = '/admin/trips/generate-daily';
+
+  // ── 1.1 Trips Emergencies (360 Radar & Operations) ────────────────────────
+  static const String emergenciesList = '/admin/trips/emergencies';
+  static String emergencyDetails(dynamic id) => '/admin/trips/emergencies/$id';
+  static String assignSubstituteDriver(dynamic dispatchId) =>
+      '/admin/trips/emergencies/$dispatchId/assign-substitute';
+  static String resolveEmergency(dynamic dispatchId) =>
+      '/admin/trips/emergencies/$dispatchId/resolve';
 
   // ── 2. Drivers ──────────────────────────────────────────────────────────────
   static const String drivers = '/admin/drivers';

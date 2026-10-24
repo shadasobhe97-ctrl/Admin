@@ -4,6 +4,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../models/dashboard_stats_model.dart';
 import '../models/active_trip_model.dart';
+import '../models/trip_emergency_detail_model.dart';
+import '../models/emergency_trip_item_model.dart';
 
 class DashboardRepository {
   final ApiClient _apiClient;
@@ -111,6 +113,91 @@ class DashboardRepository {
     } catch (e) {
       _logError('POST', ApiEndpoints.generateDailyTrips, e);
       throw Exception(_extractErrorMessage(e, 'تعذر توليد رحلات اليوم'));
+    }
+  }
+
+  /// GET /api/admin/trips/emergencies/{id}
+  Future<TripEmergencyDetailModel> getEmergencyDetails(dynamic id) async {
+    try {
+      final endpoint = ApiEndpoints.emergencyDetails(id);
+      final response = await _apiClient.get(endpoint);
+      final data = response.data;
+
+      if (data is Map) {
+        final payload = data['data'];
+        if (payload is Map) {
+          return TripEmergencyDetailModel.fromJson(Map<String, dynamic>.from(payload));
+        }
+      }
+      throw Exception(data is Map ? data['message'] ?? 'فشل جلب تفاصيل الطوارئ' : 'استجابة غير متوافقة من الخادم');
+    } catch (e) {
+      _logError('GET', ApiEndpoints.emergencyDetails(id), e);
+      throw Exception(_extractErrorMessage(e, 'فشل جلب تفاصيل طوارئ الرحلة'));
+    }
+  }
+
+  /// POST /api/admin/trips/emergencies/{dispatchId}/assign-substitute
+  Future<Map<String, dynamic>> assignSubstituteDriver(dynamic dispatchId, int substituteDriverId) async {
+    try {
+      final endpoint = ApiEndpoints.assignSubstituteDriver(dispatchId);
+      final response = await _apiClient.post(
+        endpoint,
+        data: {'substitute_driver_id': substituteDriverId},
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final isSuccess = data['success'] == true || data['status'] == true || data['status'] == 'success';
+        if (isSuccess) {
+          return data;
+        }
+        throw Exception(data['message'] ?? 'تعذر تكليف السائق البديل');
+      }
+      throw Exception('استجابة غير متوقعة من الخادم');
+    } catch (e) {
+      _logError('POST', ApiEndpoints.assignSubstituteDriver(dispatchId), e);
+      throw Exception(_extractErrorMessage(e, 'تعذر تكليف السائق البديل'));
+    }
+  }
+
+  /// POST /api/admin/trips/emergencies/{dispatchId}/resolve
+  Future<Map<String, dynamic>> resolveEmergency(dynamic dispatchId) async {
+    try {
+      final endpoint = ApiEndpoints.resolveEmergency(dispatchId);
+      final response = await _apiClient.post(endpoint, data: {});
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final isSuccess = data['success'] == true || data['status'] == true || data['status'] == 'success';
+        if (isSuccess) {
+          return data;
+        }
+        throw Exception(data['message'] ?? 'تعذر حل وإغلاق حالة الطوارئ');
+      }
+      throw Exception('استجابة غير متوقعة من الخادم');
+    } catch (e) {
+      _logError('POST', ApiEndpoints.resolveEmergency(dispatchId), e);
+      throw Exception(_extractErrorMessage(e, 'تعذر حل وإغلاق حالة الطوارئ'));
+    }
+  }
+
+  /// GET /api/admin/trips/emergencies
+  Future<EmergenciesListResult> getEmergenciesList({int page = 1}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.emergenciesList,
+        queryParameters: {'page': page},
+      );
+      final data = response.data;
+
+      if (data is Map<String, dynamic>) {
+        final isSuccess = data['status'] == 'success' || data['status'] == true || data['success'] == true;
+        if (isSuccess || data.containsKey('data')) {
+          return EmergenciesListResult.fromJson(data);
+        }
+      }
+      throw Exception(data is Map ? data['message'] ?? 'فشل جلب قائمة الرحلات المعطلة' : 'استجابة غير متوافقة من الخادم');
+    } catch (e) {
+      _logError('GET', ApiEndpoints.emergenciesList, e);
+      throw Exception(_extractErrorMessage(e, 'فشل جلب قائمة الرحلات المعطلة'));
     }
   }
 }

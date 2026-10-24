@@ -7,9 +7,11 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/derbi_colors.dart';
 import '../../data/models/active_trip_model.dart';
 import '../../data/models/dashboard_stats_model.dart';
+import '../../data/models/emergency_trip_item_model.dart';
 import '../../logic/dashboard_cubit.dart';
 import '../../logic/dashboard_state.dart';
 import '../widgets/trip_inspector_modal.dart';
+import '../widgets/trip_emergency_inspector_modal.dart';
 import '../../../../core/theme/admin_colors.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/remote_circle_avatar.dart';
@@ -42,6 +44,48 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
   // التحكم في تفاعلية الخريطة لمنع تعارض السحب مع سحب الشاشة
   bool _isMapInteractive = false;
 
+  // التبديل بين عرض الرحلات النشطة والرحلات المعطلة
+  bool _showBreakdown = false;
+
+  // معرف الرحلة المحددة للتمركز عليها ورفع كرتها في مقدمة الخريطة (Topmost Z-Index)
+  int? _selectedTripId;
+
+  Widget _buildTripsToggle(BuildContext context, int breakdownCount) {
+    Widget chip(String label, bool selected, Color color, VoidCallback onTap) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? color : color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: selected ? Colors.white : color,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        chip('الرحلات النشطة', !_showBreakdown, AdminColors.brandPrimary,
+            () => setState(() => _showBreakdown = false)),
+        chip('الرحلات المعطلة ($breakdownCount)', _showBreakdown,
+            AdminColors.statusDanger, () => setState(() => _showBreakdown = true)),
+      ],
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -60,13 +104,14 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
       return;
     }
 
-    // تفعيل تفاعلية الخريطة تلقائياً عند التركيز
+    // تفعيل تفاعلية الخريطة تلقائياً وتحديد كرت السائق ليرتفع في مقدمة جميع الكروت
     setState(() {
+      _selectedTripId = trip.tripId;
       _isMapInteractive = true;
     });
 
-    // 1. تحريك وزوم الخريطة إلى موقع السائق
-    _mapController.move(LatLng(trip.currentLat, trip.currentLng), 16.0);
+    // 1. تحريك وزوم الخريطة إلى موقع السائق بدقة
+    _mapController.move(LatLng(trip.currentLat, trip.currentLng), 16.5);
 
     // 2. سحب الشاشة بسلاسة لأعلى حتى يظهر قسم الخريطة
     if (_mapKey.currentContext != null) {
@@ -80,10 +125,50 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'تم التمركز على موقع السائق "${trip.driverName}" في الخريطة 🎯',
+          'تم التمركز على موقع السائق "${trip.driverName}" في الخريطة وجعله في المقدمة 🎯',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AdminColors.brandPrimary,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _focusOnEmergency(BuildContext context, EmergencyTripItemModel item) {
+    final lat = item.breakdownLocation.latitude;
+    final lng = item.breakdownLocation.longitude;
+    if (lat == 0.0 && lng == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('إحداثيات موقع تعطل الحافلة غير مسجلة حالياً.'),
+          backgroundColor: AdminColors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _selectedTripId = item.tripId;
+      _isMapInteractive = true;
+    });
+
+    _mapController.move(LatLng(lat, lng), 16.5);
+
+    if (_mapKey.currentContext != null) {
+      Scrollable.ensureVisible(
+        _mapKey.currentContext!,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم التمركز على موقع الحافلة المعطلة (رحلة #${item.tripId}) في الخريطة 🚨',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AdminColors.statusDanger,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -186,7 +271,24 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     ),
                     const SizedBox(height: 32),
 
-                    // 4. قسم تفاصيل رحلات السائقين النشطين
+                    _buildTripsToggle(context, state.emergencyTrips.length),
+                    const SizedBox(height: 20),
+
+                    if (_showBreakdown) ...[
+                      if (state.emergencyTrips.isNotEmpty)
+                        _buildBreakdownTripsSection(context, state.emergencyTrips)
+                      else
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              'لا توجد رحلات معطلة حالياً',
+                              style: TextStyle(color: context.textSecondary),
+                            ),
+                          ),
+                        ),
+                    ] else ...[
+                    // 5. قسم تفاصيل رحلات السائقين النشطين
                     Wrap(
                       alignment: WrapAlignment.spaceBetween,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -237,6 +339,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               context, state.activeTrips[index]);
                         },
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -499,7 +602,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
     );
   }
 
-  // --- قسم الخريطة: مع استخدام IgnorePointer لتعطيل التفاعل 100% عند القفل ---
+  // --- قسم الخريطة: مع استخدام IgnorePointer لتعطيل التفاعل 100% عند القفل وترتيب الكروت بحسب التحديد ---
   Widget _buildRealMapSection(
       BuildContext context, List<ActiveTripModel> trips, DashboardState state) {
     final theme = Theme.of(context);
@@ -521,73 +624,132 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         ? LatLng(validTrips.first.currentLat, validTrips.first.currentLng)
         : const LatLng(32.8872, 13.1913);
 
+    // ترتيب الحافلات بحيث تُرسم الحافلة المحددة (_selectedTripId) في آخر القائمة
+    // في FlutterMap يُرسم العنصر الأخير فوق كل العناصر السابقة، مما يضمن ظهور الكرت المختار في المقدمة دائماً مهما تداخلت الكروت
+    final sortedTrips = List<ActiveTripModel>.from(validTrips);
+    if (_selectedTripId != null) {
+      sortedTrips.sort((a, b) {
+        if (a.tripId == _selectedTripId) return 1;
+        if (b.tripId == _selectedTripId) return -1;
+        return 0;
+      });
+    }
+
     final markers = <Marker>[];
-    for (final trip in validTrips) {
+    for (final trip in sortedTrips) {
+      final isSelected = trip.tripId == _selectedTripId;
+
       markers.add(
         Marker(
           point: LatLng(trip.currentLat, trip.currentLng),
-          width: 155,
-          height: 85,
+          width: isSelected ? 175 : 155,
+          height: isSelected ? 92 : 85,
           child: GestureDetector(
-            onTap: () => TripInspectorModal.show(context, trip),
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() {
+                _selectedTripId = trip.tripId;
+              });
+              if (trip.isBreakdown) {
+                final match = state.emergencyTrips
+                    .where((e) => e.tripId == trip.tripId || e.id == trip.tripId)
+                    .firstOrNull;
+                final dispatchId =
+                    match?.dispatchId ?? match?.id ?? trip.emergencyDispatchId;
+                TripEmergencyInspectorModal.show(
+                  context,
+                  dispatchId: dispatchId,
+                  tripId: trip.tripId,
+                  trip: trip,
+                );
+              } else {
+                TripInspectorModal.show(context, trip);
+              }
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      EdgeInsets.symmetric(horizontal: isSelected ? 10 : 8, vertical: isSelected ? 5 : 4),
                   decoration: BoxDecoration(
-                    color: AdminColors.mapMarkerLabelBg.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected
+                        ? (trip.isBreakdown
+                            ? AdminColors.statusDanger.withValues(alpha: 0.98)
+                            : AdminColors.brandPrimary.withValues(alpha: 0.98))
+                        : AdminColors.mapMarkerLabelBg.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(isSelected ? 10 : 8),
                     border: Border.all(
-                      color: trip.isSignalWeak
-                          ? AdminColors.orange
-                          : (trip.isOnline
-                              ? AdminColors.statusSuccess
-                              : AdminColors.brandPrimary),
-                      width: 1.5,
+                      color: isSelected
+                          ? Colors.amber
+                          : (trip.isBreakdown
+                              ? AdminColors.statusDanger
+                              : (trip.isSignalWeak
+                                  ? AdminColors.orange
+                                  : (trip.isOnline
+                                      ? AdminColors.statusSuccess
+                                      : AdminColors.brandPrimary))),
+                      width: isSelected ? 2.5 : (trip.isBreakdown ? 2.0 : 1.5),
                     ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AdminColors.mapMarkerShadow,
-                        blurRadius: 6,
-                      ),
-                    ],
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: (trip.isBreakdown ? AdminColors.statusDanger : Colors.amber)
+                                  .withValues(alpha: 0.8),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : const [
+                            BoxShadow(
+                              color: AdminColors.mapMarkerShadow,
+                              blurRadius: 6,
+                            ),
+                          ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // مؤشر النبض اللحظي
-                      Container(
-                        width: 7,
-                        height: 7,
-                        margin: const EdgeInsets.only(left: 4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: trip.isSignalWeak
-                              ? AdminColors.orange
-                              : (trip.isOnline
-                                  ? AdminColors.statusSuccess
-                                  : Colors.grey),
+                      // مؤشر التحديد أو النبض اللحظي
+                      if (isSelected)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.stars_rounded, color: Colors.amber, size: 14),
+                        )
+                      else
+                        Container(
+                          width: 7,
+                          height: 7,
+                          margin: const EdgeInsets.only(left: 4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: trip.isBreakdown
+                                ? AdminColors.statusDanger
+                                : (trip.isSignalWeak
+                                    ? AdminColors.orange
+                                    : (trip.isOnline
+                                        ? AdminColors.statusSuccess
+                                        : Colors.grey)),
+                          ),
                         ),
-                      ),
                       Flexible(
                         child: Text(
                           trip.driverName,
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AdminColors.onMapMarkerLabel,
-                              fontSize: 10,
+                              fontSize: isSelected ? 11 : 10,
                               fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (trip.speedKmH > 0) ...[
+                      if (trip.speedKmH > 0 && !trip.isBreakdown) ...[
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
-                            color: context.primaryColor,
+                            color: isSelected ? Colors.black.withValues(alpha: 0.25) : context.primaryColor,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -604,11 +766,15 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AdminColors.successFgLight,
+                          color: trip.isBreakdown
+                              ? (isSelected ? Colors.black.withValues(alpha: 0.3) : AdminColors.statusDanger)
+                              : (isSelected ? Colors.black.withValues(alpha: 0.3) : AdminColors.successFgLight),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '${trip.totalChildrenCount > 0 ? trip.totalChildrenCount : trip.studentsCount} طلاب',
+                          trip.isBreakdown
+                              ? 'عطل طارئ'
+                              : '${trip.totalChildrenCount > 0 ? trip.totalChildrenCount : trip.studentsCount} طلاب',
                           style: const TextStyle(
                               color: AdminColors.onMapMarkerLabel,
                               fontSize: 8,
@@ -623,26 +789,41 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                 Transform.rotate(
                   angle: (trip.heading * (math.pi / 180)),
                   child: Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: EdgeInsets.all(isSelected ? 8 : 6),
                     decoration: BoxDecoration(
-                      color: trip.isSignalWeak
-                          ? AdminColors.orange
-                          : (trip.isOnline
-                              ? AdminColors.brandPrimary
-                              : Colors.grey.shade700),
+                      color: trip.isBreakdown
+                          ? AdminColors.statusDanger
+                          : (trip.isSignalWeak
+                              ? AdminColors.orange
+                              : (trip.isOnline
+                                  ? (isSelected ? Colors.white : AdminColors.brandPrimary)
+                                  : Colors.grey.shade700)),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: AdminColors.mapMarkerShadow,
-                            blurRadius: 5,
-                            offset: Offset(0, 2)),
-                      ],
+                      border: Border.all(
+                        color: isSelected ? Colors.amber : Colors.white,
+                        width: isSelected ? 2.5 : 1.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.amber.withValues(alpha: 0.9),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : const [
+                              BoxShadow(
+                                  color: AdminColors.mapMarkerShadow,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 2)),
+                            ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.navigation,
-                      color: AdminColors.onMapMarkerLabel,
-                      size: 16,
+                      color: (isSelected && !trip.isBreakdown && trip.isOnline)
+                          ? AdminColors.brandPrimary
+                          : AdminColors.onMapMarkerLabel,
+                      size: isSelected ? 18 : 16,
                     ),
                   ),
                 ),
@@ -917,6 +1098,374 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
     );
   }
 
+  Widget _buildBreakdownTripsSection(
+      BuildContext context, List<EmergencyTripItemModel> emergencies) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            Text(
+              'الرحلات المعطلة',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AdminColors.statusDanger.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AdminColors.statusDanger.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Text(
+                '${emergencies.length} رحلات معطلة',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AdminColors.statusDanger,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: emergencies.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            return _buildBreakdownCard(context, emergencies[index]);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBreakdownCard(
+      BuildContext context, EmergencyTripItemModel item) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: context.cardShadow.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 750;
+
+          if (isMobile) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'رحلة #${item.tripId} • بلاغ #${item.dispatchId}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    _buildEmergencyStatusBadge(item),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'السائق الأصلي: ${item.originalDriver.name} (${item.originalDriver.phone ?? "-"})',
+                  style: TextStyle(fontSize: 12, color: context.textPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'سبب العطل: ${item.reason}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AdminColors.statusDanger,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'الأطفال العالقين: ${item.strandedChildrenCount} أطفال',
+                  style: TextStyle(fontSize: 12, color: context.textSecondary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.hasSubstituteDriver
+                      ? 'السائق البديل: ${item.substituteDriver!.name}'
+                      : 'السائق البديل: لم يُكلف بعد',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: item.hasSubstituteDriver
+                        ? AdminColors.statusSuccess
+                        : AdminColors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (item.breakdownLocation.latitude != 0.0 && item.breakdownLocation.longitude != 0.0) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _focusOnEmergency(context, item),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: context.infoBorder),
+                            foregroundColor: context.infoColor,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: const Icon(Icons.center_focus_strong_rounded, size: 14),
+                          label: const Text(
+                            'تمرُكز بالخريطة',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _openEmergencyModal(context, item),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AdminColors.statusDanger,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'تفاصيل العطل',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          // Desktop Row
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. رقم الرحلة والسائق الأصلي
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color:
+                                AdminColors.statusDanger.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'رحلة #${item.tripId}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AdminColors.statusDanger,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'بلاغ #${item.dispatchId}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.originalDriver.name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    if (item.originalDriver.phone != null)
+                      Text(
+                        item.originalDriver.phone!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.textSecondary,
+                        ),
+                        textDirection: TextDirection.ltr,
+                      ),
+                  ],
+                ),
+              ),
+
+              // 2. سبب العطل وعدد الأطفال
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'السبب: ${item.reason}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AdminColors.statusDanger,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'الأطفال العالقين: ${item.strandedChildrenCount} أطفال',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 3. السائق البديل وحالة البلاغ
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.hasSubstituteDriver
+                          ? 'بديل: ${item.substituteDriver!.name}'
+                          : 'لم يُكلف بديل بعد',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: item.hasSubstituteDriver
+                            ? AdminColors.statusSuccess
+                            : AdminColors.orange,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildEmergencyStatusBadge(item),
+                  ],
+                ),
+              ),
+
+              // 4. أزرار التفاعل (تمركز بالخريطة + تفاصيل العطل)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (item.breakdownLocation.latitude != 0.0 && item.breakdownLocation.longitude != 0.0) ...[
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: context.infoBorder),
+                        foregroundColor: context.infoColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => _focusOnEmergency(context, item),
+                      icon: const Icon(Icons.center_focus_strong_rounded, size: 15),
+                      label: const Text(
+                        'تمرُكز بالخريطة',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  ElevatedButton(
+                    onPressed: () => _openEmergencyModal(context, item),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AdminColors.statusDanger,
+                      foregroundColor: Colors.white,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'تفاصيل العطل',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmergencyStatusBadge(EmergencyTripItemModel item) {
+    Color bg = AdminColors.statusWarning.withValues(alpha: 0.15);
+    Color fg = AdminColors.statusWarning;
+
+    if (item.status == 'accepted') {
+      bg = AdminColors.statusSuccess.withValues(alpha: 0.15);
+      fg = AdminColors.statusSuccess;
+    } else if (item.status == 'completed' || item.status == 'resolved') {
+      bg = AdminColors.statusInfo.withValues(alpha: 0.15);
+      fg = AdminColors.statusInfo;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        item.statusLabel.isNotEmpty ? item.statusLabel : item.status,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg),
+      ),
+    );
+  }
+
+  void _openEmergencyModal(BuildContext context, EmergencyTripItemModel item) {
+    final targetDispatchId = item.dispatchId > 0 ? item.dispatchId : item.id;
+    TripEmergencyInspectorModal.show(
+      context,
+      dispatchId: targetDispatchId,
+      tripId: item.tripId,
+    ).then((_) {
+      if (context.mounted) {
+        context.read<DashboardCubit>().refreshEmergencies();
+      }
+    });
+  }
+
   Widget _buildEmptyTripsWidget(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -1016,19 +1565,24 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AdminColors.successFgLight
-                                      .withValues(alpha: isDark ? 0.3 : 0.15),
+                                  color: trip.isBreakdown
+                                      ? AdminColors.statusDanger.withValues(alpha: 0.12)
+                                      : AdminColors.brandPrimary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                      color: AdminColors.statusSuccess
-                                          .withValues(alpha: 0.4)),
+                                    color: trip.isBreakdown
+                                        ? AdminColors.statusDanger.withValues(alpha: 0.3)
+                                        : AdminColors.brandPrimary.withValues(alpha: 0.25),
+                                  ),
                                 ),
                                 child: Text(
                                   'رحلة #${trip.tripId}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: AdminColors.statusSuccess,
+                                    color: trip.isBreakdown
+                                        ? AdminColors.statusDanger
+                                        : AdminColors.brandPrimary,
                                   ),
                                 ),
                               ),
@@ -1036,17 +1590,26 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                      horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: context.primaryColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: trip.isBreakdown
+                                        ? AdminColors.statusDanger.withValues(alpha: 0.12)
+                                        : AdminColors.statusSuccess.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: trip.isBreakdown
+                                          ? AdminColors.statusDanger.withValues(alpha: 0.3)
+                                          : AdminColors.statusSuccess.withValues(alpha: 0.3),
+                                    ),
                                   ),
                                   child: Text(
-                                    trip.status,
+                                    trip.cleanStatus,
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: context.primaryColor,
+                                      color: trip.isBreakdown
+                                          ? AdminColors.statusDanger
+                                          : AdminColors.statusSuccess,
                                     ),
                                   ),
                                 ),
@@ -1055,12 +1618,12 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           ),
                           const SizedBox(height: 4),
                           Wrap(
-                            spacing: 8,
+                            spacing: 10,
                             runSpacing: 4,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                'سائق معرف: #${trip.driverId}',
+                                'معرف السائق: #${trip.driverId}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: context.textTertiary,
@@ -1068,7 +1631,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               ),
                               if (trip.driverPhone.isNotEmpty)
                                 Text(
-                                  trip.driverPhone,
+                                  'هاتف: ${trip.driverPhone}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -1077,35 +1640,21 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   textDirection: TextDirection.ltr,
                                 ),
                               if (trip.region.isNotEmpty)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.location_on_outlined, size: 12, color: AdminColors.accentCyan),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      trip.region,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AdminColors.accentCyan,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  'المنطقة: ${trip.region}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: context.primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               if (trip.duration.isNotEmpty || trip.startedAt.isNotEmpty)
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.schedule_rounded, size: 12, color: context.textTertiary),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      trip.duration.isNotEmpty ? trip.duration : trip.startedAt,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: context.textTertiary,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  'المدة: ${trip.duration.isNotEmpty ? trip.duration : trip.startedAt}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: context.textTertiary,
+                                  ),
                                 ),
                             ],
                           ),
@@ -1125,65 +1674,80 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'الطلاب بالرحلة: $totalStudents طلاب',
-                      style: const TextStyle(
+                      'الطلاب: $totalStudents',
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: AdminColors.accentCyan,
+                        color: context.primaryColor,
                       ),
                     ),
                     Text('${trip.ridingCount} على المتن', style: const TextStyle(fontSize: 11, color: AdminColors.statusSuccess, fontWeight: FontWeight.bold)),
                     Text('${trip.waitingCount} بانتظار', style: const TextStyle(fontSize: 11, color: AdminColors.statusWarning, fontWeight: FontWeight.bold)),
                     Text('${trip.arrivedCount} وصل', style: const TextStyle(fontSize: 11, color: AdminColors.statusInfo, fontWeight: FontWeight.bold)),
+                    if (trip.absentStudentsCount > 0)
+                      Text('${trip.absentStudentsCount} غائب', style: const TextStyle(fontSize: 11, color: AdminColors.statusDanger, fontWeight: FontWeight.bold)),
                     if (trip.destination.isNotEmpty)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.school_outlined, size: 13, color: context.textTertiary),
-                          const SizedBox(width: 4),
-                          Text(trip.destination, style: TextStyle(fontSize: 11, color: context.textTertiary)),
-                        ],
-                      ),
+                      Text('الوجهة: ${trip.destination}', style: TextStyle(fontSize: 11, color: context.textTertiary)),
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: context.infoBorder,
-                          ),
-                          foregroundColor: context.infoColor,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: context.infoBorder,
                         ),
-                        onPressed: () => _focusOnDriver(context, trip),
-                        icon: const Icon(Icons.center_focus_strong_rounded,
-                            size: 16),
-                        label: const Text('تمرُكز بالخريطة',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
+                        foregroundColor: context.infoColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       ),
+                      onPressed: () => _focusOnDriver(context, trip),
+                      child: const Text('تمرُكز بالخريطة',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AdminColors.brandPrimary,
-                          foregroundColor: AdminColors.onBrand,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => TripInspectorModal.show(context, trip),
-                        icon: const Icon(Icons.auto_awesome, size: 14),
-                        label: const Text('تفاصيل الرحلة',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: trip.isBreakdown
+                            ? AdminColors.statusDanger
+                            : AdminColors.brandPrimary,
+                        foregroundColor: AdminColors.onBrand,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        if (trip.isBreakdown) {
+                          final emergencies = context
+                              .read<DashboardCubit>()
+                              .state
+                              .emergencyTrips;
+                          final match = emergencies
+                              .where((e) =>
+                                  e.tripId == trip.tripId || e.id == trip.tripId)
+                              .firstOrNull;
+                          final dispatchId = match?.dispatchId ??
+                              match?.id ??
+                              trip.emergencyDispatchId;
+                          TripEmergencyInspectorModal.show(
+                            context,
+                            dispatchId: dispatchId,
+                            tripId: trip.tripId,
+                            trip: trip,
+                          );
+                        } else {
+                          TripInspectorModal.show(context, trip);
+                        }
+                      },
+                      child: Text(
+                        trip.isBreakdown ? 'تفاصيل العطل' : 'ركاب الرحلة',
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1397,9 +1961,11 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ElevatedButton.icon(
+                  ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AdminColors.brandPrimary,
+                      backgroundColor: trip.isBreakdown
+                          ? AdminColors.statusDanger
+                          : AdminColors.brandPrimary,
                       foregroundColor: AdminColors.onBrand,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -1407,12 +1973,33 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                           horizontal: 16, vertical: 10),
                       elevation: 0,
                     ),
-                    onPressed: () => TripInspectorModal.show(context, trip),
-                    icon: const Icon(Icons.auto_awesome, size: 14),
-                    label: const Text(
-                      'تفاصيل الرحلة',
+                    onPressed: () {
+                      if (trip.isBreakdown) {
+                        final emergencies = context
+                            .read<DashboardCubit>()
+                            .state
+                            .emergencyTrips;
+                        final match = emergencies
+                            .where((e) =>
+                                e.tripId == trip.tripId || e.id == trip.tripId)
+                            .firstOrNull;
+                        final dispatchId = match?.dispatchId ??
+                            match?.id ??
+                            trip.emergencyDispatchId;
+                        TripEmergencyInspectorModal.show(
+                          context,
+                          dispatchId: dispatchId,
+                          tripId: trip.tripId,
+                          trip: trip,
+                        );
+                      } else {
+                        TripInspectorModal.show(context, trip);
+                      }
+                    },
+                    child: Text(
+                      trip.isBreakdown ? 'تفاصيل العطل' : 'ركاب الرحلة',
                       style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
