@@ -859,84 +859,71 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               children: [
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 580),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 10,
+                    runSpacing: 6,
                     children: [
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 10,
-                        runSpacing: 6,
-                        children: [
-                          Text(
-                            'رادار التتبع الحي لرحلات الحافلات (OpenStreetMap)',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: context.textPrimary,
-                            ),
+                      Text(
+                        'رادار التتبع الحي للحافلات',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: state.isRealtimeActive
+                              ? AdminColors.successBgLight
+                              : (state.isUsingFallbackPolling
+                                  ? AdminColors.amber.withValues(alpha: 0.15)
+                                  : AdminColors.successBgLight),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: state.isRealtimeActive
+                                ? AdminColors.statusSuccess.withValues(alpha: 0.3)
+                                : (state.isUsingFallbackPolling
+                                    ? AdminColors.amber.withValues(alpha: 0.4)
+                                    : AdminColors.statusSuccess.withValues(alpha: 0.2)),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: state.isRealtimeActive
-                                  ? AdminColors.successBgLight
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              state.isRealtimeActive
+                                  ? Icons.bolt_rounded
                                   : (state.isUsingFallbackPolling
-                                      ? AdminColors.amber.withValues(alpha: 0.15)
-                                      : AdminColors.successBgLight),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
+                                      ? Icons.sync_rounded
+                                      : Icons.circle),
+                              size: 14,
+                              color: state.isRealtimeActive
+                                  ? AdminColors.statusSuccess
+                                  : (state.isUsingFallbackPolling
+                                      ? AdminColors.amber
+                                      : AdminColors.statusSuccess),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              state.isRealtimeActive
+                                  ? 'بث مباشر • ${validTrips.length} رحلة'
+                                  : (state.isUsingFallbackPolling
+                                      ? 'تحديث تلقائي • ${validTrips.length} رحلة'
+                                      : '${validTrips.length} رحلة نشطة'),
+                              style: TextStyle(
+                                fontSize: 11,
                                 color: state.isRealtimeActive
-                                    ? AdminColors.statusSuccess.withValues(alpha: 0.3)
+                                    ? AdminColors.successFgLight
                                     : (state.isUsingFallbackPolling
-                                        ? AdminColors.amber.withValues(alpha: 0.4)
-                                        : AdminColors.statusSuccess.withValues(alpha: 0.2)),
+                                        ? AdminColors.amber
+                                        : AdminColors.successFgLight),
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  state.isRealtimeActive
-                                      ? Icons.bolt_rounded
-                                      : (state.isUsingFallbackPolling
-                                          ? Icons.sync_rounded
-                                          : Icons.circle),
-                                  size: 14,
-                                  color: state.isRealtimeActive
-                                      ? AdminColors.statusSuccess
-                                      : (state.isUsingFallbackPolling
-                                          ? AdminColors.amber
-                                          : AdminColors.statusSuccess),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  state.isRealtimeActive
-                                      ? 'بث فوري مباشر (Firebase) • ${validTrips.length} رحلة'
-                                      : (state.isUsingFallbackPolling
-                                          ? 'تحديث احتياطي (Polling 15s) • ${validTrips.length} رحلة'
-                                          : '${validTrips.length} رحلة مباشرة على الخريطة'),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: state.isRealtimeActive
-                                        ? AdminColors.successFgLight
-                                        : (state.isUsingFallbackPolling
-                                            ? AdminColors.amber
-                                            : AdminColors.successFgLight),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'تتحول الإحداثيات الواردة من Backend (current_lat, current_lng) فوراً إلى حافلات نشطة',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.textTertiary,
+                          ],
                         ),
                       ),
                     ],
@@ -975,8 +962,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   ),
                   label: Text(
                     _isMapInteractive
-                        ? 'سحب الخريطة مفعّل (انقر للقفل للتمرير)'
-                        : 'تفعيل سحب الخريطة 🔓',
+                        ? 'سحب الخريطة مفعّل'
+                        : 'تفعيل سحب الخريطة',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -992,7 +979,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
           Container(
             height: 400,
             width: double.infinity,
-            margin: const EdgeInsets.only(left: 18, right: 18, bottom: 18),
+            margin: const EdgeInsets.only(left: 18, right: 18, bottom: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
@@ -1050,7 +1037,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                   color: AdminColors.amber, size: 16),
                               const SizedBox(width: 6),
                               const Text(
-                                'الخريطة مقفلة مؤقتاً لتسهيل سحب الشاشة لأسفل — انقر زر "تفعيل سحب الخريطة" للتحكم بها.',
+                                'الخريطة مقفلة لتسهيل تمرير الصفحة — انقر زر "تفعيل سحب الخريطة" للتحكم بها.',
                                 style: TextStyle(
                                     color: AdminColors.onMapMarkerLabel,
                                     fontSize: 11,
@@ -1073,7 +1060,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 size: 48, color: AdminColors.onMapMarkerLabelMuted),
                             SizedBox(height: 12),
                             Text(
-                              'لا توجد رحلات نشطة حالياً على خريطة OpenStreetMap',
+                              'لا توجد رحلات نشطة حالياً',
                               style: TextStyle(
                                   color: AdminColors.onMapMarkerLabel,
                                   fontSize: 14,
@@ -1081,7 +1068,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'سيتم إظهار موقع كل حافلة فور وصول إحداثيات حيّة من Backend',
+                              'سيتم إظهار موقع كل حافلة فور بدء الرحلات',
                               style: TextStyle(
                                   color: AdminColors.onMapMarkerLabelMuted, fontSize: 12),
                             ),
@@ -1093,8 +1080,81 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               ),
             ),
           ),
+
+          // دليل دلالات ألوان الخريطة (Legend)
+          Padding(
+            padding: const EdgeInsets.only(left: 18, right: 18, bottom: 16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.borderSoft),
+              ),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.palette_outlined, size: 14, color: context.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'دليل الألوان:',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildLegendItem(context, color: AdminColors.statusSuccess, label: 'أخضر: متصل وبث مباشر'),
+                  _buildLegendItem(context, color: AdminColors.orange, label: 'برتقالي: إشارة ضعيفة'),
+                  _buildLegendItem(context, color: AdminColors.statusDanger, label: 'أحمر: عطل طارئ'),
+                  _buildLegendItem(context, color: Colors.grey.shade500, label: 'رصاصي: غير متصل'),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendItem(BuildContext context,
+      {required Color color, required String label}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.45),
+                blurRadius: 4,
+                spreadRadius: 0.5,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: context.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 
