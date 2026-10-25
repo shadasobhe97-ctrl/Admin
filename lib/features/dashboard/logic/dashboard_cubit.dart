@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/active_trip_model.dart';
+import '../data/models/dashboard_stats_model.dart';
 import '../data/repositories/dashboard_repository.dart';
 import '../data/services/radar_tracking_service.dart';
 import 'dashboard_state.dart';
@@ -43,6 +44,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
+        stats: state.stats ?? DashboardStatsModel.empty(),
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
       // تفعيل الـ Fallback في حالة الفشل

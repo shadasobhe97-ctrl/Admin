@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/ai_alert_model.dart';
 import '../../data/models/ai_decision_audit_model.dart';
+import '../../data/utils/ai_alerts_translator.dart';
 
 class AiExplainabilityModal extends StatelessWidget {
   final String? title;
@@ -32,10 +33,17 @@ class AiExplainabilityModal extends StatelessWidget {
   factory AiExplainabilityModal.fromAlert(AiAlertModel alert) {
     final meta = alert.metadata ?? const {};
 
+    final rawComment = meta['review_text']?.toString() ??
+        meta['review_comment']?.toString() ??
+        meta['comment']?.toString() ??
+        (alert.message.isNotEmpty ? alert.message : null);
+
     return AiExplainabilityModal(
-      title: alert.title,
+      title: AiAlertsTranslator.translateTitle(alert.title),
       driverName: alert.displayDriverName,
-      reviewComment: alert.message,
+      reviewComment: rawComment != null
+          ? AiAlertsTranslator.cleanCommentText(rawComment)
+          : null,
       aiCategory: meta['category']?.toString(),
       confidence: (meta['confidence'] as num?)?.toDouble(),
       ratingBefore: (meta['rating_before'] as num?)?.toDouble(),
@@ -53,9 +61,11 @@ class AiExplainabilityModal extends StatelessWidget {
 
   factory AiExplainabilityModal.fromAudit(AiDecisionAuditModel audit) {
     return AiExplainabilityModal(
-      title: audit.decisionName,
+      title: audit.decisionCode.label,
       driverName: audit.driverName ?? 'سائق غير معرف',
-      reviewComment: audit.reviewComment,
+      reviewComment: audit.reviewComment != null
+          ? AiAlertsTranslator.cleanCommentText(audit.reviewComment!)
+          : null,
       reviewRating: audit.reviewRating,
       aiCategory: audit.aiCategory,
       confidence: audit.confidence,
@@ -173,7 +183,7 @@ class AiExplainabilityModal extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                aiCategory!,
+                                _translateCategory(aiCategory!),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -262,22 +272,41 @@ class AiExplainabilityModal extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFFFCA5A5)),
-                            ),
-                            child: const Text(
-                              '-10%',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFDC2626),
-                              ),
-                            ),
+                          Builder(
+                            builder: (context) {
+                              final diff = ratingAfter! - ratingBefore!;
+                              final pct = ratingBefore! > 0
+                                  ? ((diff / ratingBefore!) * 100).round()
+                                  : 0;
+                              final isDecrease = diff < 0;
+                              final badgeColor = isDecrease
+                                  ? const Color(0xFFDC2626)
+                                  : const Color(0xFF059669);
+                              final badgeBg = isDecrease
+                                  ? const Color(0xFFFEF2F2)
+                                  : const Color(0xFFECFDF5);
+                              final badgeBorder = isDecrease
+                                  ? const Color(0xFFFCA5A5)
+                                  : const Color(0xFFA7F3D0);
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: badgeBorder),
+                                ),
+                                child: Text(
+                                  '${pct > 0 ? '+' : ''}$pct%',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: badgeColor,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -287,21 +316,7 @@ class AiExplainabilityModal extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
 
-              // ── 3. توزيع احتمالات Softmax ────────────────────────────────
-              Text(
-                'توزيع احتمالات نموذج الذكاء الاصطناعي (Softmax Confidence)',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: context.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              _buildProbabilitiesDistribution(context),
-              const SizedBox(height: 20),
-
-              // ── 4. الإجراءات المطبقة تلقائياً ─────────────────────────────
+              // ── 3. الإجراءات المطبقة تلقائياً ─────────────────────────────
               if (actions.isNotEmpty) ...[
                 Text(
                   'الإجراءات التي تم تطبيقها تلقائياً:',
@@ -311,28 +326,39 @@ class AiExplainabilityModal extends StatelessWidget {
                     color: context.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: actions.map((act) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: context.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: context.primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: Text(
-                        _translateAction(act),
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: context.primaryColor,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 14,
+                            color: context.primaryColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _translateAction(act),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: context.primaryColor,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -345,90 +371,8 @@ class AiExplainabilityModal extends StatelessWidget {
     );
   }
 
-  Widget _buildProbabilitiesDistribution(BuildContext context) {
-    final Map<int, String> labels = {
-      0: '0 - بدون إجراء (NO_ACTION)',
-      1: '1 - مكافأة وتقييم (REWARD)',
-      2: '2 - مخالفة متوسطة (MODERATE_VIOLATION)',
-      3: '3 - تحذير رسمي (FORMAL_WARNING)',
-      4: '4 - مراجعة وتدخل إداري (ADMIN_REVIEW_REQUIRED)',
-      5: '5 - إيقاف نهائي (PERMANENT_SUSPENSION)',
-    };
+  String _translateAction(String act) => AiAlertsTranslator.translateAction(act);
 
-    return Column(
-      children: labels.entries.map((entry) {
-        final code = entry.key;
-        final label = entry.value;
-        final prob = probabilities['$code'] ?? probabilities['code_$code'] ?? 0.0;
-        final percent = (prob * 100).toStringAsFixed(1);
-        final isHighest = confidence != null && (prob - confidence!).abs() < 0.05 || (code == 4 && prob > 0.5);
-
-        Color barColor;
-        if (code == 4 || code == 5) {
-          barColor = isHighest ? const Color(0xFFDC2626) : const Color(0xFF94A3B8);
-        } else if (code == 1) {
-          barColor = isHighest ? const Color(0xFF059669) : const Color(0xFF94A3B8);
-        } else {
-          barColor = isHighest ? const Color(0xFFD97706) : const Color(0xFF94A3B8);
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isHighest ? FontWeight.bold : FontWeight.normal,
-                      color: isHighest ? context.textPrimary : context.textTertiary,
-                    ),
-                  ),
-                  Text(
-                    '$percent%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: barColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: prob.clamp(0.0, 1.0),
-                  minHeight: 8,
-                  backgroundColor: context.isDarkMode
-                      ? const Color(0xFF334155)
-                      : const Color(0xFFE2E8F0),
-                  valueColor: AlwaysStoppedAnimation<Color>(barColor),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  String _translateAction(String act) {
-    switch (act) {
-      case 'hidden_from_search_precautionary':
-        return 'حجب وقائي مؤقت من البحث';
-      case 'rating_down_10pct':
-        return 'إعادة تخفيض التقييم بنسبة 10%';
-      case 'admin_review_required':
-        return 'تنبيه الأدمن للمراجعة العاجلة';
-      case 'admin_alerted_critical':
-        return 'إصدار تنبيه أمان حرج';
-      default:
-        return act;
-    }
-  }
+  String _translateCategory(String category) =>
+      AiAlertsTranslator.translateCategory(category);
 }

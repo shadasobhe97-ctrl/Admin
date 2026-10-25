@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/utils/json_parsers.dart';
 import '../../data/models/ai_decision_audit_model.dart';
+import '../../data/utils/ai_alerts_translator.dart';
 import 'ai_explainability_modal.dart';
 
 class AiAuditCard extends StatelessWidget {
@@ -134,7 +135,7 @@ class AiAuditCard extends StatelessWidget {
               audit.reviewComment!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'السبب / ملاحظة ولي الأمر: ${audit.reviewComment!}',
+              'السبب / ملاحظة ولي الأمر: ${AiAlertsTranslator.cleanCommentText(audit.reviewComment!)}',
               style: TextStyle(fontSize: 12.5, color: context.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

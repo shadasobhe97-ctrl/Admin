@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/admin_theme_context.dart';
-import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/payment_method_model.dart';
 
 /// حوار إضافة/تعديل طريقة دفع — يعكس عقد Backend حرفياً.
@@ -323,7 +322,8 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
 
   Widget _buildIconPicker(BuildContext context) {
     final hasNewIcon = _iconBytes != null && _iconBytes!.isNotEmpty;
-    final currentUrl = widget.initialMethod?.iconUrl;
+    final currentUrl = widget.initialMethod?.iconUrl?.trim();
+    final hasCurrentUrl = currentUrl != null && currentUrl.isNotEmpty;
 
     return Row(
       children: [
@@ -338,12 +338,25 @@ class _PaymentMethodFormDialogState extends State<PaymentMethodFormDialog> {
           clipBehavior: Clip.antiAlias,
           child: hasNewIcon
               ? Image.memory(_iconBytes!, fit: BoxFit.cover)
-              : (currentUrl != null && currentUrl.isNotEmpty
-                  ? RemoteImage(
-                      rawUrl: currentUrl,
+              : (hasCurrentUrl
+                  ? Image.network(
+                      currentUrl,
                       fit: BoxFit.cover,
-                      fallback: Icon(Icons.image_outlined,
-                          color: context.textMuted, size: 28),
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.image_outlined,
+                        color: context.textMuted,
+                        size: 28,
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
                     )
                   : Icon(Icons.image_outlined,
                       color: context.textMuted, size: 28)),

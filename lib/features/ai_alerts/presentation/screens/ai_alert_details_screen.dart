@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/ai_alert_model.dart';
+import '../../data/utils/ai_alerts_translator.dart';
 import '../../logic/cubit/ai_alerts_cubit.dart';
 import '../../logic/state/ai_alerts_state.dart';
 import '../widgets/ai_alert_severity_badge.dart';
@@ -195,19 +196,16 @@ class _AlertInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alertTypeLabel = switch (alert.alertType) {
-      'ai_critical' => 'تنبيه حرج (AI Critical)',
-      'ai_warning' => 'تنبيه تحذيري (AI Warning)',
-      _ => alert.alertType.isNotEmpty ? alert.alertType : 'غير محدد',
-    };
+    final alertTypeLabel = AiAlertsTranslator.translateAlertType(alert.alertType);
+    final displayTitle = AiAlertsTranslator.translateTitle(alert.title);
 
     return _SectionCard(
       title: 'معلومات التنبيه',
       icon: Icons.smart_toy_outlined,
       children: [
-        if (alert.title.isNotEmpty) ...[
+        if (displayTitle.isNotEmpty) ...[
           Text(
-            alert.title,
+            displayTitle,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -266,7 +264,7 @@ class _DriverInfoCard extends StatelessWidget {
         if (driver.rating != null)
           _detailRow(context, 'التقييم الحالي', driver.rating!.toStringAsFixed(2)),
         if (driver.status != null && driver.status!.isNotEmpty)
-          _detailRow(context, 'حالة الحساب', driver.status!),
+          _detailRow(context, 'حالة الحساب', AiAlertsTranslator.translateDriverStatus(driver.status!)),
         if (isHidden) ...[
           const SizedBox(height: 8),
           Container(
@@ -310,7 +308,15 @@ class _AiResultCard extends StatelessWidget {
     final metadata = alert.metadata;
     final ratingBefore = _asDouble(metadata?['rating_before']);
     final ratingAfter = _asDouble(metadata?['rating_after']);
-    final reviewText = _asNonEmptyString(metadata?['review_text']);
+
+    // جلب نص التعليق وتنظيفه من أي معرّفات (IDs)
+    final rawReviewText = _asNonEmptyString(metadata?['review_text']) ??
+        _asNonEmptyString(metadata?['review_comment']) ??
+        _asNonEmptyString(metadata?['comment']) ??
+        _asNonEmptyString(metadata?['note']);
+    final reviewText = rawReviewText != null
+        ? AiAlertsTranslator.cleanCommentText(rawReviewText)
+        : null;
 
     final metaRows = <MapEntry<String, String>>[];
     void addIfPresent(String key, String label, [String Function(dynamic)? format]) {
@@ -321,8 +327,8 @@ class _AiResultCard extends StatelessWidget {
       metaRows.add(MapEntry(label, text));
     }
 
-    addIfPresent('trigger', 'سبب التنبيه');
-    addIfPresent('review_id', 'رقم التقييم المرتبط');
+    addIfPresent('trigger', 'سبب التنبيه', AiAlertsTranslator.translateTrigger);
+    // تم إلغاء عرض رقم التقييم/التعليق (review_id) نهائياً بناءً على رغبة المستخدم
     addIfPresent('window_start', 'بداية فترة الرصد');
     addIfPresent('distinct_negative_children', 'عدد الأطفال المعلّقين سلبًا');
     addIfPresent('active_children_total', 'إجمالي الأطفال النشطين بالفترة');
@@ -357,7 +363,7 @@ class _AiResultCard extends StatelessWidget {
       icon: Icons.insights_rounded,
       children: [
         if (hasActionsTaken) ...[
-          _detailRow(context, 'الإجراء المتخذ', alert.actionsTaken!),
+          _detailRow(context, 'الإجراء المتخذ', AiAlertsTranslator.translateAction(alert.actionsTaken!)),
           const SizedBox(height: 6),
         ],
         if (ratingBefore != null && ratingAfter != null) ...[
@@ -365,7 +371,7 @@ class _AiResultCard extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         ...metaRows.map((e) => _detailRow(context, e.key, e.value)),
-        if (reviewText != null) ...[
+        if (reviewText != null && reviewText.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
             'نص التعليق المرتبط:',

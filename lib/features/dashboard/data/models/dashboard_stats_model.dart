@@ -50,6 +50,18 @@ class DashboardStatsModel {
     required this.totalRevenueDinar,
   });
 
+  factory DashboardStatsModel.empty() {
+    return DashboardStatsModel(
+      totalUsers: 0,
+      totalDrivers: 0,
+      pendingDrivers: 0,
+      totalParents: 0,
+      activeSubscriptions: 0,
+      activeTripsToday: 0,
+      totalRevenueDinar: 0.0,
+    );
+  }
+
   // Backward compatibility StatItem getters
   StatItem get statTotalUsers => StatItem(value: totalUsers.toString(), raw: totalUsers, change: '', trend: 'up');
   StatItem get statActiveDrivers => StatItem(value: totalDrivers.toString(), raw: totalDrivers, change: '', trend: 'up');

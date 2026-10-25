@@ -41,12 +41,10 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
-  late final ScrollController _permissionsScrollController;
 
   late bool _isActive;
   bool _isPasswordVisible = false;
   int? _selectedRoleId;
-  final Set<String> _selectedCustomPermissions = {};
 
   Uint8List? _avatarBytes;
   String? _avatarFileName;
@@ -89,7 +87,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
   @override
   void initState() {
     super.initState();
-    _permissionsScrollController = ScrollController();
     _nameController =
         TextEditingController(text: widget.initialAdmin?.fullName ?? '');
     _emailController =
@@ -100,18 +97,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
 
     _isActive = widget.initialAdmin?.isActive ?? true;
     _selectedRoleId = widget.initialAdmin?.roleId;
-
-    final admin = widget.initialAdmin;
-    if (admin != null) {
-      _selectedCustomPermissions.addAll(admin.customPermissions);
-      // لو الخادم رجّع الصلاحيات مدموجة، فالزائد عن صلاحيات الدور هو الإضافي.
-      final roles = context.read<AdminManagementCubit>().state.roles;
-      final role = roles.where((r) => r.id == admin.roleId).firstOrNull;
-      if (role != null) {
-        _selectedCustomPermissions.addAll(
-            admin.permissions.where((p) => !role.permissions.contains(p)));
-      }
-    }
 
     _nameController.addListener(_onNameChanged);
     _emailController.addListener(_onEmailChanged);
@@ -180,7 +165,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     _emailController.removeListener(_onEmailChanged);
     _phoneController.removeListener(_onPhoneChanged);
     _passwordController.removeListener(_onPasswordChanged);
-    _permissionsScrollController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -225,17 +209,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         AuthorizationService.hasPermission('admins.manage');
     final passwordText = _passwordController.text.trim();
 
-    // صلاحيات الدور تُمنح تلقائياً، فلا تُرسل ضمن الصلاحيات المخصصة.
-    final roles = context.read<AdminManagementCubit>().state.roles;
-    final rolePermissions = roles
-            .where((r) => r.id == _selectedRoleId)
-            .firstOrNull
-            ?.permissions
-            .toSet() ??
-        const <String>{};
-    final customPermissions =
-        _selectedCustomPermissions.difference(rolePermissions).toList();
-
     if (_isEditMode) {
       final updateReq = UpdateAdminRequestModel(
         fullName: _nameController.text.trim(),
@@ -243,7 +216,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         phoneNumber: _phoneController.text.trim(),
         password: passwordText.isNotEmpty ? passwordText : null,
         roleId: _selectedRoleId,
-        customPermissions: customPermissions,
         isActive: isCurrentMainAdmin ? _isActive : null,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -256,7 +228,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
         phoneNumber: _phoneController.text.trim(),
         password: passwordText.isNotEmpty ? passwordText : null,
         roleId: _selectedRoleId,
-        customPermissions: customPermissions,
         isActive: _isActive,
         avatarBytes: _avatarBytes,
         avatarFileName: _avatarFileName,
@@ -288,8 +259,6 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
             currentSelectedRole = found.first;
           }
         }
-        final rolePermissions =
-            currentSelectedRole?.permissions.toSet() ?? const <String>{};
 
         return Form(
           key: _formKey,
@@ -555,163 +524,7 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
                   ),
                 ],
               ],
-              const SizedBox(height: 24),
-
-              // ── 2. الصلاحيات المخصصة (Custom Permissions Tree) ──────────────
-              if (permissionsTree.isNotEmpty) ...[
-                Row(
-                  children: [
-                    Icon(Icons.tune_rounded,
-                        size: 18, color: context.primaryColor),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'الصلاحيات المخصصة (إضافات فوق صلاحيات الدور):',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'صلاحيات الدور تظهر محددة تلقائياً، واختر الصلاحيات الإضافية المطلوب منحها لهذا المشرف تحديداً:',
-                  style: TextStyle(fontSize: 12, color: context.textTertiary),
-                ),
-                const SizedBox(height: 12),
-                _buildSelectedExtrasSummary(
-                    context, permissionsTree, rolePermissions),
-                const SizedBox(height: 12),
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 280),
-                  decoration: BoxDecoration(
-                    color: context.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: Scrollbar(
-                    controller: _permissionsScrollController,
-                    child: ListView.separated(
-                      controller: _permissionsScrollController,
-                      padding: const EdgeInsets.all(12),
-                      shrinkWrap: true,
-                      itemCount: permissionsTree.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final group = permissionsTree[index];
-                        final roleCount = group.permissions
-                            .where((p) => rolePermissions.contains(p.key))
-                            .length;
-                        final extraCount = group.permissions
-                            .where((p) =>
-                                !rolePermissions.contains(p.key) &&
-                                _selectedCustomPermissions.contains(p.key))
-                            .length;
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: theme.dividerColor),
-                          ),
-                          child: ExpansionTile(
-                            key: PageStorageKey('perm-group-${group.groupKey}'),
-                            // تُفتح المجموعات التي فيها إضافات ليظهر المختار مباشرة.
-                            initiallyExpanded: extraCount > 0,
-                            tilePadding:
-                                const EdgeInsets.symmetric(horizontal: 12),
-                            title: Text(
-                              group.groupName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${roleCount + extraCount} من ${group.permissions.length} مختارة',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: roleCount + extraCount > 0
-                                    ? context.primaryColor
-                                    : context.textTertiary,
-                              ),
-                            ),
-                            children: group.permissions.map((perm) {
-                              final isFromRole =
-                                  rolePermissions.contains(perm.key);
-                              final isExtra = !isFromRole &&
-                                  _selectedCustomPermissions.contains(perm.key);
-                              return CheckboxListTile(
-                                dense: true,
-                                value: isFromRole || isExtra,
-                                activeColor: isFromRole
-                                    ? context.primaryColor
-                                    : context.warningColor,
-                                title: Text(
-                                  perm.name,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (perm.description != null &&
-                                        perm.description!.isNotEmpty)
-                                      Text(
-                                        perm.description!,
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            color: context.textSecondary),
-                                      ),
-                                    if (isFromRole)
-                                      Text(
-                                        'ممنوحة من الدور',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.primaryColor,
-                                        ),
-                                      ),
-                                    if (isExtra)
-                                      Text(
-                                        'صلاحية إضافية مختارة',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.warningColor,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                onChanged: isFromRole
-                                    ? null
-                                    : (bool? selected) {
-                                        setState(() {
-                                          if (selected == true) {
-                                            _selectedCustomPermissions
-                                                .add(perm.key);
-                                          } else {
-                                            _selectedCustomPermissions
-                                                .remove(perm.key);
-                                          }
-                                        });
-                                      },
-                              );
-                            }).toList(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+              const SizedBox(height: 20),
 
               // Is Active Switch (عند التعديل)
               if (_isEditMode) ...[
@@ -851,67 +664,4 @@ class _AdminFormWidgetState extends State<AdminFormWidget> {
     );
   }
 
-  /// ملخص الصلاحيات الإضافية المختارة فوق صلاحيات الدور.
-  Widget _buildSelectedExtrasSummary(
-    BuildContext context,
-    List<PermissionGroupModel> permissionsTree,
-    Set<String> rolePermissions,
-  ) {
-    final extras = _selectedCustomPermissions
-        .where((p) => !rolePermissions.contains(p))
-        .toList();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.warningColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: context.warningColor.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'الصلاحيات الإضافية المختارة (${extras.length}):',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: context.warningColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (extras.isEmpty)
-            Text(
-              'لا توجد صلاحيات إضافية، المشرف لديه صلاحيات الدور فقط.',
-              style: TextStyle(fontSize: 12, color: context.textTertiary),
-            )
-          else
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: extras.map((key) {
-                return Chip(
-                  label: Text(permissionsTree.permissionLabel(key)),
-                  labelStyle: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: context.warningColor,
-                  ),
-                  backgroundColor: context.warningColor.withValues(alpha: 0.12),
-                  side: BorderSide(
-                      color: context.warningColor.withValues(alpha: 0.3)),
-                  visualDensity: VisualDensity.compact,
-                  deleteIcon: const Icon(Icons.close_rounded, size: 14),
-                  deleteIconColor: context.warningColor,
-                  deleteButtonTooltipMessage: 'إزالة الصلاحية',
-                  onDeleted: () =>
-                      setState(() => _selectedCustomPermissions.remove(key)),
-                );
-              }).toList(),
-            ),
-        ],
-      ),
-    );
-  }
 }

@@ -396,9 +396,14 @@ class _DerbiMainDashboardState extends State<DerbiMainDashboard> {
     }
   }
 
-  /// فتح شاشة الإشعارات عند الضغط على جرس الهيدر
+  /// فتح شاشة الإشعارات عند الضغط على جرس الهيدر أو على الإشعار المنبثق
   void _openNotificationsTab() {
-    setState(() => _isViewingNotifications = true);
+    setState(() {
+      _isViewingNotifications = true;
+    });
+    InAppNotificationBanner.hideAll();
+    _notificationsCubit.fetchNotifications();
+    _notificationsCubit.fetchUnreadCount();
   }
 
   /// توجيه الإشعار عند الضغط عليه إذا كانت الشاشة موجودة

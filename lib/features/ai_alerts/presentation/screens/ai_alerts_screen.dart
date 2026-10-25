@@ -94,7 +94,7 @@ class _AiAlertsViewState extends State<_AiAlertsView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'مركز تحكّم الذكاء الاصطناعي (AI Control Center)',
+                      'مركز تحكّم وتنبيهات الذكاء الاصطناعي',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
