@@ -495,9 +495,11 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
     PaymentMethodModel method,
     PaymentMethodModel original,
   ) async {
+    // Laravel لا يقبل multipart/form-data عبر PUT مباشرةً،
+    // لذا نرسل POST والـ Model يضيف _method=PUT تلقائياً (Method Spoofing).
     final endpoint = ApiEndpoints.paymentMethodDetails(id);
     try {
-      final response = await _apiClient.put(
+      final response = await _apiClient.post(
         endpoint,
         data: method.toUpdatePartialFormData(original),
       );
@@ -506,7 +508,7 @@ class FinancialRemoteDataSourceImpl implements FinancialRemoteDataSource {
         fallbackMessage: 'تم تحديث طريقة الدفع بنجاح.',
       );
     } catch (error) {
-      _fail('PUT', endpoint, error, 'تعذّر تحديث طريقة الدفع.');
+      _fail('POST', endpoint, error, 'تعذّر تحديث طريقة الدفع.');
     }
   }
 

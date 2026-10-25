@@ -5,7 +5,6 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/permissions/authorization_service.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../../../core/widgets/admin_ui.dart';
-import '../../../../core/widgets/remote_image.dart';
 import '../../data/models/payment_method_model.dart';
 import '../../logic/cubit/financial_cubit.dart';
 import '../../logic/state/financial_state.dart';
@@ -311,6 +310,9 @@ class _PaymentMethodsView extends StatelessWidget {
   }
 
   Widget _buildIconCell(BuildContext context, PaymentMethodModel item) {
+    final iconUrl = item.iconUrl?.trim();
+    final hasIcon = iconUrl != null && iconUrl.isNotEmpty;
+
     return Container(
       width: 40,
       height: 40,
@@ -320,12 +322,31 @@ class _PaymentMethodsView extends StatelessWidget {
         border: Border.all(color: context.borderSoft),
       ),
       clipBehavior: Clip.antiAlias,
-      child: (item.iconUrl != null && item.iconUrl!.isNotEmpty)
-          ? RemoteImage(
-              rawUrl: item.iconUrl,
+      child: hasIcon
+          ? Image.network(
+              iconUrl,
               fit: BoxFit.cover,
-              fallback: Icon(Icons.image_outlined,
-                  size: 20, color: context.textMuted),
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.image_outlined,
+                size: 20,
+                color: context.textMuted,
+              ),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                );
+              },
             )
           : Icon(Icons.image_outlined, size: 20, color: context.textMuted),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/admin_theme_context.dart';
+import '../../data/utils/ai_alerts_translator.dart';
 
 /// شارة مستوى الخطورة: تعتمد على `alert_type` (متوفر دوماً بالقائمة
 /// والتفاصيل) وليس على `severity` (قد تغيب في استجابة التفاصيل).
@@ -22,11 +23,7 @@ class AiAlertSeverityBadge extends StatelessWidget {
     final border = isCritical ? context.dangerBorder : context.warningBorder;
     final icon = isCritical ? Icons.dangerous_rounded : Icons.warning_amber_rounded;
 
-    final label = switch (riskLevel.toUpperCase()) {
-      'CRITICAL' => 'خطر حرج',
-      'HIGH' => 'خطر مرتفع',
-      _ => riskLevel,
-    };
+    final label = AiAlertsTranslator.translateRiskLevel(riskLevel, isCritical: isCritical);
 
     return Container(
       padding: EdgeInsets.symmetric(

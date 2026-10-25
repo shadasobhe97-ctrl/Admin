@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/json_parsers.dart';
 import '../../../../core/utils/admin_theme_context.dart';
 import '../../data/models/ai_alert_model.dart';
+import '../../data/utils/ai_alerts_translator.dart';
 import '../../logic/cubit/ai_alerts_cubit.dart';
 import 'ai_alert_severity_badge.dart';
 import 'ai_explainability_modal.dart';
@@ -48,7 +49,7 @@ class AiAlertCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    alert.title.isNotEmpty ? alert.title : 'تنبيه ذكاء اصطناعي',
+                    AiAlertsTranslator.translateTitle(alert.title),
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
@@ -69,7 +70,7 @@ class AiAlertCard extends StatelessWidget {
             if (alert.message.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                alert.message,
+                AiAlertsTranslator.cleanCommentText(alert.message),
                 style: TextStyle(fontSize: 12.5, color: context.textSecondary),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

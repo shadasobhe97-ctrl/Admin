@@ -59,6 +59,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
+        stats: state.stats ?? DashboardStatsModel.empty(),
         errorMessage: e.toString().replaceAll('Exception: ', ''),
       ));
       // تفعيل الـ Fallback في حالة الفشل

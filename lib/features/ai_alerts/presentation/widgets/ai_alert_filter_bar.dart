@@ -161,7 +161,7 @@ class FullWidthSearchBar extends StatelessWidget {
         style: TextStyle(fontSize: 13, color: context.textPrimary),
         decoration: InputDecoration(
           isDense: true,
-          hintText: 'ابحث برقم السائق (driver_id) أو الملاحظات والتنبيهات...',
+          hintText: 'ابحث برقم معرّف السائق أو الملاحظات والتنبيهات...',
           hintStyle: TextStyle(fontSize: 12.5, color: context.textMuted),
           prefixIcon: Icon(Icons.search_rounded, size: 19, color: context.primaryColor),
           suffixIcon: hasActiveQuery || controller.text.isNotEmpty

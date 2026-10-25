@@ -60,11 +60,15 @@ void showWebDesktopNotificationImpl({
       (function() {
         try {
           if (window.Notification && Notification.permission === 'granted') {
-            new Notification('$safeTitle', {
+            var notif = new Notification('$safeTitle', {
               body: '$safeBody',
               icon: '/favicon.png',
               tag: 'darby_notif_' + Date.now()
             });
+            notif.onclick = function() {
+              window.focus();
+              this.close();
+            };
           }
         } catch(e){}
       })();

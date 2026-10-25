@@ -83,27 +83,22 @@ class PaymentMethodModel {
     return FormData.fromMap(map);
   }
 
-  /// FormData لعملية التعديل (PUT) — Partial Update.
-  /// يُرسَل فقط ما تغيّر عن [original]. الصورة تُرسَل فقط عند اختيار صورة جديدة.
-  /// `is_active` لا يُرسَل إطلاقاً هنا.
-  FormData toUpdatePartialFormData(PaymentMethodModel original) {
-    final map = <String, dynamic>{};
+  /// FormData لعملية التعديل عبر POST مع `_method=PUT` (Method Spoofing).
+  /// Laravel لا يقبل multipart/form-data عبر PUT الأصلي، لذا نستخدم POST
+  /// مع حقل `_method=PUT` حتى يُعامَل كـ PUT داخل Laravel.
+  /// الصورة تُرسَل فقط عند اختيار صورة جديدة في حقل `icon`.
+  FormData toUpdatePartialFormData([PaymentMethodModel? original]) {
+    final map = <String, dynamic>{
+      // Method Spoofing: Laravel يحتاج هذا لقبول multipart عبر PUT
+      '_method': 'PUT',
+      'name_ar': nameAr.trim(),
+      'code': code.trim(),
+      'sort_order': sortOrder,
+    };
 
-    if (nameAr.trim() != original.nameAr.trim()) {
-      map['name_ar'] = nameAr.trim();
-    }
-    if (code.trim() != original.code.trim()) {
-      map['code'] = code.trim();
-    }
-    if (minAmount != original.minAmount) {
-      if (minAmount != null) map['min_amount'] = minAmount;
-    }
-    if (maxAmount != original.maxAmount) {
-      if (maxAmount != null) map['max_amount'] = maxAmount;
-    }
-    if (sortOrder != original.sortOrder) {
-      map['sort_order'] = sortOrder;
-    }
+    if (minAmount != null) map['min_amount'] = minAmount;
+    if (maxAmount != null) map['max_amount'] = maxAmount;
+
     if (iconBytes != null && iconBytes!.isNotEmpty) {
       map['icon'] = MultipartFile.fromBytes(
         iconBytes!,

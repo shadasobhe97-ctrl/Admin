@@ -184,14 +184,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
         textDirection: TextDirection.rtl,
         child: BlocConsumer<DashboardCubit, DashboardState>(
           listener: (context, state) {
-            if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage!),
-                  backgroundColor: DerbiColors.dangerRose,
-                ),
-              );
-            }
             if (state.successMessage != null &&
                 state.successMessage!.isNotEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -239,7 +231,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // 2. حالة التحميل / الأخطاء / عرض الإحصائيات بكروت مصغرة وسكرول أفقي
+                    // 2. حالة التحميل / عرض الإحصائيات بكروت مصغرة وسكرول أفقي
                     if (state.isLoading && state.stats == null)
                       const SizedBox(
                         height: 120,
@@ -248,10 +240,9 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               color: AdminColors.brandPrimary),
                         ),
                       )
-                    else if (state.errorMessage != null && state.stats == null)
-                      _buildErrorBox(context, state.errorMessage!)
-                    else if (state.stats != null)
-                      _buildHorizontalStatsList(context, state.stats!),
+                    else
+                      _buildHorizontalStatsList(
+                          context, state.stats ?? DashboardStatsModel.empty()),
 
                     const SizedBox(height: 32),
                     Text(
@@ -385,36 +376,6 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
               style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
-    );
-  }
-
-  Widget _buildErrorBox(BuildContext context, String message) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AdminColors.dangerBgLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AdminColors.dangerBorderLight),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: AdminColors.red),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(color: AdminColors.red, fontSize: 13),
-            ),
-          ),
-          TextButton(
-            onPressed: () =>
-                context.read<DashboardCubit>().fetchDashboardData(),
-            child: const Text('إعادة المحاولة',
-                style: TextStyle(color: AdminColors.brandPrimary)),
-          ),
-        ],
-      ),
     );
   }
 

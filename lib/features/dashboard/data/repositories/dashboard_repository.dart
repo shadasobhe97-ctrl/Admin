@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../models/dashboard_stats_model.dart';
 import '../models/active_trip_model.dart';
 import '../models/trip_emergency_detail_model.dart';
@@ -23,31 +24,7 @@ class DashboardRepository {
   }
 
   String _extractErrorMessage(dynamic error, String defaultMsg) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
-          final firstVal = (data['errors'] as Map).values.first;
-          if (firstVal is List && firstVal.isNotEmpty) {
-            return firstVal.first.toString();
-          }
-          return firstVal.toString();
-        }
-        if (data['message'] != null && data['message'].toString().isNotEmpty) {
-          return data['message'].toString();
-        }
-      }
-      if (error.response?.statusCode == 401) {
-        return 'غير مصرح للوصول (401 Unauthorized)، يرجى إعادة تسجيل الدخول.';
-      }
-      if (error.response?.statusCode == 403) {
-        return 'ليس لديك صلاحية الوصول لوظائف لوحة التحكم (403 Forbidden).';
-      }
-      if (error.response?.statusCode == 500) {
-        return 'حدث خطأ غير متوقع في الخادم (500 Server Error).';
-      }
-    }
-    return error.toString().replaceAll('Exception: ', '');
+    return ApiErrorMapper.map(error, fallbackMessage: defaultMsg).message;
   }
 
   /// GET /api/admin/dashboard/stats

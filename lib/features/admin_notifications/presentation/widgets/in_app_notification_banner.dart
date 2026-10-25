@@ -32,15 +32,18 @@ class InAppNotificationBanner {
       _stackOverlayEntry = OverlayEntry(
         builder: (_) => Directionality(
           textDirection: TextDirection.rtl,
-          child: _NotificationStack(
-            notifier: _notifier,
-            queue: _queue,
-            onDismiss: (id) => _dismiss(id),
-            onHideAll: () => hideAll(),
-            onTapItem: (item) {
-              _dismiss(item.id);
-              item.onTap?.call();
-            },
+          child: Material(
+            type: MaterialType.transparency,
+            child: _NotificationStack(
+              notifier: _notifier,
+              queue: _queue,
+              onDismiss: (id) => _dismiss(id),
+              onHideAll: () => hideAll(),
+              onTapItem: (item) {
+                _dismiss(item.id);
+                item.onTap?.call();
+              },
+            ),
           ),
         ),
       );
@@ -194,30 +197,33 @@ class _NotificationStackState extends State<_NotificationStack> {
                             ],
                           ),
                         ),
-                        InkWell(
-                          onTap: widget.onHideAll,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.clear_all_rounded,
-                                  size: 14,
-                                  color: context.textTertiary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'مسح الكل',
-                                  style: TextStyle(
-                                    fontSize: 11,
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: widget.onHideAll,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.clear_all_rounded,
+                                    size: 14,
                                     color: context.textTertiary,
-                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'مسح الكل',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: context.textTertiary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
