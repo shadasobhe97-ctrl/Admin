@@ -1370,6 +1370,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                     const SizedBox(height: 6),
                     Text(
                       item.originalDriver.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1397,6 +1399,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                   children: [
                     Text(
                       'السبب: ${item.reason}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1425,6 +1429,8 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                       item.hasSubstituteDriver
                           ? 'بديل: ${item.substituteDriver!.name}'
                           : 'لم يُكلف بديل بعد',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -1648,28 +1654,32 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                               ),
                               if (trip.status.isNotEmpty) ...[
                                 const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: trip.isBreakdown
-                                        ? AdminColors.statusDanger.withValues(alpha: 0.12)
-                                        : AdminColors.statusSuccess.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
                                       color: trip.isBreakdown
-                                          ? AdminColors.statusDanger.withValues(alpha: 0.3)
-                                          : AdminColors.statusSuccess.withValues(alpha: 0.3),
+                                          ? AdminColors.statusDanger.withValues(alpha: 0.12)
+                                          : AdminColors.statusSuccess.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: trip.isBreakdown
+                                            ? AdminColors.statusDanger.withValues(alpha: 0.3)
+                                            : AdminColors.statusSuccess.withValues(alpha: 0.3),
+                                      ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    trip.cleanStatus,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: trip.isBreakdown
-                                          ? AdminColors.statusDanger
-                                          : AdminColors.statusSuccess,
+                                    child: Text(
+                                      trip.isBreakdown ? 'عطل طارئ' : trip.cleanStatus,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: trip.isBreakdown
+                                            ? AdminColors.statusDanger
+                                            : AdminColors.statusSuccess,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1823,7 +1833,7 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
             children: [
               // 1. جهة اليمين: الأفاتار + اسم السائق والشارة + معرف السائق ووقت الانطلاق والمنطقة
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: Row(
                   children: [
                     RemoteCircleAvatar(
@@ -1857,37 +1867,56 @@ class _DashboardOverviewContentState extends State<_DashboardOverviewContent> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AdminColors.successFgLight
+                                  color: (trip.isBreakdown
+                                          ? AdminColors.statusDanger
+                                          : AdminColors.successFgLight)
                                       .withValues(alpha: isDark ? 0.3 : 0.15),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                      color: AdminColors.statusSuccess
+                                      color: (trip.isBreakdown
+                                              ? AdminColors.statusDanger
+                                              : AdminColors.statusSuccess)
                                           .withValues(alpha: 0.4)),
                                 ),
                                 child: Text(
                                   'رحلة #${trip.tripId}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: AdminColors.statusSuccess,
+                                    color: trip.isBreakdown
+                                        ? AdminColors.statusDanger
+                                        : AdminColors.statusSuccess,
                                   ),
                                 ),
                               ),
                               if (trip.status.isNotEmpty) ...[
                                 const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: context.primaryColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    trip.status,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: context.primaryColor,
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: trip.isBreakdown
+                                          ? AdminColors.statusDanger.withValues(alpha: 0.12)
+                                          : context.primaryColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: trip.isBreakdown
+                                            ? AdminColors.statusDanger.withValues(alpha: 0.3)
+                                            : context.primaryColor.withValues(alpha: 0.25),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      trip.isBreakdown ? 'عطل طارئ' : trip.status,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: trip.isBreakdown
+                                            ? AdminColors.statusDanger
+                                            : context.primaryColor,
+                                      ),
                                     ),
                                   ),
                                 ),
