@@ -30,16 +30,21 @@ class TripPassenger {
   });
 
   bool get isOnBoard => status == 'on_board' || status == 'راكب';
-  bool get isPending => status == 'pending' || status == 'ينتظر';
+  bool get isPending => status == 'pending' || status == 'ينتظر' || status == 'waiting_pickup';
   bool get isDelivered => status == 'delivered' || status == 'وصل';
   bool get isAbsent => status == 'absent' || status == 'غائب';
+  bool get isStranded => status == 'stranded_in_broken_bus';
 
   String get displayStatus {
     if (statusLabel != null && statusLabel!.trim().isNotEmpty) {
+      // إزالة الإيموجيات للحفاظ على البساطة المطلقة
+      final stripped = statusLabel!.replaceAll(RegExp(r'[^\u0600-\u06FF\s\(\)\-]'), '').trim();
+      if (stripped.isNotEmpty) return stripped;
       return statusLabel!.trim();
     }
+    if (isStranded) return 'داخل الحافلة المعطلة (بانتظار وصول البديل)';
     if (isOnBoard) return 'على متن الحافلة (مع السائق)';
-    if (isDelivered) return 'تم التوصيل بنجاح';
+    if (isDelivered) return 'تم التوصيل';
     if (isAbsent) return 'غائب';
     return 'بانتظار الاستلام (لم يُصعد بعد)';
   }
@@ -86,6 +91,11 @@ class ActiveTripModel {
   final String duration;
   final String childrenSummary;
 
+  // Emergency & Status Key fields
+  final String statusKey;
+  final bool isEmergency;
+  final Map<String, dynamic>? emergencyDetails;
+
   ActiveTripModel({
     required this.tripId,
     required this.driverId,
@@ -120,6 +130,9 @@ class ActiveTripModel {
     this.region = '',
     this.duration = '',
     this.childrenSummary = '',
+    this.statusKey = '',
+    this.isEmergency = false,
+    this.emergencyDetails,
   });
 
   String get id => tripId.toString();
@@ -128,6 +141,36 @@ class ActiveTripModel {
   bool get isSignalWeak {
     if (updatedAt == null) return false;
     return DateTime.now().difference(updatedAt!).inMinutes >= 2;
+  }
+
+  /// هل الرحلة معطلة وبها حالة طوارئ؟
+  bool get isBreakdown =>
+      statusKey == 'suspended_breakdown' ||
+      isEmergency ||
+      status.contains('عطل');
+
+  /// هل الرحلة نشطة وطبيعية في الطريق؟
+  bool get isInProgress =>
+      statusKey == 'in_progress' ||
+      (!isBreakdown && statusKey != 'suspended_breakdown');
+
+  /// معرف بلاغ الطوارئ المرتبط إن وجد
+  int? get emergencyDispatchId => emergencyDetails?['dispatch_id'] != null
+      ? int.tryParse(emergencyDetails!['dispatch_id'].toString())
+      : null;
+
+  /// حالة بلاغ الطوارئ المرتبط
+  String? get emergencyDispatchStatus =>
+      emergencyDetails?['dispatch_status']?.toString();
+
+  /// نص الحالة النقي والمباشر بدون إيموجيات مشوشة
+  String get cleanStatus {
+    if (isBreakdown) {
+      final stripped = status.replaceAll(RegExp(r'[^\u0600-\u06FF0-9\s\:\-]'), '').trim();
+      return stripped.isNotEmpty ? stripped : 'عطل طارئ: توقف الحافلة';
+    }
+    final stripped = status.replaceAll(RegExp(r'[^\u0600-\u06FF0-9\s\:\-]'), '').trim();
+    return stripped.isNotEmpty ? stripped : 'في الطريق للاستلام';
   }
 
   ActiveTripModel copyWith({
@@ -164,6 +207,9 @@ class ActiveTripModel {
     String? region,
     String? duration,
     String? childrenSummary,
+    String? statusKey,
+    bool? isEmergency,
+    Map<String, dynamic>? emergencyDetails,
   }) {
     return ActiveTripModel(
       tripId: tripId ?? this.tripId,
@@ -199,6 +245,9 @@ class ActiveTripModel {
       region: region ?? this.region,
       duration: duration ?? this.duration,
       childrenSummary: childrenSummary ?? this.childrenSummary,
+      statusKey: statusKey ?? this.statusKey,
+      isEmergency: isEmergency ?? this.isEmergency,
+      emergencyDetails: emergencyDetails ?? this.emergencyDetails,
     );
   }
 
@@ -217,6 +266,7 @@ class ActiveTripModel {
   int get absentStudentsCount => absentCount > 0
       ? absentCount
       : passengers.where((p) => p.isAbsent).length;
+
 
   factory ActiveTripModel.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic val) {
@@ -266,6 +316,10 @@ class ActiveTripModel {
         case 'غائب':
         case 'cancelled':
           return 'absent';
+        case 'stranded_in_broken_bus':
+          return 'stranded_in_broken_bus';
+        case 'waiting_pickup':
+          return 'waiting_pickup';
         case 'pending':
         case 'ينتظر':
         case 'waiting':
@@ -509,11 +563,30 @@ class ActiveTripModel {
     final duration = pickStr(json, ['duration', 'time_elapsed', 'timeElapsed']);
     final childrenSummary = json['children'] is String ? json['children'].toString().trim() : '';
 
+    final rawStatusKey = pickStr(json, ['status_key', 'statusKey']);
+    final rawStatusStr = json['status']?.toString() ?? 'in_progress';
+    final isEmergency = json['is_emergency'] == true ||
+        json['is_emergency']?.toString() == '1' ||
+        json['is_emergency']?.toString() == 'true' ||
+        rawStatusKey == 'suspended_breakdown' ||
+        rawStatusStr.contains('عطل');
+
+    final resolvedStatusKey = rawStatusKey.isNotEmpty
+        ? rawStatusKey
+        : (isEmergency ? 'suspended_breakdown' : 'in_progress');
+
+    Map<String, dynamic>? emergencyDetails;
+    if (json['emergency_details'] is Map) {
+      emergencyDetails = Map<String, dynamic>.from(json['emergency_details']);
+    } else if (json['emergencyDetails'] is Map) {
+      emergencyDetails = Map<String, dynamic>.from(json['emergencyDetails']);
+    }
+
     return ActiveTripModel(
       tripId: parseInt(json['trip_id'] ?? json['id']),
       driverId: parseInt(json['driver_id'] ?? json['driverId'] ?? driver?['id']),
       driverName: driverName,
-      status: json['status']?.toString() ?? 'in_progress',
+      status: rawStatusStr,
       currentLat: parseDouble(json['current_lat'] ?? json['currentLat'] ?? json['lat'] ?? json['driver_lat']),
       currentLng: parseDouble(json['current_lng'] ?? json['currentLng'] ?? json['lng'] ?? json['driver_lng']),
       studentsCount: studentsCount,
@@ -543,6 +616,9 @@ class ActiveTripModel {
       region: region,
       duration: duration,
       childrenSummary: childrenSummary,
+      statusKey: resolvedStatusKey,
+      isEmergency: isEmergency,
+      emergencyDetails: emergencyDetails,
     );
   }
 }

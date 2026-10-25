@@ -53,39 +53,9 @@ class DriverChangeComparisonWidget extends StatelessWidget {
     required this.proposedData,
   });
 
-  /// جدول عقود الباك إند الصريح والشامل لكافة حقول ومفتاح المخرجات (Old Values vs New Values).
+  /// جدول عقود الباك إند الصريح والمطابق حصراً لنوعي التعديل (المركبة + الوثائق والبيانات القانونية).
   static const List<_FieldContractSpec> _allContractSpecs = [
-    // 1. البيانات الشخصية
-    _FieldContractSpec(
-      canonicalKey: 'full_name',
-      arabicLabel: 'الاسم الكامل',
-      oldKeys: ['full_name', 'name', 'driver_name'],
-      newKeys: ['full_name', 'name', 'driver_name'],
-      type: _ChangeFieldType.text,
-    ),
-    _FieldContractSpec(
-      canonicalKey: 'phone_number',
-      arabicLabel: 'رقم الهاتف الأساسي',
-      oldKeys: ['phone_number', 'phone', 'driver_phone'],
-      newKeys: ['phone_number', 'phone', 'driver_phone'],
-      type: _ChangeFieldType.text,
-    ),
-    _FieldContractSpec(
-      canonicalKey: 'alternative_phone',
-      arabicLabel: 'رقم الهاتف الاحتياطي',
-      oldKeys: ['alternative_phone', 'alt_phone', 'second_phone'],
-      newKeys: ['alternative_phone', 'alt_phone', 'second_phone'],
-      type: _ChangeFieldType.text,
-    ),
-    _FieldContractSpec(
-      canonicalKey: 'avatar',
-      arabicLabel: 'الصورة الشخصية للسائق',
-      oldKeys: ['avatar_url', 'avatar', 'profile_photo', 'photo'],
-      newKeys: ['avatar_url', 'avatar', 'profile_photo', 'photo'],
-      type: _ChangeFieldType.image,
-    ),
-
-    // 2. بيانات وتفاصيل المركبة
+    // 1. بيانات وتفاصيل المركبة
     _FieldContractSpec(
       canonicalKey: 'plate_number',
       arabicLabel: 'رقم اللوحة',
@@ -150,7 +120,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
       type: _ChangeFieldType.image,
     ),
 
-    // 3. البيانات القانونية والوثائق الرسمية والمستندات
+    // 2. البيانات القانونية والوثائق الرسمية والمستندات (وفق تحديث الباك إند)
     _FieldContractSpec(
       canonicalKey: 'national_id',
       arabicLabel: 'الرقم الوطني',
@@ -174,44 +144,44 @@ class DriverChangeComparisonWidget extends StatelessWidget {
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_license',
-      arabicLabel: 'ملف صورة رخصة القيادة',
-      oldKeys: ['doc_license_path', 'doc_license', 'license_photo'],
-      newKeys: ['doc_license_path', 'doc_license', 'license_photo'],
+      arabicLabel: 'صورة رخصة القيادة',
+      oldKeys: ['doc_license_path', 'doc_license', 'license_photo', 'license_image_url'],
+      newKeys: ['doc_license_path', 'doc_license', 'license_photo', 'license_image_url'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_logbook',
-      arabicLabel: 'ملف صورة كتيب المركبة',
+      arabicLabel: 'صورة كتيب المركبة',
       oldKeys: ['doc_logbook_path', 'doc_logbook', 'logbook_photo'],
       newKeys: ['doc_logbook_path', 'doc_logbook', 'logbook_photo'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_insurance',
-      arabicLabel: 'ملف وثيقة التأمين',
+      arabicLabel: 'صورة وثيقة التأمين',
       oldKeys: ['doc_insurance_path', 'doc_insurance', 'insurance_photo'],
       newKeys: ['doc_insurance_path', 'doc_insurance', 'insurance_photo'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_booklet_page',
-      arabicLabel: 'ملف الصفحة الشخصية بالكتيب',
+      arabicLabel: 'صورة الصفحة الشخصية بالكتيب',
       oldKeys: ['doc_booklet_page_path', 'doc_booklet_page'],
       newKeys: ['doc_booklet_page_path', 'doc_booklet_page'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_stamp',
-      arabicLabel: 'ملف طابع ورسوم المركبة',
-      oldKeys: ['doc_stamp_path', 'doc_stamp'],
-      newKeys: ['doc_stamp_path', 'doc_stamp'],
+      arabicLabel: 'صورة الدمغ',
+      oldKeys: ['doc_stamp_path', 'doc_stamp', 'stamp_photo'],
+      newKeys: ['doc_stamp_path', 'doc_stamp', 'stamp_photo'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
       canonicalKey: 'doc_technical_inspection',
-      arabicLabel: 'ملف شهادة الفحص الفني',
-      oldKeys: ['doc_technical_inspection_path', 'doc_technical_inspection'],
-      newKeys: ['doc_technical_inspection_path', 'doc_technical_inspection'],
+      arabicLabel: 'صورة الفحص الفني',
+      oldKeys: ['doc_technical_inspection_path', 'doc_technical_inspection', 'inspection_photo'],
+      newKeys: ['doc_technical_inspection_path', 'doc_technical_inspection', 'inspection_photo'],
       type: _ChangeFieldType.image,
     ),
     _FieldContractSpec(
@@ -223,7 +193,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
     ),
     _FieldContractSpec(
       canonicalKey: 'stamp_expiry',
-      arabicLabel: 'تاريخ انتهاء الطابع',
+      arabicLabel: 'تاريخ انتهاء الدمغ',
       oldKeys: ['stamp_expiry', 'stamp_expiry_date'],
       newKeys: ['stamp_expiry', 'stamp_expiry_date'],
       type: _ChangeFieldType.date,
@@ -237,7 +207,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
     ),
   ];
 
-  /// تفكيك الكائنات المتداخلة في الـ JSON وإخراج المفاتيح المسطّحة بأمان.
+  /// تفكيك الكائنات المتداخلة في الـ JSON وإخراج المفاتيح المسطّحة بأمان ومباشرة.
   Map<String, dynamic> _flattenMap(Map<String, dynamic> input, [String prefix = '']) {
     final result = <String, dynamic>{};
     input.forEach((key, val) {
@@ -245,6 +215,12 @@ class DriverChangeComparisonWidget extends StatelessWidget {
       final newKey = prefix.isEmpty ? key : '${prefix}_$key';
       if (val is Map<String, dynamic>) {
         result.addAll(_flattenMap(val, newKey));
+        // إتاحة الحقول الداخلية بدون بادئة للوصول الفوري
+        val.forEach((subK, subV) {
+          if (subV != null && subV is! Map && subV is! List) {
+            result.putIfAbsent(subK, () => subV);
+          }
+        });
       } else if (val is List && val.isNotEmpty && val.first is Map<String, dynamic>) {
         for (int i = 0; i < val.length; i++) {
           if (val[i] is Map<String, dynamic>) {
@@ -253,6 +229,7 @@ class DriverChangeComparisonWidget extends StatelessWidget {
         }
       } else {
         result[newKey] = val;
+        result.putIfAbsent(key, () => val);
       }
     });
     return result;
@@ -310,18 +287,47 @@ class DriverChangeComparisonWidget extends StatelessWidget {
       }
     }
 
-    // 2. كبديل احتياطي (Fallback): إضافة أي حقول إضافية غير معروفة وُجدت في flatProposed ولم تُطابق العقد
+    // 2. كبديل احتياطي (Fallback): إضافة أي حقول إضافية وُجدت في flatProposed وتخص المستندات أو المركبة ولم تُطابق العقد صراحة
+    const ignoredFallbackKeys = {
+      'id',
+      'driver_id',
+      'vehicle_id',
+      'status',
+      'created_at',
+      'updated_at',
+      'submitted_at',
+      'change_id',
+      'request_id',
+      'rejection_reason',
+      'change_type',
+      'driver_name',
+      'driver_phone',
+      'driver',
+      'full_name',
+      'phone_number',
+      'alternative_phone',
+      'avatar_url',
+      'avatar',
+      'documents',
+      'vehicle',
+      'user_id',
+    };
+
     flatProposed.forEach((key, newVal) {
       if (newVal == null) return;
       final valStr = newVal.toString().trim();
       if (valStr.isEmpty || valStr == 'null') return;
-      if (matchedKeysInProposed.contains(key.toLowerCase())) return;
+      final k = key.toLowerCase();
+      if (ignoredFallbackKeys.contains(k) ||
+          ignoredFallbackKeys.any((ign) => k == ign || k.startsWith('${ign}_'))) {
+        return;
+      }
+      if (matchedKeysInProposed.contains(k)) return;
 
       final oldVal = flatCurrent[key];
       _ChangeFieldType type = _ChangeFieldType.text;
 
-      final k = key.toLowerCase();
-      if (k.contains('image') || k.contains('photo') || k.contains('avatar') || k.startsWith('doc_')) {
+      if (k.contains('image') || k.contains('photo') || k.startsWith('doc_')) {
         type = _ChangeFieldType.image;
       } else if (k.contains('expiry') || k.contains('date')) {
         type = _ChangeFieldType.date;

@@ -110,8 +110,6 @@ class DriverDocumentModel {
         return 'إذن/تصريح التشغيل';
       case 'NATIONAL_ID':
         return 'الرقم الوطني / الهوية';
-      case 'BACKGROUND_CHECK':
-        return 'شهادة الحالة الجنائية';
       default:
         return docType;
     }

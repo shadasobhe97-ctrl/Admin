@@ -231,11 +231,20 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                       separatorBuilder: (_, __) => Divider(color: context.borderSoft, height: 20),
                       itemBuilder: (ctx, i) {
                         final trip = _activeTrips[i] as Map<String, dynamic>;
+                        final rawStatus = trip['status_key']?.toString() ?? trip['status']?.toString() ?? '';
+                        final isBreakdown = rawStatus == 'suspended_breakdown' ||
+                            trip['is_emergency'] == true ||
+                            (trip['status']?.toString() ?? '').contains('عطل');
+                        final statusColor = isBreakdown ? DerbiColors.dangerRose : context.successColor;
                         return Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: context.successColor.withValues(alpha: 0.15),
-                              child: Icon(Icons.local_shipping_rounded, color: context.successColor, size: 18),
+                              backgroundColor: statusColor.withValues(alpha: 0.15),
+                              child: Icon(
+                                isBreakdown ? Icons.warning_amber_rounded : Icons.directions_bus_rounded,
+                                color: statusColor,
+                                size: 18,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -248,7 +257,7 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'رحلة #${trip['trip_id']} • بدأت ${trip['started_at'] ?? ''} • ${trip['students_count'] ?? 0} طالب',
+                                    'رحلة #${trip['trip_id']} • ${trip['students_count'] ?? 0} طالب',
                                     style: TextStyle(color: context.textMuted, fontSize: 11),
                                   ),
                                 ],
@@ -257,12 +266,13 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: context.successColor.withValues(alpha: 0.12),
+                                color: statusColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: statusColor.withValues(alpha: 0.25)),
                               ),
                               child: Text(
-                                _tripStatusLabel(trip['status']),
-                                style: TextStyle(color: context.successColor, fontSize: 10, fontWeight: FontWeight.bold),
+                                _tripStatusLabel(rawStatus),
+                                style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -288,15 +298,23 @@ class _LiveTrackingDashboardViewState extends State<LiveTrackingDashboardView> {
   }
 
   String _tripStatusLabel(dynamic status) {
-    switch (status) {
+    switch (status?.toString().trim()) {
       case 'in_progress':
         return 'قيد التنفيذ';
+      case 'suspended_breakdown':
+        return 'عطل طارئ: توقف الحافلة';
       case 'completed':
         return 'مكتملة';
       case 'pending':
         return 'بالانتظار';
+      case 'cancelled':
+        return 'ملغاة';
+      case '':
+      case null:
+        return 'غير معروف';
       default:
-        return status?.toString() ?? 'غير معروف';
+        // يرجع النص العربي مباشرة إن كان من الباك-إند
+        return status.toString();
     }
   }
 }

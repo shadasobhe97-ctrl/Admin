@@ -79,9 +79,13 @@ class DriverChangeDetailsModel {
 
     // 1. استخراج البيانات المقترحة الجديدة (Proposed / New Values) أولاً
     Map<String, dynamic> proposedMap = {};
-    final proposedRaw = pick(['new_values', 'proposed_data', 'proposed', 'new_data', 'changes', 'pending_changes']);
-    if (proposedRaw is Map<String, dynamic>) {
+    final proposedRaw = pick(['new_values', 'new_data', 'proposed_data', 'proposed', 'changes', 'pending_changes']);
+    final requestedNewRaw = pick(['requested_new_data']);
+
+    if (proposedRaw is Map<String, dynamic> && proposedRaw.isNotEmpty) {
       proposedMap = Map<String, dynamic>.from(proposedRaw);
+    } else if (requestedNewRaw is Map<String, dynamic> && requestedNewRaw.isNotEmpty) {
+      proposedMap = Map<String, dynamic>.from(requestedNewRaw);
     } else if (json['data'] is Map<String, dynamic> && dataObj == json['data']) {
       // إذا كان json['data'] يحوي حقول التعديل مباشرة
       final dataContent = Map<String, dynamic>.from(json['data'] as Map<String, dynamic>)
@@ -101,9 +105,22 @@ class DriverChangeDetailsModel {
 
     // 2. استخراج البيانات الحالية القديمة (Current / Old Values)
     Map<String, dynamic> currentMap = {};
-    final currentRaw = pick(['old_values', 'current_data', 'current', 'old_data', 'original']);
-    if (currentRaw is Map<String, dynamic>) {
+    final currentRaw = pick(['old_values', 'old_data', 'current_data', 'current', 'original']);
+    final currentSystemRaw = pick(['current_system_data']);
+
+    if (currentRaw is Map<String, dynamic> && currentRaw.isNotEmpty) {
       currentMap = Map<String, dynamic>.from(currentRaw);
+    } else if (currentSystemRaw is Map<String, dynamic> && currentSystemRaw.isNotEmpty) {
+      currentMap = Map<String, dynamic>.from(currentSystemRaw);
+    }
+
+    // إتاحة الكائنات الهيكلية الاحتياطية لسد أي نقص في القيم الحالية
+    if (currentSystemRaw is Map<String, dynamic>) {
+      currentSystemRaw.forEach((k, v) {
+        if (!currentMap.containsKey(k)) {
+          currentMap[k] = v;
+        }
+      });
     }
 
     // 3. قراءة بيانات السائق لمنع الالتباس
@@ -133,25 +150,55 @@ class DriverChangeDetailsModel {
     );
   }
 
+  /// نوع التعديل مترجم (حصر التعديلات بالنوعين المعتمدين فقط)
   String get translatedType {
     if (changeType != null && changeType!.isNotEmpty) {
       final ct = changeType!.toLowerCase();
       if (ct.contains('vehicle') || ct == 'vehicle_update') return 'تعديل بيانات المركبة';
-      if (ct.contains('document') || ct == 'document_update' || ct.contains('doc')) return 'تحديث الوثائق الرسمية';
-      if (ct.contains('profile') || ct == 'profile_update' || ct.contains('user')) return 'تعديل بيانات الملف الشخصي';
+      if (ct.contains('document') ||
+          ct.contains('legal') ||
+          ct.contains('doc') ||
+          ct == 'document_update' ||
+          ct == 'legal_data') {
+        return 'تعديل الوثائق والبيانات القانونية';
+      }
+      if (ct.contains('profile') || ct == 'profile_update' || ct.contains('user')) {
+        return 'تعديل بيانات الملف الشخصي (ملغي)';
+      }
     }
 
     final keys = proposedData.keys.map((k) => k.toLowerCase()).toList();
-    if (keys.any((k) => k.contains('doc_') || k.contains('license') || k.contains('expiry') || k.contains('insurance') || k.contains('stamp'))) {
-      return 'تحديث الوثائق الرسمية';
+    if (keys.any((k) =>
+        k.contains('doc_') ||
+        k.contains('license') ||
+        k.contains('expiry') ||
+        k.contains('insurance') ||
+        k.contains('stamp') ||
+        k.contains('inspection') ||
+        k.contains('national_id') ||
+        k.contains('logbook'))) {
+      return 'تعديل الوثائق والبيانات القانونية';
     }
-    if (keys.any((k) => k.contains('plate') || k.contains('vehicle') || k.contains('color') || k.contains('year') || k.contains('brand') || k.contains('model'))) {
+    if (keys.any((k) =>
+        k.contains('plate') ||
+        k.contains('vehicle') ||
+        k.contains('color') ||
+        k.contains('year') ||
+        k.contains('brand') ||
+        k.contains('model') ||
+        k.contains('capacity') ||
+        k.contains('has_ac'))) {
       return 'تعديل بيانات المركبة';
     }
-    if (keys.any((k) => k.contains('name') || k.contains('phone') || k.contains('national_id') || k.contains('avatar'))) {
-      return 'تعديل بيانات الملف الشخصي';
+    if (keys.any((k) => k.contains('name') || k.contains('phone') || k.contains('avatar'))) {
+      return 'تعديل بيانات الملف الشخصي (ملغي)';
     }
 
-    return changeType ?? 'تعديل بيانات المركبة';
+    return 'تعديل الوثائق والبيانات القانونية';
+  }
+
+  /// هل هذا الطلب يتبع أحد النوعين المقبولين للعرض؟
+  bool get isSupportedChangeType {
+    return translatedType != 'تعديل بيانات الملف الشخصي (ملغي)';
   }
 }

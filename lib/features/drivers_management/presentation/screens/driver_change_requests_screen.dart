@@ -107,8 +107,11 @@ class _DriverChangeRequestsContentState
           builder: (context, state) {
             final cubit = context.read<DriversManagementCubit>();
 
+            // تصفية طلبات التعديل: استبعاد طلبات الملف الشخصي والاعتماد حصراً على (الوثائق والبيانات القانونية أو المركبة)
+            final supportedChanges = state.pendingChanges.where((c) => c.isSupportedChangeType).toList();
+
             // تصفية طلبات التعديل بناءً على نص البحث
-            final filteredChanges = state.pendingChanges.where((change) {
+            final filteredChanges = supportedChanges.where((change) {
               if (_searchQuery.trim().isEmpty) return true;
               final q = _searchQuery.trim().toLowerCase();
               final driverName = (change.driverName ?? '').toLowerCase();
@@ -146,7 +149,7 @@ class _DriverChangeRequestsContentState
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'مراجعة الطلبات المقدمة من السائقين لتحديث بيانات المركبة، الكتيب والرخصة مع مقارنة التغييرات',
+                              'مراجعة الطلبات المعلقة لتحديث بيانات المركبة، أو الوثائق والبيانات القانونية مع مقارنة التغييرات',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: context.textTertiary,
@@ -192,11 +195,11 @@ class _DriverChangeRequestsContentState
                               color: context.primaryColor),
                         ),
                       )
-                    else if (state.isPendingChangesEmpty)
+                    else if (supportedChanges.isEmpty)
                       DriverEmptyState(
                         title: 'لا توجد طلبات تعديل معلقة حالياً',
                         description:
-                            'لم يقدم أي سائق طلبات لتحديث بيانات المركبة أو الوثائق حالياً.',
+                            'لم يقدم أي سائق طلبات معلقة لتحديث بيانات المركبة أو الوثائق والبيانات القانونية حالياً.',
                         onRefresh: () => cubit.fetchPendingDriverChanges(),
                       )
                     else if (filteredChanges.isEmpty)

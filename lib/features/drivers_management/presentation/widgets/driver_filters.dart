@@ -21,8 +21,6 @@ class DriverFiltersWidget extends StatelessWidget {
       {'key': 'Approved', 'label': 'سائقون مفعّلون (Approved)'},
       {'key': 'Suspended', 'label': 'حسابات موقوفة (Suspended)'},
       {'key': 'Rejected', 'label': 'طلبات مرفوضة (Rejected)'},
-      {'key': 'Offline', 'label': 'غير متصل (Offline)'},
-      {'key': 'ON_TRIP', 'label': 'في رحلة (ON_TRIP)'},
     ];
 
     return Wrap(

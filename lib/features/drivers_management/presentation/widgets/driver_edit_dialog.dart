@@ -73,11 +73,22 @@ class _DriverEditDialogState extends State<DriverEditDialog> {
     final vehicle = widget.details?.vehicle;
     final docs = widget.details?.documents ?? const [];
 
-    /// أول تاريخ غير فارغ من نوع معيّن عبر كل الوثائق.
-    String firstDate(String? Function(DriverDocumentModel doc) pick) {
-      for (final DriverDocumentModel doc in docs) {
-        final value = pick(doc);
-        if (value != null && value.isNotEmpty) return value;
+    /// استخراج تاريخ انتهاء الوثيقة من الوثائق المحملة للسائق بدقة.
+    String findExpiryForDoc(
+      bool Function(DriverDocumentModel doc) match,
+      String? Function(DriverDocumentModel doc) specificField,
+    ) {
+      // 1. البحث في الوثيقة المطابقة عبر expiryDate (الذي يقرأ تاريخ الانتهاء العام من الخادم)
+      for (final doc in docs) {
+        if (match(doc)) {
+          final exp = doc.expiryDate;
+          if (exp != null && exp.isNotEmpty) return exp;
+        }
+      }
+      // 2. البحث عبر الحقل المخصص كبديل احتياطي
+      for (final doc in docs) {
+        final val = specificField(doc);
+        if (val != null && val.isNotEmpty) return val;
       }
       return '';
     }
@@ -101,12 +112,32 @@ class _DriverEditDialogState extends State<DriverEditDialog> {
     _capacityController =
         TextEditingController(text: vehicle?.capacity?.toString() ?? '');
 
-    _insuranceExpiryController =
-        TextEditingController(text: firstDate((doc) => doc.insuranceExpiry));
-    _stampExpiryController =
-        TextEditingController(text: firstDate((doc) => doc.stampExpiry));
+    _insuranceExpiryController = TextEditingController(
+      text: findExpiryForDoc(
+        (doc) =>
+            doc.docType.toLowerCase().contains('insurance') ||
+            doc.translatedType.contains('تأمين'),
+        (doc) => doc.insuranceExpiry,
+      ),
+    );
+    _stampExpiryController = TextEditingController(
+      text: findExpiryForDoc(
+        (doc) =>
+            doc.docType.toLowerCase().contains('stamp') ||
+            doc.docType.toLowerCase().contains('permit') ||
+            doc.translatedType.contains('دمغ') ||
+            doc.translatedType.contains('طابع'),
+        (doc) => doc.stampExpiry,
+      ),
+    );
     _technicalExpiryController = TextEditingController(
-      text: firstDate((doc) => doc.technicalInspectionExpiry),
+      text: findExpiryForDoc(
+        (doc) =>
+            doc.docType.toLowerCase().contains('inspection') ||
+            doc.docType.toLowerCase().contains('technical') ||
+            doc.translatedType.contains('فحص'),
+        (doc) => doc.technicalInspectionExpiry,
+      ),
     );
 
     _isActive = driver.isActive;
@@ -117,28 +148,60 @@ class _DriverEditDialogState extends State<DriverEditDialog> {
   /// البحث عن رابط الملف الحالي للوثيقة المطابقة لنوع الحقل من الوثائق المحملة للسائق.
   String? _findDocumentUrl(String field) {
     final docs = widget.details?.documents ?? const [];
+    final expectedLabel = DriverDocumentField.labels[field];
     final target = field.toLowerCase().replaceAll('doc_', '');
+
+    // 1. فحص صورة رخصة القيادة من كائن السائق مباشرة كأولوية موثوقة
+    if (target == 'license') {
+      final licImg = widget.driver.resolvedLicenseImage;
+      if (licImg != null && licImg.isNotEmpty) return licImg;
+    }
 
     for (final doc in docs) {
       if (doc.fileUrl.isEmpty) continue;
-      final docType = doc.docType.toLowerCase().replaceAll('doc_', '');
 
+      // 2. المطابقة بالاسم العربي المعروض في شاشة تفاصيل السائق أولاً (لأنه 100% مطابق)
+      if (expectedLabel != null && doc.translatedType == expectedLabel) {
+        return doc.fileUrl;
+      }
+
+      final docType = doc.docType.toLowerCase().replaceAll('doc_', '');
       if (docType == target) return doc.fileUrl;
 
-      if (target == 'license' && docType == 'license') return doc.fileUrl;
+      // 3. مطابقة شاملة ومرنة لكافة المسميات والمفاتيح البديلة
+      if (target == 'license' &&
+          (docType.contains('license') || doc.translatedType.contains('رخصة'))) {
+        return doc.fileUrl;
+      }
       if (target == 'logbook' &&
-          (docType == 'logbook' ||
-              docType == 'vehicle_logbook' ||
-              docType == 'vehicle_registration')) {
+          (docType.contains('logbook') || docType.contains('registration')) &&
+          !docType.contains('page') &&
+          !doc.translatedType.contains('أوصاف')) {
         return doc.fileUrl;
       }
-      if (target == 'insurance' && docType == 'insurance') return doc.fileUrl;
+      if (target == 'insurance' &&
+          (docType.contains('insurance') || doc.translatedType.contains('تأمين'))) {
+        return doc.fileUrl;
+      }
       if (target == 'booklet_page' &&
-          (docType == 'booklet_page' || docType == 'booklet_personal_page')) {
+          (docType.contains('booklet_page') ||
+              docType.contains('personal') ||
+              docType.contains('page') ||
+              doc.translatedType.contains('أوصاف') ||
+              doc.translatedType.contains('شخصية'))) {
         return doc.fileUrl;
       }
-      if (target == 'stamp' && docType == 'stamp') return doc.fileUrl;
-      if (target == 'technical_inspection' && docType == 'technical_inspection') {
+      if (target == 'stamp' &&
+          (docType.contains('stamp') ||
+              docType.contains('permit') ||
+              doc.translatedType.contains('دمغ') ||
+              doc.translatedType.contains('طابع'))) {
+        return doc.fileUrl;
+      }
+      if (target == 'technical_inspection' &&
+          (docType.contains('inspection') ||
+              docType.contains('technical') ||
+              doc.translatedType.contains('فحص'))) {
         return doc.fileUrl;
       }
     }

@@ -35,6 +35,14 @@ class ApiEndpoints {
   static const String activeTrips = '/admin/dashboard/active-trips';
   static const String generateDailyTrips = '/admin/trips/generate-daily';
 
+  // ── 1.1 Trips Emergencies (360 Radar & Operations) ────────────────────────
+  static const String emergenciesList = '/admin/trips/emergencies';
+  static String emergencyDetails(dynamic id) => '/admin/trips/emergencies/$id';
+  static String assignSubstituteDriver(dynamic dispatchId) =>
+      '/admin/trips/emergencies/$dispatchId/assign-substitute';
+  static String resolveEmergency(dynamic dispatchId) =>
+      '/admin/trips/emergencies/$dispatchId/resolve';
+
   // ── 2. Drivers ──────────────────────────────────────────────────────────────
   static const String drivers = '/admin/drivers';
   static String driverDetails(dynamic id) => '/admin/drivers/$id';

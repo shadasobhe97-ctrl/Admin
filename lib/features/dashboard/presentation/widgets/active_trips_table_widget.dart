@@ -103,11 +103,11 @@ class ActiveDriverCard extends StatelessWidget {
               // العدادات الثلاثية
               Row(
                 children: [
-                  Expanded(child: _buildStatusBadge('🚖 راكب معاه', '${trip.ridingCount} أطفال', context.successBg, context.successBorder, context.successColor)),
+                  Expanded(child: _buildStatusBadge('على المتن', '${trip.ridingCount}', context.successBg, context.successBorder, context.successColor)),
                   const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('⏳ ينتظر', '${trip.waitingCount} أطفال', context.warningBg, context.warningBorder, context.warningColor)),
+                  Expanded(child: _buildStatusBadge('بانتظار الاستلام', '${trip.waitingCount}', context.warningBg, context.warningBorder, context.warningColor)),
                   const SizedBox(width: 6),
-                  Expanded(child: _buildStatusBadge('✅ وصل', '${trip.arrivedCount} أطفال', context.infoBg, context.infoBorder, context.infoColor)),
+                  Expanded(child: _buildStatusBadge('تم التوصيل', '${trip.arrivedCount}', context.infoBg, context.infoBorder, context.infoColor)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -115,7 +115,7 @@ class ActiveDriverCard extends StatelessWidget {
               // زر الفحص
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: onTapInspect,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.primaryColor,
@@ -124,8 +124,7 @@ class ActiveDriverCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
-                  icon: const Icon(Icons.auto_awesome, size: 14, color: AdminColors.onBrand),
-                  label: const Text('عرض ركاب الرحلة الذكية', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: const Text('عرض ركاب الرحلة', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

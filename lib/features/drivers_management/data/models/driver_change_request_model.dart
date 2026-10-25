@@ -67,13 +67,13 @@ class DriverChangeRequestModel {
     final finalDriverId = rawDriverId != 0 ? rawDriverId : rawId;
 
     Map<String, dynamic> oldMap = {};
-    final oldRaw = pick(['old_values', 'current_data', 'current', 'old_data']);
+    final oldRaw = pick(['old_values', 'current_system_data', 'current_data', 'current', 'old_data']);
     if (oldRaw is Map<String, dynamic>) {
       oldMap = oldRaw;
     }
 
     Map<String, dynamic> newMap = {};
-    final newRaw = pick(['new_values', 'proposed_data', 'proposed', 'new_data']);
+    final newRaw = pick(['new_values', 'requested_new_data', 'proposed_data', 'proposed', 'new_data']);
     if (newRaw is Map<String, dynamic>) {
       newMap = newRaw;
     }
@@ -104,25 +104,55 @@ class DriverChangeRequestModel {
     );
   }
 
+  /// نوع التعديل مترجم (حصر التعديلات بالنوعين المعتمدين فقط)
   String get translatedType {
     if (changeType != null && changeType!.isNotEmpty) {
       final ct = changeType!.toLowerCase();
       if (ct.contains('vehicle') || ct == 'vehicle_update') return 'تعديل بيانات المركبة';
-      if (ct.contains('document') || ct == 'document_update' || ct.contains('doc')) return 'تحديث الوثائق الرسمية';
-      if (ct.contains('profile') || ct == 'profile_update' || ct.contains('user')) return 'تعديل بيانات الملف الشخصي';
+      if (ct.contains('document') ||
+          ct.contains('legal') ||
+          ct.contains('doc') ||
+          ct == 'document_update' ||
+          ct == 'legal_data') {
+        return 'تعديل الوثائق والبيانات القانونية';
+      }
+      if (ct.contains('profile') || ct == 'profile_update' || ct.contains('user')) {
+        return 'تعديل بيانات الملف الشخصي (ملغي)';
+      }
     }
 
     final keys = newValues.keys.map((k) => k.toLowerCase()).toList();
-    if (keys.any((k) => k.contains('doc_') || k.contains('license') || k.contains('expiry') || k.contains('insurance') || k.contains('stamp'))) {
-      return 'تحديث الوثائق الرسمية';
+    if (keys.any((k) =>
+        k.contains('doc_') ||
+        k.contains('license') ||
+        k.contains('expiry') ||
+        k.contains('insurance') ||
+        k.contains('stamp') ||
+        k.contains('inspection') ||
+        k.contains('national_id') ||
+        k.contains('logbook'))) {
+      return 'تعديل الوثائق والبيانات القانونية';
     }
-    if (keys.any((k) => k.contains('plate') || k.contains('vehicle') || k.contains('color') || k.contains('year') || k.contains('brand') || k.contains('model'))) {
+    if (keys.any((k) =>
+        k.contains('plate') ||
+        k.contains('vehicle') ||
+        k.contains('color') ||
+        k.contains('year') ||
+        k.contains('brand') ||
+        k.contains('model') ||
+        k.contains('capacity') ||
+        k.contains('has_ac'))) {
       return 'تعديل بيانات المركبة';
     }
-    if (keys.any((k) => k.contains('name') || k.contains('phone') || k.contains('national_id') || k.contains('avatar'))) {
-      return 'تعديل بيانات الملف الشخصي';
+    if (keys.any((k) => k.contains('name') || k.contains('phone') || k.contains('avatar'))) {
+      return 'تعديل بيانات الملف الشخصي (ملغي)';
     }
 
-    return changeType ?? 'تعديل بيانات المركبة';
+    return 'تعديل الوثائق والبيانات القانونية';
+  }
+
+  /// هل هذا الطلب يتبع أحد النوعين المقبولين للعرض (وثائق/بيانات قانونية أو مركبة)؟
+  bool get isSupportedChangeType {
+    return translatedType != 'تعديل بيانات الملف الشخصي (ملغي)';
   }
 }

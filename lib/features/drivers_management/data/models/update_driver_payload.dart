@@ -74,7 +74,6 @@ class DriverDocumentField {
   static const String license = 'doc_license';
   static const String logbook = 'doc_logbook';
   static const String insurance = 'doc_insurance';
-  static const String bookletPage = 'doc_booklet_page';
   static const String stamp = 'doc_stamp';
   static const String technicalInspection = 'doc_technical_inspection';
 
@@ -82,7 +81,6 @@ class DriverDocumentField {
     license: 'رخصة القيادة',
     logbook: 'كتيب المركبة (بيانات مالك المركبة)',
     insurance: 'التأمين',
-    bookletPage: 'كتيب المركبة (أوصاف المركبة الآلية)',
     stamp: 'الدمغ (إذن تجول)',
     technicalInspection: 'الفحص الفني',
   };
@@ -91,7 +89,6 @@ class DriverDocumentField {
     license,
     logbook,
     insurance,
-    bookletPage,
     stamp,
     technicalInspection,
   ];
